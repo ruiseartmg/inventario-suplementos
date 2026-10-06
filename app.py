@@ -20,6 +20,12 @@ def conectar_sheets():
     # Si estamos en la nube, lee las credenciales seguras de Streamlit. Si estás en tu PC, busca el archivo local.
     if "GOOGLE_CREDS" in st.secrets:
         creds_dict = dict(st.secrets["GOOGLE_CREDS"])
+        
+        # Asegurar que los saltos de línea de la llave privada se lean correctamente
+        private_key = creds_dict.get("private_key", "")
+        if "\\n" in private_key:
+            creds_dict["private_key"] = private_key.replace("\\n", "\n")
+            
         creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, SCOPE)
     else:
         ruta_json = os.path.join(os.path.dirname(os.path.abspath(__file__)), "credenciales.json")
