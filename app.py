@@ -8,7 +8,7 @@ import os
 st.set_page_config(page_title="Gestión de Inventario", page_icon="📦", layout="centered")
 
 # ==========================================
-# CONEXIÓN A GOOGLE SHEETS (Método Moderno y Seguro)
+# CONEXIÓN A GOOGLE SHEETS (Blindada contra errores de formato)
 # ==========================================
 SCOPE = [
     "https://www.googleapis.com/auth/spreadsheets",
@@ -17,12 +17,15 @@ SCOPE = [
 
 def conectar_sheets():
     if "GOOGLE_CREDS" in st.secrets:
-        # Convertimos los secretos de Streamlit a un diccionario normal
         creds_dict = dict(st.secrets["GOOGLE_CREDS"])
         
-        # Corregir saltos de línea en la llave privada si vienen escapados
+        # Limpiar y dar formato correcto a la llave privada automáticamente
         if "private_key" in creds_dict:
-            creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
+            pk = creds_dict["private_key"]
+            pk = pk.replace("\\n", "\n")
+            # Eliminar espacios sobrantes en cada línea para evitar errores de padding
+            lines = [line.strip() for line in pk.split("\n")]
+            creds_dict["private_key"] = "\n".join(lines)
             
         creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPE)
     else:
