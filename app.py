@@ -1,35 +1,33 @@
 import streamlit as st
 import gspread
-from oauth2client.service_account import ServiceAccountCredentials
+from google.oauth2.service_account import Credentials
 from datetime import datetime
-import json
 import os
 
 # Configuración de la página
 st.set_page_config(page_title="Gestión de Inventario", page_icon="📦", layout="centered")
 
 # ==========================================
-# CONEXIÓN A GOOGLE SHEETS (Segura para la Nube)
+# CONEXIÓN A GOOGLE SHEETS (Método Moderno y Seguro)
 # ==========================================
 SCOPE = [
-    "https://spreadsheets.google.com/feeds",
+    "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive"
 ]
 
 def conectar_sheets():
-    # Si estamos en la nube, lee las credenciales seguras de Streamlit. Si estás en tu PC, busca el archivo local.
     if "GOOGLE_CREDS" in st.secrets:
+        # Convertimos los secretos de Streamlit a un diccionario normal
         creds_dict = dict(st.secrets["GOOGLE_CREDS"])
         
-        # Asegurar que los saltos de línea de la llave privada se lean correctamente
-        private_key = creds_dict.get("private_key", "")
-        if "\\n" in private_key:
-            creds_dict["private_key"] = private_key.replace("\\n", "\n")
+        # Corregir saltos de línea en la llave privada si vienen escapados
+        if "private_key" in creds_dict:
+            creds_dict["private_key"] = creds_dict["private_key"].replace("\\n", "\n")
             
-        creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, SCOPE)
+        creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPE)
     else:
         ruta_json = os.path.join(os.path.dirname(os.path.abspath(__file__)), "credenciales.json")
-        creds = ServiceAccountCredentials.from_json_keyfile_name(ruta_json, SCOPE)
+        creds = Credentials.from_service_account_file(ruta_json, scopes=SCOPE)
         
     client = gspread.authorize(creds)
     sheet = client.open("Inventario Suplementos")
@@ -61,7 +59,6 @@ pestana1, pestana2 = st.tabs(["🛒 Registrar Movimiento", "📜 Historial de Mo
 with pestana1:
     st.subheader("Registrar Venta o Entrada")
     
-    # Obtener lista de productos
     nombres_productos = [p.get("Nombre del Producto") for p in registros_inv if p.get("Nombre del Producto")]
     
     prod_seleccionado = st.selectbox("Selecciona Producto", nombres_productos)
@@ -69,12 +66,11 @@ with pestana1:
     tipo = st.radio("Tipo de Movimiento", ["Venta", "Compra (Entrada)"])
     
     if st.button("Registrar Movimiento", type="primary"):
-        # Buscar el producto en los registros
         row_idx = None
         producto_obj = None
         for i, p in enumerate(registros_inv):
             if p.get("Nombre del Producto") == prod_seleccionado:
-                row_idx = i + 2 # Fila en Google Sheets
+                row_idx = i + 2 
                 producto_obj = p
                 break
         
@@ -84,7 +80,6 @@ with pestana1:
             except:
                 stock_actual = 0
                 
-            # Buscar precio de forma flexible
             raw_precio = "0"
             for k, v in producto_obj.items():
                 if "precio" in k.lower():
@@ -105,7 +100,6 @@ with pestana1:
             if nuevo_stock < 0:
                 st.error("¡No hay suficiente stock en existencia!")
             else:
-                # Actualizar Google Sheets
                 hoja_inv.update_cell(row_idx, 4, nuevo_stock)
                 
                 ahora = datetime.now()
@@ -121,7 +115,6 @@ with pestana1:
     st.divider()
     st.subheader("Estado Actual del Inventario")
     
-    # Mostrar tabla limpia
     registros_frescos = hoja_inv.get_all_records()
     st.dataframe(registros_frescos, use_container_width=True)
 
