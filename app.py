@@ -101,7 +101,7 @@ with pestana1:
                         except:
                             pass
                 
-                # Precio de venta (limpieza robusta de texto y símbolos)
+                # Precio de venta
                 precio_venta = 0.0
                 for k, v in producto_obj.items():
                     if "precio de venta" in k.lower() or (k.lower().strip() == "precio de venta"):
@@ -192,11 +192,13 @@ with pestana1:
     registros_frescos = hoja_inv.get_all_records()
     if registros_frescos:
         df_inv = pd.DataFrame(registros_frescos)
-        # Dar formato visual de dinero a las columnas de precios si existen
+        # Formatear columnas de precios y cantidades numéricas limpias
         for col in df_inv.columns:
             if "precio" in col.lower():
                 df_inv[col] = pd.to_numeric(df_inv[col].astype(str).str.replace("$", "").str.replace(",", "").str.strip(), errors="coerce").fillna(0)
                 df_inv[col] = df_inv[col].apply(lambda x: f"${x:,.2f}")
+            elif "stock" in col.lower() or "cantidad" in col.lower() or "surtir" in col.lower():
+                df_inv[col] = pd.to_numeric(df_inv[col], errors="coerce").fillna(0).astype(int)
         st.dataframe(df_inv, use_container_width=True)
 
 with pestana2:
@@ -233,7 +235,6 @@ with pestana2:
                     }
                     for idx, header in enumerate(headers):
                         if header in datos_ingresados:
-                            # Guardamos el precio limpio sin símbolos para que Google Sheets lo guarde como número puro
                             nueva_fila[idx] = datos_ingresados[header]
                     hoja_inv.append_row(nueva_fila)
                     st.success(f"¡El producto '{nuevo_nombre}' se ha dado de alta correctamente!")
