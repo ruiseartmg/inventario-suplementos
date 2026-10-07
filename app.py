@@ -153,7 +153,7 @@ with pestana1:
                         hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), prod_seleccionado, "Venta", cantidad, cantidad * precio_venta])
                         st.rerun()
                     elif stock_actual == 0:
-                        st.warning(f"El producto ya estava en stock 0. Se han sumado **{cantidad} piezas** directamente a 'Por surtir'.")
+                        st.warning(f"El producto ya estaba en stock 0. Se han sumado **{cantidad} piezas** directamente a 'Por surtir'.")
                         if col_surtir_idx:
                             hoja_inv.update_cell(row_idx, col_surtir_idx, por_surtir_actual + cantidad)
                         hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), prod_seleccionado, "Venta", cantidad, cantidad * precio_venta])
@@ -164,11 +164,9 @@ with pestana1:
                         st.success(f"¡Venta guardada con éxito! {cantidad}x {prod_seleccionado}")
                         st.rerun()
                         
-                else:  # === COMPRA / ENTRADA DE MATERIAL (CORREGIDO) ===
-                    # Todo lo que compres entra completo al Stock físico
+                else:  # === COMPRA / ENTRADA DE MATERIAL ===
                     nuevo_stock = stock_actual + cantidad
                     
-                    # Y el "Por Surtir" pendiente se liquida por completo (o se reduce si hubiera más pendiente que compra)
                     if por_surtir_actual > 0:
                         if cantidad >= por_surtir_actual:
                             nuevo_por_surtir = 0
@@ -180,7 +178,6 @@ with pestana1:
                         nuevo_por_surtir = 0
                         st.success(f"📦 Entrada registrada con éxito: +{cantidad} piezas al stock de {prod_seleccionado}.")
                     
-                    # Actualizamos Google Sheets respetando que el stock sube y el pendiente se limpia
                     hoja_inv.update_cell(row_idx, col_stock_idx, nuevo_stock)
                     if col_surtir_idx:
                         hoja_inv.update_cell(row_idx, col_surtir_idx, nuevo_por_surtir)
@@ -194,7 +191,12 @@ with pestana1:
     st.subheader("Estado Actual del Inventario")
     registros_frescos = hoja_inv.get_all_records()
     if registros_frescos:
-        st.dataframe(pd.DataFrame(registros_frescos), use_container_width=True)
+        df_inventario = pd.DataFrame(registros_frescos)
+        # Forzar columnas numéricas para que se alinien a la derecha en la vista de Streamlit
+        for col in df_inventario.columns:
+            if "stock" in col.lower() or "surtir" in col.lower() or "cantidad" in col.lower() or "precio" in col.lower():
+                df_inventario[col] = pd.to_numeric(df_inventario[col], errors='coerce').fillna(0).astype(int)
+        st.dataframe(df_inventario, use_container_width=True)
 
 with pestana2:
     st.subheader("Agregar un Producto Nuevo al Inventario")
