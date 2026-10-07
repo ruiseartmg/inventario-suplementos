@@ -153,7 +153,7 @@ with pestana1:
                         hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), prod_seleccionado, "Venta", cantidad, cantidad * precio_venta])
                         st.rerun()
                     elif stock_actual == 0:
-                        st.warning(f"El producto ya estaba en stock 0. Se han sumado **{cantidad} piezas** directamente a 'Por surtir'.")
+                        st.warning(f"El producto ya estava en stock 0. Se han sumado **{cantidad} piezas** directamente a 'Por surtir'.")
                         if col_surtir_idx:
                             hoja_inv.update_cell(row_idx, col_surtir_idx, por_surtir_actual + cantidad)
                         hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), prod_seleccionado, "Venta", cantidad, cantidad * precio_venta])
@@ -164,27 +164,23 @@ with pestana1:
                         st.success(f"¡Venta guardada con éxito! {cantidad}x {prod_seleccionado}")
                         st.rerun()
                         
-                else:  # === COMPRA / ENTRADA DE MATERIAL ===
-                    # Si hay cosas pendientes por surtir, la entrada cubre primero eso
+                else:  # === COMPRA / ENTRADA DE MATERIAL (CORREGIDO) ===
+                    # Todo lo que compres entra completo al Stock físico
+                    nuevo_stock = stock_actual + cantidad
+                    
+                    # Y el "Por Surtir" pendiente se liquida por completo (o se reduce si hubiera más pendiente que compra)
                     if por_surtir_actual > 0:
                         if cantidad >= por_surtir_actual:
-                            # La compra alcanza para cubrir todo lo pendiente y sobra para stock
-                            sobrante_para_stock = cantidad - por_surtir_actual
-                            nuevo_stock = stock_actual + sobrante_para_stock
                             nuevo_por_surtir = 0
-                            st.success(f"📦 Se cubrieron los **{por_surtir_actual} pendientes** de surtir. Las **{sobrante_para_stock} piezas restantes** se fueron al Stock.")
+                            st.success(f"📦 ¡Entrada registrada! +{cantidad} piezas al stock. Se cubrieron los {por_surtir_actual} pendientes de surtir.")
                         else:
-                            # La compra no alcanzó a cubrir todo el pendiente, pero reduce el déficit
                             nuevo_por_surtir = por_surtir_actual - cantidad
-                            nuevo_stock = stock_actual
-                            st.warning(f"📦 Entraron {cantidad} piezas. Se descontaron del pendiente; aún quedan **{nuevo_por_surtir} piezas** por surtir.")
+                            st.warning(f"📦 ¡Entrada registrada! +{cantidad} piezas al stock. Aún quedan {nuevo_por_surtir} pendientes por surtir.")
                     else:
-                        # Si no había nada pendiente, todo se va al stock normal
-                        nuevo_stock = stock_actual + cantidad
                         nuevo_por_surtir = 0
                         st.success(f"📦 Entrada registrada con éxito: +{cantidad} piezas al stock de {prod_seleccionado}.")
                     
-                    # Actualizamos ambas columnas en Google Sheets
+                    # Actualizamos Google Sheets respetando que el stock sube y el pendiente se limpia
                     hoja_inv.update_cell(row_idx, col_stock_idx, nuevo_stock)
                     if col_surtir_idx:
                         hoja_inv.update_cell(row_idx, col_surtir_idx, nuevo_por_surtir)
