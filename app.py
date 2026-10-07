@@ -101,7 +101,7 @@ with pestana1:
                         except:
                             pass
                 
-                # Precio de venta
+                # Precio de venta (limpieza robusta de texto y símbolos)
                 precio_venta = 0.0
                 for k, v in producto_obj.items():
                     if "precio de venta" in k.lower() or (k.lower().strip() == "precio de venta"):
@@ -153,7 +153,7 @@ with pestana1:
                         hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), prod_seleccionado, "Venta", cantidad, cantidad * precio_venta])
                         st.rerun()
                     elif stock_actual == 0:
-                        st.warning(f"El producto ya estaba en stock 0. Se han sumado **{cantidad} piezas** directamente a 'Por surtir'.")
+                        st.warning(f"El producto estaba en stock 0. Se han sumado **{cantidad} piezas** directamente a 'Por surtir'.")
                         if col_surtir_idx:
                             hoja_inv.update_cell(row_idx, col_surtir_idx, por_surtir_actual + cantidad)
                         hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), prod_seleccionado, "Venta", cantidad, cantidad * precio_venta])
@@ -191,12 +191,13 @@ with pestana1:
     st.subheader("Estado Actual del Inventario")
     registros_frescos = hoja_inv.get_all_records()
     if registros_frescos:
-        df_inventario = pd.DataFrame(registros_frescos)
-        # Forzar columnas numéricas para que se alinien a la derecha en la vista de Streamlit
-        for col in df_inventario.columns:
-            if "stock" in col.lower() or "surtir" in col.lower() or "cantidad" in col.lower() or "precio" in col.lower():
-                df_inventario[col] = pd.to_numeric(df_inventario[col], errors='coerce').fillna(0).astype(int)
-        st.dataframe(df_inventario, use_container_width=True)
+        df_inv = pd.DataFrame(registros_frescos)
+        # Dar formato visual de dinero a las columnas de precios si existen
+        for col in df_inv.columns:
+            if "precio" in col.lower():
+                df_inv[col] = pd.to_numeric(df_inv[col].astype(str).str.replace("$", "").str.replace(",", "").str.strip(), errors="coerce").fillna(0)
+                df_inv[col] = df_inv[col].apply(lambda x: f"${x:,.2f}")
+        st.dataframe(df_inv, use_container_width=True)
 
 with pestana2:
     st.subheader("Agregar un Producto Nuevo al Inventario")
@@ -232,6 +233,7 @@ with pestana2:
                     }
                     for idx, header in enumerate(headers):
                         if header in datos_ingresados:
+                            # Guardamos el precio limpio sin símbolos para que Google Sheets lo guarde como número puro
                             nueva_fila[idx] = datos_ingresados[header]
                     hoja_inv.append_row(nueva_fila)
                     st.success(f"¡El producto '{nuevo_nombre}' se ha dado de alta correctamente!")
