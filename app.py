@@ -60,7 +60,7 @@ registros_inv = hoja_inv.get_all_records()
 
 st.title("📦 Productos Naturales - Inventario")
 
-# Pestañas en la web (¡Ahora con 3 pestañas!)
+# Pestañas en la web
 pestana1, pestana2, pestana3 = st.tabs(["🛒 Registrar Movimiento", "➕ Nuevo Producto", "📜 Historial de Movimientos"])
 
 with pestana1:
@@ -83,20 +83,41 @@ with pestana1:
                     break
             
             if producto_obj and row_idx:
-                try:
-                    stock_actual = int(producto_obj.get("Cantidad en Stock", 0))
-                except:
-                    stock_actual = 0
-                    
-                raw_precio = "0"
+                # Buscamos el stock real sin importar la posición de la columna
+                stock_actual = 0
                 for k, v in producto_obj.items():
-                    if "precio" in k.lower():
+                    if "stock" in k.lower() or "cantidad" in k.lower():
+                        try:
+                            # Evitamos tomar celdas que sean otra cosa
+                            val_temp = int(v)
+                            stock_actual = val_temp
+                            break
+                        except:
+                            continue
+                
+                # Buscamos el precio de venta de forma segura
+                precio_venta = 0.0
+                for k, v in producto_obj.items():
+                    if "precio de venta" in k.lower() or (k.lower().strip() == "precio de venta"):
                         raw_precio = str(v).replace("$", "").replace(",", "").strip()
-                        break
-                try:
-                    precio_venta = float(raw_precio)
-                except:
-                    precio_venta = 0.0
+                        try:
+                            precio_venta = float(raw_precio)
+                            break
+                        except:
+                            pass
+                
+                # Si falló el específico, buscamos cualquiera que tenga la palabra precio y no sea cero
+                if precio_venta == 0.0:
+                    for k, v in producto_obj.items():
+                        if "precio" in k.lower():
+                            raw_precio = str(v).replace("$", "").replace(",", "").strip()
+                            try:
+                                val_p = float(raw_precio)
+                                if val_p > 0:
+                                    precio_venta = val_p
+                                    break
+                            except:
+                                continue
                     
                 if tipo == "Venta":
                     nuevo_stock = stock_actual - cantidad
@@ -108,7 +129,15 @@ with pestana1:
                 if nuevo_stock < 0:
                     st.error("¡No hay suficiente stock en existencia!")
                 else:
-                    hoja_inv.update_cell(row_idx, 4, nuevo_stock)
+                    # Encontramos el número exacto de la columna de stock para actualizarla bien
+                    headers = hoja_inv.row_values(1)
+                    col_stock_idx = 4 # Valor por defecto por si acaso
+                    for idx, h in enumerate(headers):
+                        if "stock" in h.lower() or "cantidad en stock" in h.lower():
+                            col_stock_idx = idx + 1
+                            break
+                            
+                    hoja_inv.update_cell(row_idx, col_stock_idx, nuevo_stock)
                     
                     ahora = datetime.now()
                     fecha_str = ahora.strftime("%Y-%m-%d")
@@ -152,11 +181,9 @@ with pestana2:
                 st.error("¡El nombre del producto es obligatorio!")
             else:
                 try:
-                    # Obtenemos los encabezados actuales de la hoja de Google Sheets
                     headers = hoja_inv.row_values(1)
                     nueva_fila = [""] * len(headers)
                     
-                    # Mapeamos los datos ingresados con los nombres de las columnas que ya tengas
                     datos_ingresados = {
                         "Nombre del Producto": nuevo_nombre,
                         "Presentacion": nueva_presentacion,
@@ -172,7 +199,6 @@ with pestana2:
                         if header in datos_ingresados:
                             nueva_fila[idx] = datos_ingresados[header]
                             
-                    # Agregamos la fila al final del Google Sheets
                     hoja_inv.append_row(nueva_fila)
                     st.success(f"¡El producto '{nuevo_nombre}' se ha dado de alta correctamente!")
                     st.rerun()
