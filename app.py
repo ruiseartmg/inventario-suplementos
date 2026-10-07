@@ -4,6 +4,7 @@ from google.oauth2.service_account import Credentials
 from datetime import datetime
 import os
 import base64
+import pandas as pd
 
 # Configuración de la página
 st.set_page_config(page_title="Gestión de Inventario", page_icon="📦", layout="centered")
@@ -122,7 +123,17 @@ with pestana1:
     st.subheader("Estado Actual del Inventario")
     
     registros_frescos = hoja_inv.get_all_records()
-    st.dataframe(registros_frescos, use_container_width=True)
+    
+    # === AQUÍ APLICAMOS EL ESTILO CENTRADO CON PANDAS ===
+    if registros_frescos:
+        df_inventario = pd.DataFrame(registros_frescos)
+        if "Cantidad en Stock" in df_inventario.columns:
+            st.dataframe(
+                df_inventario.style.set_properties(subset=['Cantidad en Stock'], **{'text-align': 'center'}),
+                use_container_width=True
+            )
+        else:
+            st.dataframe(df_inventario, use_container_width=True)
 
 with pestana2:
     st.subheader("Historial de Transacciones")
