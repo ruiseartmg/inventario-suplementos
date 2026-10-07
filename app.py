@@ -25,10 +25,8 @@ def conectar_sheets():
             pk_bytes = base64.b64decode(creds_dict["private_key_base64"])
             llave_sucia = pk_bytes.decode("utf-8")
             
-            # Limpieza extrema: arreglar saltos de línea literales y quitar comillas
             llave_limpia = llave_sucia.replace("\\n", "\n").replace('"', '').replace("'", "").strip()
             
-            # Si por error se coló una barra invertida (\) al inicio, la quitamos
             while llave_limpia.startswith("\\"):
                 llave_limpia = llave_limpia[1:].strip()
                 
@@ -55,13 +53,14 @@ except Exception as e:
     st.error(f"Error al conectar con Google Sheets: {e}")
     st.stop()
 
-# Cargar datos actuales
+# Cargar datos actuales y encabezados
 registros_inv = hoja_inv.get_all_records()
+headers = hoja_inv.row_values(1)
 
 st.title("📦 Productos Naturales - Inventario")
 
 # Pestañas en la web
-pestana1, pestana2, pestana3 = st.tabs(["🛒 Registrar Movimiento", "➕ Nuevo Producto", "📜 Historial de Movimientos"])
+pestana1, pestana2, pestana3, pestana4 = st.tabs(["🛒 Registrar Movimiento", "➕ Nuevo Producto", "📋 Resurtido y Pedidos", "📜 Historial"])
 
 with pestana1:
     st.subheader("Registrar Venta o Entrada")
@@ -83,40 +82,36 @@ with pestana1:
                     break
             
             if producto_obj and row_idx:
-                # Buscamos el stock real sin importar la posición de la columna
                 stock_actual = 0
                 for k, v in producto_obj.items():
                     if "stock" in k.lower() or "cantidad" in k.lower():
                         try:
-                            val_temp = int(v)
-                            stock_actual = val_temp
+                            stock_actual = int(v)
                             break
                         except:
                             continue
                 
-                # Buscamos el precio de venta de forma segura
                 precio_venta = 0.0
                 for k, v in producto_obj.items():
                     if "precio de venta" in k.lower() or (k.lower().strip() == "precio de venta"):
-                        raw_precio = str(v).replace("$", "").replace(",", "").strip()
+                        raw_p = str(v).replace("$", "").replace(",", "").strip()
                         try:
-                            precio_venta = float(raw_precio)
+                            precio_venta = float(raw_p)
                             break
                         except:
                             pass
-                
                 if precio_venta == 0.0:
                     for k, v in producto_obj.items():
                         if "precio" in k.lower():
-                            raw_precio = str(v).replace("$", "").replace(",", "").strip()
+                            raw_p = str(v).replace("$", "").replace(",", "").strip()
                             try:
-                                val_p = float(raw_precio)
+                                val_p = float(raw_p)
                                 if val_p > 0:
                                     precio_venta = val_p
                                     break
                             except:
                                 continue
-                    
+                                
                 if tipo == "Venta":
                     nuevo_stock = stock_actual - cantidad
                     mov_texto = "Venta"
@@ -124,42 +119,66 @@ with pestana1:
                     nuevo_stock = stock_actual + cantidad
                     mov_texto = "Compra"
                     
-                if nuevo_stock < 0:
-                    st.error("¡No hay suficiente stock en existencia!")
-                else:
-                    headers = hoja_inv.row_values(1)
-                    col_stock_idx = 4
-                    for idx, h in enumerate(headers):
-                        if "stock" in h.lower() or "cantidad en stock" in h.lower():
-                            col_stock_idx = idx + 1
-                            break
-                            
+                col_stock_idx = 4
+                col_surtir_idx = None
+                for idx, h in enumerate(headers):
+                    h_limpio = h.strip().lower()
+                    if "stock" in h_limpio or "cantidad en stock" in h_limpio:
+                        col_stock_idx = idx + 1
+                    elif "por surtir" in h_limpio or "por_surtir" in h_limpio:
+                        col_surtir_idx = idx + 1
+
+                if tipo == "Venta" and nuevo_stock < 0:
+                    faltante = cantidad - stock_actual
+                    vendible = stock_actual
+                    nuevo_stock = 0 
+                    
+                    st.error(f"⚠️ Stock insuficiente. Solo tenías {stock_actual} en existencia.")
+                    st.warning(f"Se descontaron {vendible} y se mandaron **{faltante} piezas** a la lista de 'Por surtir'.")
+                    
+                    if col_surtir_idx:
+                        val_actual_surtir = producto_obj.get(headers[col_surtir_idx - 1], 0)
+                        try:
+                            val_actual_surtir = int(val_actual_surtir)
+                        except:
+                            val_actual_surtir = 0
+                        hoja_inv.update_cell(row_idx, col_surtir_idx, val_actual_surtir + faltante)
+                    
                     hoja_inv.update_cell(row_idx, col_stock_idx, nuevo_stock)
                     
-                    # === HORA Y FECHA AJUSTADAS A MÉXICO (UTC-6) ===
                     ahora_mexico = datetime.utcnow() - timedelta(hours=6)
-                    fecha_str = ahora_mexico.strftime("%d-%m-%Y") # Formato Día-Mes-Año
-                    hora_str = ahora_mexico.strftime("%H:%M:%S")
-                    total = cantidad * precio_venta
+                    hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), prod_seleccionado, mov_texto, cantidad, cantidad * precio_venta])
+                    st.rerun()
+                elif tipo == "Venta" and stock_actual == 0:
+                    st.warning(f"El producto ya estaba en stock 0. Se han sumado **{cantidad} piezas** directamente a 'Por surtir'.")
+                    if col_surtir_idx:
+                        val_actual_surtir = producto_obj.get(headers[col_surtir_idx - 1], 0)
+                        try:
+                            val_actual_surtir = int(val_actual_surtir)
+                        except:
+                            val_actual_surtir = 0
+                        hoja_inv.update_cell(row_idx, col_surtir_idx, val_actual_surtir + cantidad)
                     
-                    hoja_hist.append_row([fecha_str, hora_str, prod_seleccionado, mov_texto, cantidad, total])
-                    
+                    ahora_mexico = datetime.utcnow() - timedelta(hours=6)
+                    hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), prod_seleccionado, mov_texto, cantidad, cantidad * precio_venta])
+                    st.rerun()
+                else:
+                    hoja_inv.update_cell(row_idx, col_stock_idx, nuevo_stock)
+                    ahora_mexico = datetime.utcnow() - timedelta(hours=6)
+                    hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), prod_seleccionado, mov_texto, cantidad, cantidad * precio_venta])
                     st.success(f"¡Movimiento guardado con éxito! {mov_texto} de {cantidad}x {prod_seleccionado}")
                     st.rerun()
     else:
-        st.info("No hay productos registrados todavía. Agrega uno en la pestaña de 'Nuevo Producto'.")
+        st.info("No hay productos registrados todavía.")
 
     st.divider()
     st.subheader("Estado Actual del Inventario")
-    
     registros_frescos = hoja_inv.get_all_records()
     if registros_frescos:
-        df_inventario = pd.DataFrame(registros_frescos)
-        st.dataframe(df_inventario, use_container_width=True)
+        st.dataframe(pd.DataFrame(registros_frescos), use_container_width=True)
 
 with pestana2:
     st.subheader("Agregar un Producto Nuevo al Inventario")
-    
     with st.form("form_nuevo_producto"):
         nuevo_nombre = st.text_input("Nombre del Producto *")
         col1, col2 = st.columns(2)
@@ -173,15 +192,12 @@ with pestana2:
             categoria = st.text_input("Categoría")
             
         submitted = st.form_submit_button("Guardar Producto en la Nube", type="primary")
-        
         if submitted:
             if not nuevo_nombre.strip():
                 st.error("¡El nombre del producto es obligatorio!")
             else:
                 try:
-                    headers = hoja_inv.row_values(1)
                     nueva_fila = [""] * len(headers)
-                    
                     datos_ingresados = {
                         "Nombre del Producto": nuevo_nombre,
                         "Presentacion": nueva_presentacion,
@@ -190,20 +206,78 @@ with pestana2:
                         "Precio Directo": precio_dir,
                         "Precio de Venta": precio_ven,
                         "Categoría": categoria,
-                        "Categoria": categoria
+                        "Categoria": categoria,
+                        "Por surtir": 0
                     }
-                    
                     for idx, header in enumerate(headers):
                         if header in datos_ingresados:
                             nueva_fila[idx] = datos_ingresados[header]
-                            
                     hoja_inv.append_row(nueva_fila)
                     st.success(f"¡El producto '{nuevo_nombre}' se ha dado de alta correctamente!")
                     st.rerun()
                 except Exception as e:
-                    st.error(f"Error al guardar el producto: {e}")
+                    st.error(f"Error al guardar: {e}")
 
 with pestana3:
+    st.subheader("📋 Sugerencia de Pedido y Resurtido")
+    st.markdown("Aquí puedes ver lo que tienes pendiente de surtir a clientes más el promedio de venta mensual para calcular tu pedido ideal.")
+    
+    if st.button("🔄 Actualizar Datos de Pedidos"):
+        st.rerun()
+        
+    reg_inv_actuales = hoja_inv.get_all_records()
+    reg_hist_actuales = hoja_hist.get_all_records()
+    
+    if reg_inv_actuales:
+        df_h = pd.DataFrame(reg_hist_actuales) if reg_hist_actuales else pd.DataFrame()
+        promedios_dict = {}
+        
+        if not df_h.empty and "Producto" in df_h.columns and "Cantidad" in df_h.columns and "Fecha" in df_h.columns:
+            if "Compra/Venta" in df_h.columns:
+                df_ventas = df_h[df_h["Compra/Venta"] == "Venta"].copy()
+            else:
+                df_ventas = df_h.copy()
+                
+            if not df_ventas.empty:
+                try:
+                    df_ventas["Mes"] = df_ventas["Fecha"].str.slice(3, 10)
+                    totales_prod_mes = df_ventas.groupby(["Producto", "Mes"])["Cantidad"].sum().reset_index()
+                    promedios = totales_prod_mes.groupby("Producto")["Cantidad"].mean().reset_index()
+                    for _, row in promedios.iterrows():
+                        promedios_dict[row["Producto"]] = round(row["Cantidad"], 1)
+                except:
+                    pass
+
+        lista_resurtido = []
+        for p in reg_inv_actuales:
+            nombre = p.get("Nombre del Producto", "")
+            stock = int(p.get("Cantidad en Stock", 0) or 0)
+            
+            por_surtir = 0
+            for k, v in p.items():
+                if "por surtir" in k.lower() or "por_surtir" in k.lower():
+                    try:
+                        por_surtir = int(v or 0)
+                    except:
+                        pass
+            
+            promedio_mes = promedios_dict.get(nombre, 0.0)
+            sugerido_pedido = por_surtir + int(promedio_mes)
+            
+            lista_resurtido.append({
+                "Producto": nombre,
+                "Stock Actual": stock,
+                "Por Surtir (Pendiente)": por_surtir,
+                "Promedio Venta / Mes": promedio_mes,
+                "Sugerido a Pedir": sugerido_pedido
+            })
+            
+        df_resurtido = pd.DataFrame(lista_resurtido)
+        st.dataframe(df_resurtido, use_container_width=True)
+    else:
+        st.info("No hay productos en el inventario.")
+
+with pestana4:
     st.subheader("Historial de Transacciones")
     if st.button("🔄 Actualizar Historial"):
         st.rerun()
