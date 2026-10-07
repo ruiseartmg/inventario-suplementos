@@ -3,12 +3,13 @@ import gspread
 from google.oauth2.service_account import Credentials
 from datetime import datetime
 import os
+import base64
 
 # Configuración de la página
 st.set_page_config(page_title="Gestión de Inventario", page_icon="📦", layout="centered")
 
 # ==========================================
-# CONEXIÓN A GOOGLE SHEETS (Blindada contra errores de formato)
+# CONEXIÓN A GOOGLE SHEETS (Método Base64 Blindado)
 # ==========================================
 SCOPE = [
     "https://www.googleapis.com/auth/spreadsheets",
@@ -17,15 +18,13 @@ SCOPE = [
 
 def conectar_sheets():
     if "GOOGLE_CREDS" in st.secrets:
+        # Copiamos los secretos a un diccionario modificable
         creds_dict = dict(st.secrets["GOOGLE_CREDS"])
         
-        # Limpiar y dar formato correcto a la llave privada automáticamente
-        if "private_key" in creds_dict:
-            pk = creds_dict["private_key"]
-            pk = pk.replace("\\n", "\n")
-            # Eliminar espacios sobrantes en cada línea para evitar errores de padding
-            lines = [line.strip() for line in pk.split("\n")]
-            creds_dict["private_key"] = "\n".join(lines)
+        # Si usamos el formato Base64 blindado, decodificamos la llave limpiamente
+        if "private_key_base64" in creds_dict:
+            pk_bytes = base64.b64decode(creds_dict["private_key_base64"])
+            creds_dict["private_key"] = pk_bytes.decode("utf-8")
             
         creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPE)
     else:
@@ -56,9 +55,6 @@ st.title("📦 Productos Naturales - Inventario")
 # Pestañas en la web
 pestana1, pestana2 = st.tabs(["🛒 Registrar Movimiento", "📜 Historial de Movimientos"])
 
-# ==========================================
-# PESTAÑA 1: REGISTRAR MOVIMIENTO
-# ==========================================
 with pestana1:
     st.subheader("Registrar Venta o Entrada")
     
@@ -121,9 +117,6 @@ with pestana1:
     registros_frescos = hoja_inv.get_all_records()
     st.dataframe(registros_frescos, use_container_width=True)
 
-# ==========================================
-# PESTAÑA 2: HISTORIAL
-# ==========================================
 with pestana2:
     st.subheader("Historial de Transacciones")
     if st.button("🔄 Actualizar Historial"):
