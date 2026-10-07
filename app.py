@@ -1,7 +1,7 @@
 import streamlit as st
 import gspread
 from google.oauth2.service_account import Credentials
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 import base64
 import pandas as pd
@@ -88,7 +88,6 @@ with pestana1:
                 for k, v in producto_obj.items():
                     if "stock" in k.lower() or "cantidad" in k.lower():
                         try:
-                            # Evitamos tomar celdas que sean otra cosa
                             val_temp = int(v)
                             stock_actual = val_temp
                             break
@@ -106,7 +105,6 @@ with pestana1:
                         except:
                             pass
                 
-                # Si falló el específico, buscamos cualquiera que tenga la palabra precio y no sea cero
                 if precio_venta == 0.0:
                     for k, v in producto_obj.items():
                         if "precio" in k.lower():
@@ -129,9 +127,8 @@ with pestana1:
                 if nuevo_stock < 0:
                     st.error("¡No hay suficiente stock en existencia!")
                 else:
-                    # Encontramos el número exacto de la columna de stock para actualizarla bien
                     headers = hoja_inv.row_values(1)
-                    col_stock_idx = 4 # Valor por defecto por si acaso
+                    col_stock_idx = 4
                     for idx, h in enumerate(headers):
                         if "stock" in h.lower() or "cantidad en stock" in h.lower():
                             col_stock_idx = idx + 1
@@ -139,9 +136,10 @@ with pestana1:
                             
                     hoja_inv.update_cell(row_idx, col_stock_idx, nuevo_stock)
                     
-                    ahora = datetime.now()
-                    fecha_str = ahora.strftime("%Y-%m-%d")
-                    hora_str = ahora.strftime("%H:%M:%S")
+                    # === HORA Y FECHA AJUSTADAS A MÉXICO (UTC-6) ===
+                    ahora_mexico = datetime.utcnow() - timedelta(hours=6)
+                    fecha_str = ahora_mexico.strftime("%d-%m-%Y") # Formato Día-Mes-Año
+                    hora_str = ahora_mexico.strftime("%H:%M:%S")
                     total = cantidad * precio_venta
                     
                     hoja_hist.append_row([fecha_str, hora_str, prod_seleccionado, mov_texto, cantidad, total])
