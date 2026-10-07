@@ -10,16 +10,17 @@ import pandas as pd
 st.set_page_config(page_title="Gestión de Inventario", page_icon="📦", layout="centered")
 
 # ==========================================
-# CSS PARA FORZAR EL CENTRADO REAL EN LAS COLUMNAS DE CANTIDAD
+# CSS PARA CENTRAR LAS COLUMNAS DE CANTIDADES EXACTAMENTE AL CENTRO
 # ==========================================
 st.markdown("""
     <style>
-    /* Forzar centrado en celdas de texto o numéricas específicas */
-    [data-testid="stDataFrame"] div[data-testid="stTable"] td:nth-child(5),
-    [data-testid="stDataFrame"] div[data-testid="stTable"] th:nth-child(5),
-    [data-testid="stDataFrame"] div[data-testid="stTable"] td:nth-child(6),
-    [data-testid="stDataFrame"] div[data-testid="stTable"] th:nth-child(6) {
+    /* Forzar alineación al centro en las columnas de Cantidad en Stock y Cantidad Venta */
+    [data-testid="stDataFrame"] table tr th:nth-child(5),
+    [data-testid="stDataFrame"] table tr td:nth-child(5),
+    [data-testid="stDataFrame"] table tr th:nth-child(6),
+    [data-testid="stDataFrame"] table tr td:nth-child(6) {
         text-align: center !important;
+        justify-content: center !important;
     }
     </style>
 """, unsafe_allow_html=True)
