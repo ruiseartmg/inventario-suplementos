@@ -55,13 +55,12 @@ except Exception as e:
     st.error(f"Error al conectar con Google Sheets: {e}")
     st.stop()
 
-# Cargar datos actuales y encabezados
+# Cargar datos actuales
 registros_inv = hoja_inv.get_all_records()
-headers = hoja_inv.row_values(1)
 
 st.title("📦 Productos Naturales - Inventario")
 
-# Pestañas en la web
+# Pestañas en la web (¡Ahora con 3 pestañas!)
 pestana1, pestana2, pestana3 = st.tabs(["🛒 Registrar Movimiento", "➕ Nuevo Producto", "📜 Historial de Movimientos"])
 
 with pestana1:
@@ -106,56 +105,22 @@ with pestana1:
                     nuevo_stock = stock_actual + cantidad
                     mov_texto = "Compra"
                     
-                # Validamos si falta stock en una Venta
-                if tipo == "Venta" and nuevo_stock < 0:
-                    faltante = cantidad - stock_actual
-                    st.error(f"⚠️ ¡Stock insuficiente! Tienes {stock_actual} en existencia y quieres vender {cantidad}.")
-                    st.warning(f"Te hacen falta **{faltante} piezas**. Este faltante se ha sumado a tu lista de 'Por Surtir'.")
-                    
-                    # Buscamos si existe la columna "Por Surtir" en el Sheets
-                    col_por_surtir_idx = None
-                    for idx, h in enumerate(headers):
-                        if h.lower() in ["por surtir", "por_surtir"]:
-                            col_por_surtir_idx = idx + 1
-                            break
-                    
-                    if col_por_surtir_idx:
-                        # Obtenemos el valor actual que tenía "Por Surtir"
-                        val_actual_surtir = producto_obj.get(headers[col_por_surtir_idx - 1], 0)
-                        try:
-                            val_actual_surtir = int(val_actual_surtir)
-                        except:
-                            val_actual_surtir = 0
-                            
-                        nuevo_surtir = val_actual_surtir + faltante
-                        # Actualizamos la celda en Google Sheets
-                        hoja_inv.update_cell(row_idx, col_por_surtir_idx, nuevo_surtir)
-                    else:
-                        st.info("💡 Consejo: Agrega una columna llamada 'Por Surtir' en tu Google Sheets para guardar este dato automáticamente.")
+                if nuevo_stock < 0:
+                    st.error("¡No hay suficiente stock en existencia!")
                 else:
-                    # Buscamos la columna de Cantidad en Stock para actualizarla
-                    col_stock_idx = None
-                    for idx, h in enumerate(headers):
-                        if "stock" in h.lower() or "cantidad" in h.lower():
-                            col_stock_idx = idx + 1
-                            break
+                    hoja_inv.update_cell(row_idx, 4, nuevo_stock)
                     
-                    if col_stock_idx:
-                        hoja_inv.update_cell(row_idx, col_stock_idx, nuevo_stock)
-                        
-                        ahora = datetime.now()
-                        fecha_str = ahora.strftime("%Y-%m-%d")
-                        hora_str = ahora.strftime("%H:%M:%S")
-                        total = cantidad * precio_venta
-                        
-                        hoja_hist.append_row([fecha_str, hora_str, prod_seleccionado, mov_texto, cantidad, total])
-                        
-                        st.success(f"¡Movimiento guardado con éxito! {mov_texto} de {cantidad}x {prod_seleccionado}")
-                        st.rerun()
-                    else:
-                        st.error("No se encontró la columna de Stock en tu Google Sheets.")
+                    ahora = datetime.now()
+                    fecha_str = ahora.strftime("%Y-%m-%d")
+                    hora_str = ahora.strftime("%H:%M:%S")
+                    total = cantidad * precio_venta
+                    
+                    hoja_hist.append_row([fecha_str, hora_str, prod_seleccionado, mov_texto, cantidad, total])
+                    
+                    st.success(f"¡Movimiento guardado con éxito! {mov_texto} de {cantidad}x {prod_seleccionado}")
+                    st.rerun()
     else:
-        st.info("No hay productos registrados todavía.")
+        st.info("No hay productos registrados todavía. Agrega uno en la pestaña de 'Nuevo Producto'.")
 
     st.divider()
     st.subheader("Estado Actual del Inventario")
@@ -187,7 +152,11 @@ with pestana2:
                 st.error("¡El nombre del producto es obligatorio!")
             else:
                 try:
+                    # Obtenemos los encabezados actuales de la hoja de Google Sheets
+                    headers = hoja_inv.row_values(1)
                     nueva_fila = [""] * len(headers)
+                    
+                    # Mapeamos los datos ingresados con los nombres de las columnas que ya tengas
                     datos_ingresados = {
                         "Nombre del Producto": nuevo_nombre,
                         "Presentacion": nueva_presentacion,
@@ -196,14 +165,14 @@ with pestana2:
                         "Precio Directo": precio_dir,
                         "Precio de Venta": precio_ven,
                         "Categoría": categoria,
-                        "Categoria": categoria,
-                        "Por Surtir": 0
+                        "Categoria": categoria
                     }
                     
                     for idx, header in enumerate(headers):
                         if header in datos_ingresados:
                             nueva_fila[idx] = datos_ingresados[header]
                             
+                    # Agregamos la fila al final del Google Sheets
                     hoja_inv.append_row(nueva_fila)
                     st.success(f"¡El producto '{nuevo_nombre}' se ha dado de alta correctamente!")
                     st.rerun()
