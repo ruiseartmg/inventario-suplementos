@@ -9,7 +9,7 @@ import base64
 st.set_page_config(page_title="Gestión de Inventario", page_icon="📦", layout="centered")
 
 # ==========================================
-# CONEXIÓN A GOOGLE SHEETS (Método Base64 Blindado)
+# CONEXIÓN A GOOGLE SHEETS (Método Base64 + Limpieza Extrema)
 # ==========================================
 SCOPE = [
     "https://www.googleapis.com/auth/spreadsheets",
@@ -18,13 +18,20 @@ SCOPE = [
 
 def conectar_sheets():
     if "GOOGLE_CREDS" in st.secrets:
-        # Copiamos los secretos a un diccionario modificable
         creds_dict = dict(st.secrets["GOOGLE_CREDS"])
         
-        # Si usamos el formato Base64 blindado, decodificamos la llave limpiamente
         if "private_key_base64" in creds_dict:
             pk_bytes = base64.b64decode(creds_dict["private_key_base64"])
-            creds_dict["private_key"] = pk_bytes.decode("utf-8")
+            llave_sucia = pk_bytes.decode("utf-8")
+            
+            # Limpieza extrema: arreglar saltos de línea literales y quitar comillas
+            llave_limpia = llave_sucia.replace("\\n", "\n").replace('"', '').replace("'", "").strip()
+            
+            # Si por error se coló una barra invertida (\) al inicio, la quitamos
+            while llave_limpia.startswith("\\"):
+                llave_limpia = llave_limpia[1:].strip()
+                
+            creds_dict["private_key"] = llave_limpia
             
         creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPE)
     else:
