@@ -212,7 +212,8 @@ with pestana1:
                 df_inv[col] = pd.to_numeric(df_inv[col].astype(str).str.replace("$", "").str.replace(",", "").str.strip(), errors="coerce").fillna(0)
                 df_inv[col] = df_inv[col].apply(lambda x: f"${x:,.2f}")
             elif "stock" in col.lower() or "cantidad" in col.lower() or "surtir" in col.lower():
-                df_inv[col] = pd.to_numeric(df_inv[col], errors="coerce").fillna(0).astype(int)
+                # Convertimos a string para forzar alineación a la izquierda visualmente en Streamlit
+                df_inv[col] = pd.to_numeric(df_inv[col], errors="coerce").fillna(0).astype(int).astype(str)
         st.dataframe(df_inv, use_container_width=True)
 
 with pestana2:
@@ -301,7 +302,6 @@ with pestana3:
                     except:
                         pass
             
-            # Obtener Precio Directo para calcular el costo de inversión
             p_directo = 0.0
             for k, v in p.items():
                 if "precio directo" in k.lower() or "directo" in k.lower():
@@ -328,12 +328,13 @@ with pestana3:
             costo_total_producto = sugerido_pedido * p_directo
             gran_total_inversion += costo_total_producto
             
+            # Convertimos a string para alineación a la izquierda cómoda en celular
             lista_resurtido.append({
                 "Producto": nombre,
-                "Stock Actual": stock,
-                "Por Surtir": por_surtir,
-                "Promedio/Mes": promedio_mes,
-                "Sugerido": sugerido_pedido,
+                "Stock Actual": str(stock),
+                "Por Surtir": str(por_surtir),
+                "Promedio/Mes": str(promedio_mes),
+                "Sugerido": str(sugerido_pedido),
                 "Costo Unit.": f"${p_directo:,.2f}",
                 "Inversión Est.": f"${costo_total_producto:,.2f}"
             })
@@ -343,7 +344,6 @@ with pestana3:
         
         st.markdown(f"### 💰 Inversión Total Estimada: **${gran_total_inversion:,.2f}**")
         
-        # Botón inteligente para abrir la ventana de impresión optimizada para PDF y carta
         st.markdown("---")
         if st.button("🖨️ Imprimir / Guardar Reporte en PDF"):
             html_table = df_resurtido.to_html(index=False, classes='table')
