@@ -124,16 +124,11 @@ with pestana1:
     
     registros_frescos = hoja_inv.get_all_records()
     
-    # === AQUÍ APLICAMOS EL ESTILO CENTRADO CON PANDAS ===
+    # === TABLA CON CENTRADO FORZADO ===
     if registros_frescos:
         df_inventario = pd.DataFrame(registros_frescos)
-        if "Cantidad en Stock" in df_inventario.columns:
-            st.dataframe(
-                df_inventario.style.set_properties(subset=['Cantidad en Stock'], **{'text-align': 'center'}),
-                use_container_width=True
-            )
-        else:
-            st.dataframe(df_inventario, use_container_width=True)
+        estilo_centrado = df_inventario.style.set_properties(**{'text-align': 'center'})
+        st.table(estilo_centrado)
 
 with pestana2:
     st.subheader("Historial de Transacciones")
