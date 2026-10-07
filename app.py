@@ -101,7 +101,7 @@ with pestana1:
                         except:
                             pass
                 
-                # Precio de venta
+                # Obtener Precio de Venta
                 precio_venta = 0.0
                 for k, v in producto_obj.items():
                     if "precio de venta" in k.lower() or (k.lower().strip() == "precio de venta"):
@@ -113,7 +113,7 @@ with pestana1:
                             pass
                 if precio_venta == 0.0:
                     for k, v in producto_obj.items():
-                        if "precio" in k.lower():
+                        if "precio" in k.lower() and "directo" not in k.lower():
                             raw_p = str(v).replace("$", "").replace(",", "").strip()
                             try:
                                 val_p = float(raw_p)
@@ -122,6 +122,20 @@ with pestana1:
                                     break
                             except:
                                 continue
+
+                # Obtener Precio Directo (para compras)
+                precio_directo = 0.0
+                for k, v in producto_obj.items():
+                    if "precio directo" in k.lower() or "precio_directo" in k.lower() or "directo" in k.lower():
+                        raw_pd = str(v).replace("$", "").replace(",", "").strip()
+                        try:
+                            precio_directo = float(raw_pd)
+                            break
+                        except:
+                            pass
+                # Si no hay precio directo registrado, usamos el de venta como respaldo
+                if precio_directo == 0.0:
+                    precio_directo = precio_venta
                                 
                 # Ubicar índices exactos de columnas en Google Sheets
                 col_stock_idx = 4
@@ -137,6 +151,7 @@ with pestana1:
 
                 if tipo == "Venta":
                     nuevo_stock = stock_actual - cantidad
+                    total_movimiento = cantidad * precio_venta
                     
                     if nuevo_stock < 0:
                         faltante = cantidad - stock_actual
@@ -150,22 +165,23 @@ with pestana1:
                             hoja_inv.update_cell(row_idx, col_surtir_idx, por_surtir_actual + faltante)
                         
                         hoja_inv.update_cell(row_idx, col_stock_idx, nuevo_stock)
-                        hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), prod_seleccionado, "Venta", cantidad, cantidad * precio_venta])
+                        hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), prod_seleccionado, "Venta", cantidad, total_movimiento])
                         st.rerun()
                     elif stock_actual == 0:
                         st.warning(f"El producto estaba en stock 0. Se han sumado **{cantidad} piezas** directamente a 'Por surtir'.")
                         if col_surtir_idx:
                             hoja_inv.update_cell(row_idx, col_surtir_idx, por_surtir_actual + cantidad)
-                        hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), prod_seleccionado, "Venta", cantidad, cantidad * precio_venta])
+                        hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), prod_seleccionado, "Venta", cantidad, total_movimiento])
                         st.rerun()
                     else:
                         hoja_inv.update_cell(row_idx, col_stock_idx, nuevo_stock)
-                        hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), prod_seleccionado, "Venta", cantidad, cantidad * precio_venta])
+                        hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), prod_seleccionado, "Venta", cantidad, total_movimiento])
                         st.success(f"¡Venta guardada con éxito! {cantidad}x {prod_seleccionado}")
                         st.rerun()
                         
                 else:  # === COMPRA / ENTRADA DE MATERIAL ===
                     nuevo_stock = stock_actual + cantidad
+                    total_movimiento = cantidad * precio_directo
                     
                     if por_surtir_actual > 0:
                         if cantidad >= por_surtir_actual:
@@ -182,7 +198,7 @@ with pestana1:
                     if col_surtir_idx:
                         hoja_inv.update_cell(row_idx, col_surtir_idx, nuevo_por_surtir)
                         
-                    hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), prod_seleccionado, "Compra", cantidad, 0])
+                    hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), prod_seleccionado, "Compra", cantidad, total_movimiento])
                     st.rerun()
     else:
         st.info("No hay productos registrados todavía.")
@@ -192,7 +208,6 @@ with pestana1:
     registros_frescos = hoja_inv.get_all_records()
     if registros_frescos:
         df_inv = pd.DataFrame(registros_frescos)
-        # Formatear columnas de precios y cantidades numéricas limpias
         for col in df_inv.columns:
             if "precio" in col.lower():
                 df_inv[col] = pd.to_numeric(df_inv[col].astype(str).str.replace("$", "").str.replace(",", "").str.strip(), errors="coerce").fillna(0)
@@ -308,6 +323,11 @@ with pestana4:
         
     registros_h = hoja_hist.get_all_records()
     if registros_h:
-        st.dataframe(list(reversed(registros_h)), use_container_width=True)
+        df_hist = pd.DataFrame(registros_h)
+        # Dar formato visual de dinero a la columna Total del historial
+        if "Total" in df_hist.columns:
+            df_hist["Total"] = pd.to_numeric(df_hist["Total"].astype(str).str.replace("$", "").str.replace(",", "").str.strip(), errors="coerce").fillna(0)
+            df_hist["Total"] = df_hist["Total"].apply(lambda x: f"${x:,.2f}")
+        st.dataframe(list(reversed(registros_h)), use_container_width=True) # Muestra el DF formateado ordenado al revés
     else:
         st.info("Aún no hay registros en el historial.")
