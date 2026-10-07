@@ -10,22 +10,6 @@ import pandas as pd
 st.set_page_config(page_title="Gestión de Inventario", page_icon="📦", layout="centered")
 
 # ==========================================
-# CSS PARA CENTRAR LAS COLUMNAS DE CANTIDADES EXACTAMENTE AL CENTRO
-# ==========================================
-st.markdown("""
-    <style>
-    /* Forzar alineación al centro en las columnas de Cantidad en Stock y Cantidad Venta */
-    [data-testid="stDataFrame"] table tr th:nth-child(5),
-    [data-testid="stDataFrame"] table tr td:nth-child(5),
-    [data-testid="stDataFrame"] table tr th:nth-child(6),
-    [data-testid="stDataFrame"] table tr td:nth-child(6) {
-        text-align: center !important;
-        justify-content: center !important;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-# ==========================================
 # CONEXIÓN A GOOGLE SHEETS (Método Base64 + Limpieza Extrema)
 # ==========================================
 SCOPE = [
@@ -76,75 +60,126 @@ registros_inv = hoja_inv.get_all_records()
 
 st.title("📦 Productos Naturales - Inventario")
 
-# Pestañas en la web
-pestana1, pestana2 = st.tabs(["🛒 Registrar Movimiento", "📜 Historial de Movimientos"])
+# Pestañas en la web (¡Ahora con 3 pestañas!)
+pestana1, pestana2, pestana3 = st.tabs(["🛒 Registrar Movimiento", "➕ Nuevo Producto", "📜 Historial de Movimientos"])
 
 with pestana1:
     st.subheader("Registrar Venta o Entrada")
     
     nombres_productos = [p.get("Nombre del Producto") for p in registros_inv if p.get("Nombre del Producto")]
     
-    prod_seleccionado = st.selectbox("Selecciona Producto", nombres_productos)
-    cantidad = st.number_input("Cantidad", min_value=1, step=1, value=1)
-    tipo = st.radio("Tipo de Movimiento", ["Venta", "Compra (Entrada)"])
-    
-    if st.button("Registrar Movimiento", type="primary"):
-        row_idx = None
-        producto_obj = None
-        for i, p in enumerate(registros_inv):
-            if p.get("Nombre del Producto") == prod_seleccionado:
-                row_idx = i + 2 
-                producto_obj = p
-                break
+    if nombres_productos:
+        prod_seleccionado = st.selectbox("Selecciona Producto", nombres_productos)
+        cantidad = st.number_input("Cantidad", min_value=1, step=1, value=1)
+        tipo = st.radio("Tipo de Movimiento", ["Venta", "Compra (Entrada)"])
         
-        if producto_obj and row_idx:
-            try:
-                stock_actual = int(producto_obj.get("Cantidad en Stock", 0))
-            except:
-                stock_actual = 0
-                
-            raw_precio = "0"
-            for k, v in producto_obj.items():
-                if "precio" in k.lower():
-                    raw_precio = str(v).replace("$", "").replace(",", "").strip()
+        if st.button("Registrar Movimiento", type="primary"):
+            row_idx = None
+            producto_obj = None
+            for i, p in enumerate(registros_inv):
+                if p.get("Nombre del Producto") == prod_seleccionado:
+                    row_idx = i + 2 
+                    producto_obj = p
                     break
-            try:
-                precio_venta = float(raw_precio)
-            except:
-                precio_venta = 0.0
-                
-            if tipo == "Venta":
-                nuevo_stock = stock_actual - cantidad
-                mov_texto = "Venta"
-            else:
-                nuevo_stock = stock_actual + cantidad
-                mov_texto = "Compra"
-                
-            if nuevo_stock < 0:
-                st.error("¡No hay suficiente stock en existencia!")
-            else:
-                hoja_inv.update_cell(row_idx, 4, nuevo_stock)
-                
-                ahora = datetime.now()
-                fecha_str = ahora.strftime("%Y-%m-%d")
-                hora_str = ahora.strftime("%H:%M:%S")
-                total = cantidad * precio_venta
-                
-                hoja_hist.append_row([fecha_str, hora_str, prod_seleccionado, mov_texto, cantidad, total])
-                
-                st.success(f"¡Movimiento guardado con éxito! {mov_texto} de {cantidad}x {prod_seleccionado}")
-                st.rerun()
+            
+            if producto_obj and row_idx:
+                try:
+                    stock_actual = int(producto_obj.get("Cantidad en Stock", 0))
+                except:
+                    stock_actual = 0
+                    
+                raw_precio = "0"
+                for k, v in producto_obj.items():
+                    if "precio" in k.lower():
+                        raw_precio = str(v).replace("$", "").replace(",", "").strip()
+                        break
+                try:
+                    precio_venta = float(raw_precio)
+                except:
+                    precio_venta = 0.0
+                    
+                if tipo == "Venta":
+                    nuevo_stock = stock_actual - cantidad
+                    mov_texto = "Venta"
+                else:
+                    nuevo_stock = stock_actual + cantidad
+                    mov_texto = "Compra"
+                    
+                if nuevo_stock < 0:
+                    st.error("¡No hay suficiente stock en existencia!")
+                else:
+                    hoja_inv.update_cell(row_idx, 4, nuevo_stock)
+                    
+                    ahora = datetime.now()
+                    fecha_str = ahora.strftime("%Y-%m-%d")
+                    hora_str = ahora.strftime("%H:%M:%S")
+                    total = cantidad * precio_venta
+                    
+                    hoja_hist.append_row([fecha_str, hora_str, prod_seleccionado, mov_texto, cantidad, total])
+                    
+                    st.success(f"¡Movimiento guardado con éxito! {mov_texto} de {cantidad}x {prod_seleccionado}")
+                    st.rerun()
+    else:
+        st.info("No hay productos registrados todavía. Agrega uno en la pestaña de 'Nuevo Producto'.")
 
     st.divider()
     st.subheader("Estado Actual del Inventario")
     
     registros_frescos = hoja_inv.get_all_records()
-    
     if registros_frescos:
         df_inventario = pd.DataFrame(registros_frescos)
         st.dataframe(df_inventario, use_container_width=True)
 
 with pestana2:
+    st.subheader("Agregar un Producto Nuevo al Inventario")
+    
+    with st.form("form_nuevo_producto"):
+        nuevo_nombre = st.text_input("Nombre del Producto *")
+        col1, col2 = st.columns(2)
+        with col1:
+            nueva_presentacion = st.text_input("Presentación (ej. 500 g, 60 cápsulas)")
+            stock_inicial = st.number_input("Cantidad Inicial en Stock", min_value=0, step=1, value=0)
+            precio_dir = st.number_input("Precio Directo", min_value=0.0, step=1.0, value=0.0)
+        with col2:
+            nueva_marca = st.text_input("Marca")
+            precio_ven = st.number_input("Precio de Venta", min_value=0.0, step=1.0, value=0.0)
+            categoria = st.text_input("Categoría")
+            
+        submitted = st.form_submit_button("Guardar Producto en la Nube", type="primary")
+        
+        if submitted:
+            if not nuevo_nombre.strip():
+                st.error("¡El nombre del producto es obligatorio!")
+            else:
+                try:
+                    # Obtenemos los encabezados actuales de la hoja de Google Sheets
+                    headers = hoja_inv.row_values(1)
+                    nueva_fila = [""] * len(headers)
+                    
+                    # Mapeamos los datos ingresados con los nombres de las columnas que ya tengas
+                    datos_ingresados = {
+                        "Nombre del Producto": nuevo_nombre,
+                        "Presentacion": nueva_presentacion,
+                        "Marca": nueva_marca,
+                        "Cantidad en Stock": stock_inicial,
+                        "Precio Directo": precio_dir,
+                        "Precio de Venta": precio_ven,
+                        "Categoría": categoria,
+                        "Categoria": categoria
+                    }
+                    
+                    for idx, header in enumerate(headers):
+                        if header in datos_ingresados:
+                            nueva_fila[idx] = datos_ingresados[header]
+                            
+                    # Agregamos la fila al final del Google Sheets
+                    hoja_inv.append_row(nueva_fila)
+                    st.success(f"¡El producto '{nuevo_nombre}' se ha dado de alta correctamente!")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Error al guardar el producto: {e}")
+
+with pestana3:
     st.subheader("Historial de Transacciones")
     if st.button("🔄 Actualizar Historial"):
         st.rerun()
