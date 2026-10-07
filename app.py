@@ -82,6 +82,7 @@ with pestana1:
                     break
             
             if producto_obj and row_idx:
+                # Stock actual
                 stock_actual = 0
                 for k, v in producto_obj.items():
                     if "stock" in k.lower() or "cantidad" in k.lower():
@@ -91,6 +92,16 @@ with pestana1:
                         except:
                             continue
                 
+                # Por surtir actual
+                por_surtir_actual = 0
+                for k, v in producto_obj.items():
+                    if "por surtir" in k.lower() or "por_surtir" in k.lower():
+                        try:
+                            por_surtir_actual = int(v or 0)
+                        except:
+                            pass
+                
+                # Precio de venta
                 precio_venta = 0.0
                 for k, v in producto_obj.items():
                     if "precio de venta" in k.lower() or (k.lower().strip() == "precio de venta"):
@@ -112,13 +123,7 @@ with pestana1:
                             except:
                                 continue
                                 
-                if tipo == "Venta":
-                    nuevo_stock = stock_actual - cantidad
-                    mov_texto = "Venta"
-                else:
-                    nuevo_stock = stock_actual + cantidad
-                    mov_texto = "Compra"
-                    
+                # Ubicar índices exactos de columnas en Google Sheets
                 col_stock_idx = 4
                 col_surtir_idx = None
                 for idx, h in enumerate(headers):
@@ -128,45 +133,63 @@ with pestana1:
                     elif "por surtir" in h_limpio or "por_surtir" in h_limpio:
                         col_surtir_idx = idx + 1
 
-                if tipo == "Venta" and nuevo_stock < 0:
-                    faltante = cantidad - stock_actual
-                    vendible = stock_actual
-                    nuevo_stock = 0 
+                ahora_mexico = datetime.utcnow() - timedelta(hours=6)
+
+                if tipo == "Venta":
+                    nuevo_stock = stock_actual - cantidad
                     
-                    st.error(f"⚠️ Stock insuficiente. Solo tenías {stock_actual} en existencia.")
-                    st.warning(f"Se descontaron {vendible} y se mandaron **{faltante} piezas** a la lista de 'Por surtir'.")
+                    if nuevo_stock < 0:
+                        faltante = cantidad - stock_actual
+                        vendible = stock_actual
+                        nuevo_stock = 0 
+                        
+                        st.error(f"⚠️ Stock insuficiente. Solo tenías {stock_actual} en existencia.")
+                        st.warning(f"Se descontaron {vendible} y se mandaron **{faltante} piezas** a la lista de 'Por surtir'.")
+                        
+                        if col_surtir_idx:
+                            hoja_inv.update_cell(row_idx, col_surtir_idx, por_surtir_actual + faltante)
+                        
+                        hoja_inv.update_cell(row_idx, col_stock_idx, nuevo_stock)
+                        hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), prod_seleccionado, "Venta", cantidad, cantidad * precio_venta])
+                        st.rerun()
+                    elif stock_actual == 0:
+                        st.warning(f"El producto ya estaba en stock 0. Se han sumado **{cantidad} piezas** directamente a 'Por surtir'.")
+                        if col_surtir_idx:
+                            hoja_inv.update_cell(row_idx, col_surtir_idx, por_surtir_actual + cantidad)
+                        hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), prod_seleccionado, "Venta", cantidad, cantidad * precio_venta])
+                        st.rerun()
+                    else:
+                        hoja_inv.update_cell(row_idx, col_stock_idx, nuevo_stock)
+                        hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), prod_seleccionado, "Venta", cantidad, cantidad * precio_venta])
+                        st.success(f"¡Venta guardada con éxito! {cantidad}x {prod_seleccionado}")
+                        st.rerun()
+                        
+                else:  # === COMPRA / ENTRADA DE MATERIAL ===
+                    # Si hay cosas pendientes por surtir, la entrada cubre primero eso
+                    if por_surtir_actual > 0:
+                        if cantidad >= por_surtir_actual:
+                            # La compra alcanza para cubrir todo lo pendiente y sobra para stock
+                            sobrante_para_stock = cantidad - por_surtir_actual
+                            nuevo_stock = stock_actual + sobrante_para_stock
+                            nuevo_por_surtir = 0
+                            st.success(f"📦 Se cubrieron los **{por_surtir_actual} pendientes** de surtir. Las **{sobrante_para_stock} piezas restantes** se fueron al Stock.")
+                        else:
+                            # La compra no alcanzó a cubrir todo el pendiente, pero reduce el déficit
+                            nuevo_por_surtir = por_surtir_actual - cantidad
+                            nuevo_stock = stock_actual
+                            st.warning(f"📦 Entraron {cantidad} piezas. Se descontaron del pendiente; aún quedan **{nuevo_por_surtir} piezas** por surtir.")
+                    else:
+                        # Si no había nada pendiente, todo se va al stock normal
+                        nuevo_stock = stock_actual + cantidad
+                        nuevo_por_surtir = 0
+                        st.success(f"📦 Entrada registrada con éxito: +{cantidad} piezas al stock de {prod_seleccionado}.")
                     
-                    if col_surtir_idx:
-                        val_actual_surtir = producto_obj.get(headers[col_surtir_idx - 1], 0)
-                        try:
-                            val_actual_surtir = int(val_actual_surtir)
-                        except:
-                            val_actual_surtir = 0
-                        hoja_inv.update_cell(row_idx, col_surtir_idx, val_actual_surtir + faltante)
-                    
+                    # Actualizamos ambas columnas en Google Sheets
                     hoja_inv.update_cell(row_idx, col_stock_idx, nuevo_stock)
-                    
-                    ahora_mexico = datetime.utcnow() - timedelta(hours=6)
-                    hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), prod_seleccionado, mov_texto, cantidad, cantidad * precio_venta])
-                    st.rerun()
-                elif tipo == "Venta" and stock_actual == 0:
-                    st.warning(f"El producto ya estaba en stock 0. Se han sumado **{cantidad} piezas** directamente a 'Por surtir'.")
                     if col_surtir_idx:
-                        val_actual_surtir = producto_obj.get(headers[col_surtir_idx - 1], 0)
-                        try:
-                            val_actual_surtir = int(val_actual_surtir)
-                        except:
-                            val_actual_surtir = 0
-                        hoja_inv.update_cell(row_idx, col_surtir_idx, val_actual_surtir + cantidad)
-                    
-                    ahora_mexico = datetime.utcnow() - timedelta(hours=6)
-                    hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), prod_seleccionado, mov_texto, cantidad, cantidad * precio_venta])
-                    st.rerun()
-                else:
-                    hoja_inv.update_cell(row_idx, col_stock_idx, nuevo_stock)
-                    ahora_mexico = datetime.utcnow() - timedelta(hours=6)
-                    hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), prod_seleccionado, mov_texto, cantidad, cantidad * precio_venta])
-                    st.success(f"¡Movimiento guardado con éxito! {mov_texto} de {cantidad}x {prod_seleccionado}")
+                        hoja_inv.update_cell(row_idx, col_surtir_idx, nuevo_por_surtir)
+                        
+                    hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), prod_seleccionado, "Compra", cantidad, 0])
                     st.rerun()
     else:
         st.info("No hay productos registrados todavía.")
