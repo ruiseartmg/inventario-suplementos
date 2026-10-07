@@ -133,7 +133,6 @@ with pestana1:
                             break
                         except:
                             pass
-                # Si no hay precio directo registrado, usamos el de venta como respaldo
                 if precio_directo == 0.0:
                     precio_directo = precio_venta
                                 
@@ -258,8 +257,8 @@ with pestana2:
                     st.error(f"Error al guardar: {e}")
 
 with pestana3:
-    st.subheader("📋 Sugerencia de Pedido y Resurtido")
-    st.markdown("Aquí puedes ver lo que tienes pendiente de surtir a clientes más el promedio de venta mensual para calcular tu pedido ideal.")
+    st.subheader("📋 Sugerencia de Pedido, Costos y Resurtido")
+    st.markdown("Consulta el pedido sugerido, el costo estimado por artículo y el total a invertir.")
     
     if st.button("🔄 Actualizar Datos de Pedidos"):
         st.rerun()
@@ -288,6 +287,8 @@ with pestana3:
                     pass
 
         lista_resurtido = []
+        gran_total_inversion = 0.0
+
         for p in reg_inv_actuales:
             nombre = p.get("Nombre del Producto", "")
             stock = int(p.get("Cantidad en Stock", 0) or 0)
@@ -300,19 +301,109 @@ with pestana3:
                     except:
                         pass
             
+            # Obtener Precio Directo para calcular el costo de inversión
+            p_directo = 0.0
+            for k, v in p.items():
+                if "precio directo" in k.lower() or "directo" in k.lower():
+                    raw_pd = str(v).replace("$", "").replace(",", "").strip()
+                    try:
+                        p_directo = float(raw_pd)
+                        break
+                    except:
+                        pass
+            if p_directo == 0.0:
+                for k, v in p.items():
+                    if "precio" in k.lower():
+                        raw_pd = str(v).replace("$", "").replace(",", "").strip()
+                        try:
+                            val_p = float(raw_pd)
+                            if val_p > 0:
+                                p_directo = val_p
+                                break
+                        except:
+                            continue
+
             promedio_mes = promedios_dict.get(nombre, 0.0)
             sugerido_pedido = por_surtir + int(promedio_mes)
+            costo_total_producto = sugerido_pedido * p_directo
+            gran_total_inversion += costo_total_producto
             
             lista_resurtido.append({
                 "Producto": nombre,
                 "Stock Actual": stock,
-                "Por Surtir (Pendiente)": por_surtir,
-                "Promedio Venta / Mes": promedio_mes,
-                "Sugerido a Pedir": sugerido_pedido
+                "Por Surtir": por_surtir,
+                "Promedio/Mes": promedio_mes,
+                "Sugerido": sugerido_pedido,
+                "Costo Unit.": f"${p_directo:,.2f}",
+                "Inversión Est.": f"${costo_total_producto:,.2f}"
             })
             
         df_resurtido = pd.DataFrame(lista_resurtido)
         st.dataframe(df_resurtido, use_container_width=True)
+        
+        st.markdown(f"### 💰 Inversión Total Estimada: **${gran_total_inversion:,.2f}**")
+        
+        # Botón inteligente para abrir la ventana de impresión optimizada para PDF y carta
+        st.markdown("---")
+        if st.button("🖨️ Imprimir / Guardar Reporte en PDF"):
+            html_table = df_resurtido.to_html(index=False, classes='table')
+            html_content = f"""
+            <html>
+                <head>
+                    <title>Reporte de Resurtido y Pedidos</title>
+                    <style>
+                        @page {{
+                            size: letter portrait;
+                            margin: 1cm;
+                        }}
+                        body {{ 
+                            font-family: Arial, sans-serif; 
+                            margin: 0; 
+                            padding: 10px;
+                            color: #333;
+                        }}
+                        h2 {{ color: #2c3e50; font-size: 20px; margin-bottom: 5px; }}
+                        p {{ font-size: 12px; color: #666; margin-top: 0; }}
+                        table {{ 
+                            width: 100%; 
+                            border-collapse: collapse; 
+                            margin-top: 15px; 
+                        }}
+                        th, td {{ 
+                            border: 1px solid #bdc3c7; 
+                            padding: 8px 10px; 
+                            text-align: left; 
+                            font-size: 13px; 
+                        }}
+                        th {{ 
+                            background-color: #f8f9fa; 
+                            color: #2c3e50; 
+                        }}
+                        .total {{ 
+                            font-size: 16px; 
+                            font-weight: bold; 
+                            margin-top: 20px; 
+                            color: #27ae60; 
+                        }}
+                    </style>
+                </head>
+                <body>
+                    <h2>📦 Reporte de Sugerencia de Pedido y Resurtido</h2>
+                    <p>Fecha de emisión: {datetime.utcnow().strftime('%d-%m-%Y %H:%M:%S')} (Hora México)</p>
+                    {html_table}
+                    <div class="total">Inversión Total Estimada: ${gran_total_inversion:,.2f}</div>
+                    <script>
+                        window.onload = function() {{
+                            window.print();
+                        }};
+                    </script>
+                </body>
+            </html>
+            """
+            encoded_html = base64.b64encode(html_content.encode('utf-8')).decode('utf-8')
+            iframe_code = f'<iframe src="data:text/html;base64,{encoded_html}" width="100%" height="450px" style="border:1px solid #ccc; border-radius:5px;"></iframe>'
+            st.markdown(iframe_code, unsafe_allow_html=True)
+            st.info("💡 Se ha cargado la vista de impresión. Se abrirá automáticamente la ventana para imprimir o guardar como **PDF en tamaño carta**.")
     else:
         st.info("No hay productos en el inventario.")
 
@@ -323,11 +414,6 @@ with pestana4:
         
     registros_h = hoja_hist.get_all_records()
     if registros_h:
-        df_hist = pd.DataFrame(registros_h)
-        # Dar formato visual de dinero a la columna Total del historial
-        if "Total" in df_hist.columns:
-            df_hist["Total"] = pd.to_numeric(df_hist["Total"].astype(str).str.replace("$", "").str.replace(",", "").str.strip(), errors="coerce").fillna(0)
-            df_hist["Total"] = df_hist["Total"].apply(lambda x: f"${x:,.2f}")
-        st.dataframe(list(reversed(registros_h)), use_container_width=True) # Muestra el DF formateado ordenado al revés
+        st.dataframe(list(reversed(registros_h)), use_container_width=True)
     else:
         st.info("Aún no hay registros en el historial.")
