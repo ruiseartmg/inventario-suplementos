@@ -10,6 +10,21 @@ import pandas as pd
 st.set_page_config(page_title="Gestión de Inventario", page_icon="📦", layout="centered")
 
 # ==========================================
+# CSS PERSONALIZADO PARA FORZAR EL CENTRADO DE COLUMNAS
+# ==========================================
+st.markdown("""
+    <style>
+    /* Centra el texto de las celdas numéricas o específicas en las tablas */
+    [data-testid="stTable"] td:nth-child(5), 
+    [data-testid="stTable"] th:nth-child(5),
+    [data-testid="stDataFrame"] td:nth-child(5), 
+    [data-testid="stDataFrame"] th:nth-child(5) {
+        text-align: center !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# ==========================================
 # CONEXIÓN A GOOGLE SHEETS (Método Base64 + Limpieza Extrema)
 # ==========================================
 SCOPE = [
@@ -124,16 +139,9 @@ with pestana1:
     
     registros_frescos = hoja_inv.get_all_records()
     
-    # === TABLA CON CENTRADO EXCLUSIVO EN CANTIDADES ===
     if registros_frescos:
         df_inventario = pd.DataFrame(registros_frescos)
-        cols_centrar = [c for c in ["Cantidad en Stock", "Cantidad Venta"] if c in df_inventario.columns]
-        
-        if cols_centrar:
-            estilo_centrado = df_inventario.style.set_properties(subset=cols_centrar, **{'text-align': 'center'})
-            st.dataframe(estilo_centrado, use_container_width=True)
-        else:
-            st.dataframe(df_inventario, use_container_width=True)
+        st.dataframe(df_inventario, use_container_width=True)
 
 with pestana2:
     st.subheader("Historial de Transacciones")
