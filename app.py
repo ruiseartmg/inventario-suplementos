@@ -79,7 +79,7 @@ with pestana1:
         if st.button("Registrar Movimiento", type="primary"):
             row_idx = None
             producto_obj = None
-            for i, p in enumerate(hoja_inv.get_all_records()): # Buscamos en los registros originales para el índice exacto de la fila
+            for i, p in enumerate(hoja_inv.get_all_records()):
                 if p.get("Nombre del Producto") == prod_seleccionado:
                     row_idx = i + 2 
                     producto_obj = p
@@ -216,6 +216,9 @@ with pestana1:
                 df_inv[col] = df_inv[col].apply(lambda x: f"${x:,.2f}")
             elif "stock" in col.lower() or "cantidad" in col.lower() or "surtir" in col.lower():
                 df_inv[col] = pd.to_numeric(df_inv[col], errors="coerce").fillna(0).astype(int).astype(str)
+        
+        # === INICIO EN 1 EN VEZ DE 0 ===
+        df_inv.index = range(1, len(df_inv) + 1)
         st.dataframe(df_inv, use_container_width=True)
 
 with pestana2:
@@ -340,13 +343,16 @@ with pestana3:
             })
             
         df_resurtido = pd.DataFrame(lista_resurtido)
+        
+        # === INICIO EN 1 EN VEZ DE 0 ===
+        df_resurtido.index = range(1, len(df_resurtido) + 1)
         st.dataframe(df_resurtido, use_container_width=True)
         
         st.markdown(f"### 💰 Inversión Total Estimada: **${gran_total_inversion:,.2f}**")
         
         st.markdown("---")
         if st.button("🖨️ Imprimir / Guardar Reporte en PDF"):
-            html_table = df_resurtido.to_html(index=False, classes='table')
+            html_table = df_resurtido.to_html(classes='table')
             html_content = f"""
             <html>
                 <head>
@@ -414,6 +420,9 @@ with pestana4:
         
     registros_h = hoja_hist.get_all_records()
     if registros_h:
-        st.dataframe(list(reversed(registros_h)), use_container_width=True)
+        df_hist = pd.DataFrame(list(reversed(registros_h)))
+        # === INICIO EN 1 EN VEZ DE 0 ===
+        df_hist.index = range(1, len(df_hist) + 1)
+        st.dataframe(df_hist, use_container_width=True)
     else:
         st.info("Aún no hay registros en el historial.")
