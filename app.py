@@ -57,6 +57,10 @@ except Exception as e:
 registros_inv = hoja_inv.get_all_records()
 headers = hoja_inv.row_values(1)
 
+# === ORDENAR ALFABÉTICAMENTE LOS PRODUCTOS POR DEFAULT ===
+if registros_inv:
+    registros_inv = sorted(registros_inv, key=lambda x: str(x.get("Nombre del Producto", "")).lower())
+
 st.title("📦 Productos Naturales - Inventario")
 
 # Pestañas en la web
@@ -75,7 +79,7 @@ with pestana1:
         if st.button("Registrar Movimiento", type="primary"):
             row_idx = None
             producto_obj = None
-            for i, p in enumerate(registros_inv):
+            for i, p in enumerate(hoja_inv.get_all_records()): # Buscamos en los registros originales para el índice exacto de la fila
                 if p.get("Nombre del Producto") == prod_seleccionado:
                     row_idx = i + 2 
                     producto_obj = p
@@ -204,15 +208,13 @@ with pestana1:
 
     st.divider()
     st.subheader("Estado Actual del Inventario")
-    registros_frescos = hoja_inv.get_all_records()
-    if registros_frescos:
-        df_inv = pd.DataFrame(registros_frescos)
+    if registros_inv:
+        df_inv = pd.DataFrame(registros_inv)
         for col in df_inv.columns:
             if "precio" in col.lower():
                 df_inv[col] = pd.to_numeric(df_inv[col].astype(str).str.replace("$", "").str.replace(",", "").str.strip(), errors="coerce").fillna(0)
                 df_inv[col] = df_inv[col].apply(lambda x: f"${x:,.2f}")
             elif "stock" in col.lower() or "cantidad" in col.lower() or "surtir" in col.lower():
-                # Convertimos a string para forzar alineación a la izquierda visualmente en Streamlit
                 df_inv[col] = pd.to_numeric(df_inv[col], errors="coerce").fillna(0).astype(int).astype(str)
         st.dataframe(df_inv, use_container_width=True)
 
@@ -264,10 +266,9 @@ with pestana3:
     if st.button("🔄 Actualizar Datos de Pedidos"):
         st.rerun()
         
-    reg_inv_actuales = hoja_inv.get_all_records()
     reg_hist_actuales = hoja_hist.get_all_records()
     
-    if reg_inv_actuales:
+    if registros_inv:
         df_h = pd.DataFrame(reg_hist_actuales) if reg_hist_actuales else pd.DataFrame()
         promedios_dict = {}
         
@@ -290,7 +291,7 @@ with pestana3:
         lista_resurtido = []
         gran_total_inversion = 0.0
 
-        for p in reg_inv_actuales:
+        for p in registros_inv:
             nombre = p.get("Nombre del Producto", "")
             stock = int(p.get("Cantidad en Stock", 0) or 0)
             
@@ -328,7 +329,6 @@ with pestana3:
             costo_total_producto = sugerido_pedido * p_directo
             gran_total_inversion += costo_total_producto
             
-            # Convertimos a string para alineación a la izquierda cómoda en celular
             lista_resurtido.append({
                 "Producto": nombre,
                 "Stock Actual": str(stock),
