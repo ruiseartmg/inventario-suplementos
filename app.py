@@ -217,8 +217,10 @@ with pestana1:
             elif "stock" in col.lower() or "cantidad" in col.lower() or "surtir" in col.lower():
                 df_inv[col] = pd.to_numeric(df_inv[col], errors="coerce").fillna(0).astype(int).astype(str)
         
-        # === INICIO EN 1 EN VEZ DE 0 ===
-        df_inv.index = range(1, len(df_inv) + 1)
+        # === CONGELAR EL NOMBRE DEL PRODUCTO A LA IZQUIERDA ===
+        if "Nombre del Producto" in df_inv.columns:
+            df_inv = df_inv.set_index("Nombre del Producto")
+            
         st.dataframe(df_inv, use_container_width=True)
 
 with pestana2:
@@ -344,8 +346,10 @@ with pestana3:
             
         df_resurtido = pd.DataFrame(lista_resurtido)
         
-        # === INICIO EN 1 EN VEZ DE 0 ===
-        df_resurtido.index = range(1, len(df_resurtido) + 1)
+        # === CONGELAR EL NOMBRE DEL PRODUCTO EN RESURTIDO ===
+        if "Producto" in df_resurtido.columns:
+            df_resurtido = df_resurtido.set_index("Producto")
+            
         st.dataframe(df_resurtido, use_container_width=True)
         
         st.markdown(f"### 💰 Inversión Total Estimada: **${gran_total_inversion:,.2f}**")
@@ -421,8 +425,8 @@ with pestana4:
     registros_h = hoja_hist.get_all_records()
     if registros_h:
         df_hist = pd.DataFrame(list(reversed(registros_h)))
-        # === INICIO EN 1 EN VEZ DE 0 ===
-        df_hist.index = range(1, len(df_hist) + 1)
+        if "Producto" in df_hist.columns:
+            df_hist = df_hist.set_index("Producto")
         st.dataframe(df_hist, use_container_width=True)
     else:
         st.info("Aún no hay registros en el historial.")
