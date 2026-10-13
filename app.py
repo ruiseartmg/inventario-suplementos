@@ -7,7 +7,7 @@ import base64
 import pandas as pd
 
 # Configuración de la página
-st.set_page_config(page_title="Nature's Blessings - Inventario", page_icon="📦", layout="centered")
+st.set_page_config(page_title="Nature’s Select - Inventario", page_icon="🌿", layout="centered")
 
 # ==========================================
 # CONEXIÓN A GOOGLE SHEETS (Método Base64 + Limpieza Extrema)
@@ -61,7 +61,14 @@ headers = hoja_inv.row_values(1)
 if registros_inv:
     registros_inv = sorted(registros_inv, key=lambda x: str(x.get("Nombre del Producto", "")).lower())
 
-st.title("🌿 Nature's Blessings")
+# Cabecera con Logo e Identidad de la Marca
+col_logo, col_titulo = st.columns([1, 3])
+with col_logo:
+    st.image("watermarked_img_3973813175880226978.jpg", width=90)
+with col_titulo:
+    st.title("🌿 Nature’s Select")
+
+st.markdown("---")
 
 # Pestañas en la web
 pestana1, pestana2, pestana3, pestana4 = st.tabs(["🛒 Registrar Movimiento", "➕ Nuevo Producto", "📋 Resurtido y Pedidos", "📜 Historial"])
@@ -73,7 +80,9 @@ with pestana1:
     
     if nombres_productos:
         prod_seleccionado = st.selectbox("Selecciona Producto", nombres_productos)
-        cantidad = st.number_input("Cantidad", min_value=1, step=1, value=1)
+        
+        # Permitir decimales en la cantidad (ideal para granel)
+        cantidad = st.number_input("Cantidad", min_value=0.1, step=0.25, value=1.0)
         tipo = st.radio("Tipo de Movimiento", ["Venta", "Compra (Entrada)"])
         
         if st.button("Registrar Movimiento", type="primary"):
@@ -86,22 +95,22 @@ with pestana1:
                     break
             
             if producto_obj and row_idx:
-                # Stock actual
-                stock_actual = 0
+                # Stock actual (permitiendo decimales)
+                stock_actual = 0.0
                 for k, v in producto_obj.items():
                     if "stock" in k.lower() or "cantidad" in k.lower():
                         try:
-                            stock_actual = int(v)
+                            stock_actual = float(str(v).replace(",", ""))
                             break
                         except:
                             continue
                 
                 # Por surtir actual
-                por_surtir_actual = 0
+                por_surtir_actual = 0.0
                 for k, v in producto_obj.items():
                     if "por surtir" in k.lower() or "por_surtir" in k.lower():
                         try:
-                            por_surtir_actual = int(v or 0)
+                            por_surtir_actual = float(str(v or 0).replace(",", ""))
                         except:
                             pass
                 
@@ -159,10 +168,10 @@ with pestana1:
                     if nuevo_stock < 0:
                         faltante = cantidad - stock_actual
                         vendible = stock_actual
-                        nuevo_stock = 0 
+                        nuevo_stock = 0.0 
                         
                         st.error(f"⚠️ Stock insuficiente. Solo tenías {stock_actual} en existencia.")
-                        st.warning(f"Se descontaron {vendible} y se mandaron **{faltante} piezas** a la lista de 'Por surtir'.")
+                        st.warning(f"Se descontaron {vendible} y se mandaron **{faltante} unidades** a la lista de 'Por surtir'.")
                         
                         if col_surtir_idx:
                             hoja_inv.update_cell(row_idx, col_surtir_idx, por_surtir_actual + faltante)
@@ -171,7 +180,7 @@ with pestana1:
                         hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), prod_seleccionado, "Venta", cantidad, total_movimiento])
                         st.rerun()
                     elif stock_actual == 0:
-                        st.warning(f"El producto estaba en stock 0. Se han sumado **{cantidad} piezas** directamente a 'Por surtir'.")
+                        st.warning(f"El producto estaba en stock 0. Se han sumado **{cantidad} unidades** directamente a 'Por surtir'.")
                         if col_surtir_idx:
                             hoja_inv.update_cell(row_idx, col_surtir_idx, por_surtir_actual + cantidad)
                         hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), prod_seleccionado, "Venta", cantidad, total_movimiento])
@@ -188,14 +197,14 @@ with pestana1:
                     
                     if por_surtir_actual > 0:
                         if cantidad >= por_surtir_actual:
-                            nuevo_por_surtir = 0
-                            st.success(f"📦 ¡Entrada registrada! +{cantidad} piezas al stock. Se cubrieron los {por_surtir_actual} pendientes de surtir.")
+                            nuevo_por_surtir = 0.0
+                            st.success(f"📦 ¡Entrada registrada! +{cantidad} al stock. Se cubrieron los {por_surtir_actual} pendientes de surtir.")
                         else:
                             nuevo_por_surtir = por_surtir_actual - cantidad
-                            st.warning(f"📦 ¡Entrada registrada! +{cantidad} piezas al stock. Aún quedan {nuevo_por_surtir} pendientes por surtir.")
+                            st.warning(f"📦 ¡Entrada registrada! +{cantidad} al stock. Aún quedan {nuevo_por_surtir} pendientes por surtir.")
                     else:
-                        nuevo_por_surtir = 0
-                        st.success(f"📦 Entrada registrada con éxito: +{cantidad} piezas al stock de {prod_seleccionado}.")
+                        nuevo_por_surtir = 0.0
+                        st.success(f"📦 Entrada registrada con éxito: +{cantidad} al stock de {prod_seleccionado}.")
                     
                     hoja_inv.update_cell(row_idx, col_stock_idx, nuevo_stock)
                     if col_surtir_idx:
@@ -215,7 +224,8 @@ with pestana1:
                 df_inv[col] = pd.to_numeric(df_inv[col].astype(str).str.replace("$", "").str.replace(",", "").str.strip(), errors="coerce").fillna(0)
                 df_inv[col] = df_inv[col].apply(lambda x: f"${x:,.2f}")
             elif "stock" in col.lower() or "cantidad" in col.lower() or "surtir" in col.lower():
-                df_inv[col] = pd.to_numeric(df_inv[col], errors="coerce").fillna(0).astype(int).astype(str)
+                df_inv[col] = pd.to_numeric(df_inv[col], errors="coerce").fillna(0)
+                df_inv[col] = df_inv[col].apply(lambda x: str(int(x)) if x.is_integer() else f"{x:g}")
         
         # === CONGELAR EL NOMBRE DEL PRODUCTO A LA IZQUIERDA ===
         if "Nombre del Producto" in df_inv.columns:
@@ -226,11 +236,11 @@ with pestana1:
 with pestana2:
     st.subheader("Agregar un Producto Nuevo al Inventario")
     with st.form("form_nuevo_producto"):
-        nuevo_nombre = st.text_input("Nombre del Producto *")
+        nuevo_nombre = st.text_input("Nombre del Producto * (ej. Miel 500 g, Granola 1 kg)")
         col1, col2 = st.columns(2)
         with col1:
-            nueva_presentacion = st.text_input("Presentación (ej. 500 g, 60 cápsulas)")
-            stock_inicial = st.number_input("Cantidad Inicial en Stock", min_value=0, step=1, value=0)
+            nueva_presentacion = st.text_input("Presentación (ej. 500 g, 1 kg, frasco)")
+            stock_inicial = st.number_input("Cantidad Inicial en Stock", min_value=0.0, step=0.25, value=0.0)
             precio_dir = st.number_input("Precio Directo", min_value=0.0, step=1.0, value=0.0)
         with col2:
             nueva_marca = st.text_input("Marca")
@@ -286,10 +296,11 @@ with pestana3:
             if not df_ventas.empty:
                 try:
                     df_ventas["Mes"] = df_ventas["Fecha"].str.slice(3, 10)
+                    df_ventas["Cantidad"] = pd.to_numeric(df_ventas["Cantidad"], errors="coerce").fillna(0)
                     totales_prod_mes = df_ventas.groupby(["Producto", "Mes"])["Cantidad"].sum().reset_index()
                     promedios = totales_prod_mes.groupby("Producto")["Cantidad"].mean().reset_index()
                     for _, row in promedios.iterrows():
-                        promedios_dict[row["Producto"]] = round(row["Cantidad"], 1)
+                        promedios_dict[row["Producto"]] = float(row["Cantidad"])
                 except:
                     pass
 
@@ -298,13 +309,13 @@ with pestana3:
 
         for p in registros_inv:
             nombre = p.get("Nombre del Producto", "")
-            stock = int(p.get("Cantidad en Stock", 0) or 0)
+            stock = float(str(p.get("Cantidad en Stock", 0) or 0).replace(",", ""))
             
-            por_surtir = 0
+            por_surtir = 0.0
             for k, v in p.items():
                 if "por surtir" in k.lower() or "por_surtir" in k.lower():
                     try:
-                        por_surtir = int(v or 0)
+                        por_surtir = float(str(v or 0).replace(",", ""))
                     except:
                         pass
             
@@ -329,17 +340,22 @@ with pestana3:
                         except:
                             continue
 
-            promedio_mes = promedios_dict.get(nombre, 0.0)
-            sugerido_pedido = por_surtir + int(promedio_mes)
+            promedio_mes_val = promedios_dict.get(nombre, 0.0)
+            sugerido_pedido = por_surtir + promedio_mes_val
             costo_total_producto = sugerido_pedido * p_directo
             gran_total_inversion += costo_total_producto
             
+            stock_str = str(int(stock)) if stock.is_integer() else f"{stock:g}"
+            surtir_str = str(int(por_surtir)) if por_surtir.is_integer() else f"{por_surtir:g}"
+            prom_str = str(int(promedio_mes_val)) if promedio_mes_val.is_integer() else f"{promedio_mes_val:g}"
+            sugerido_str = str(int(sugerido_pedido)) if sugerido_pedido.is_integer() else f"{sugerido_pedido:g}"
+            
             lista_resurtido.append({
                 "Producto": nombre,
-                "Stock Actual": str(stock),
-                "Por Surtir": str(por_surtir),
-                "Promedio/Mes": str(promedio_mes),
-                "Sugerido": str(sugerido_pedido),
+                "Stock Actual": stock_str,
+                "Por Surtir": surtir_str,
+                "Promedio/Mes": prom_str,
+                "Sugerido": sugerido_str,
                 "Costo Unit.": f"${p_directo:,.2f}",
                 "Inversión Est.": f"${costo_total_producto:,.2f}"
             })
@@ -360,7 +376,7 @@ with pestana3:
             html_content = f"""
             <html>
                 <head>
-                    <title>Reporte de Resurtido y Pedidos - Nature's Blessings</title>
+                    <title>Reporte de Resurtido y Pedidos - Nature’s Select</title>
                     <style>
                         @page {{
                             size: letter portrait;
@@ -398,7 +414,7 @@ with pestana3:
                     </style>
                 </head>
                 <body>
-                    <h2>🌿 Nature's Blessings - Reporte de Resurtido y Pedidos</h2>
+                    <h2>🌿 Nature’s Select - Reporte de Resurtido y Pedidos</h2>
                     <p>Fecha de emisión: {datetime.utcnow().strftime('%d-%m-%Y %H:%M:%S')} (Hora México)</p>
                     {html_table}
                     <div class="total">Inversión Total Estimada: ${gran_total_inversion:,.2f}</div>
