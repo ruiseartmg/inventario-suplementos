@@ -31,25 +31,21 @@ st.markdown("""
             font-weight: 600;
         }
 
-        /* Forzar TODOS los botones a ser verdes con letras blancas */
-        div.stButton > button {
-            font-family: 'Montserrat', sans-serif !important;
+        /* Forzar botones principales a verde sólido con texto blanco visible */
+        div.stButton > button, div.stButton > button * {
             background-color: #2E7D32 !important;
             color: #FFFFFF !important;
-            border-radius: 8px;
+            font-family: 'Montserrat', sans-serif !important;
             font-weight: 600;
             border: none !important;
-            box-shadow: 0 4px 10px rgba(46, 125, 50, 0.3);
-            transition: 0.3s;
         }
-        div.stButton > button p {
-            color: #FFFFFF !important;
+        div.stButton > button {
+            border-radius: 8px !important;
+            box-shadow: 0 4px 10px rgba(46, 125, 50, 0.3) !important;
+            transition: 0.3s !important;
         }
-        div.stButton > button:hover {
+        div.stButton > button:hover, div.stButton > button:hover * {
             background-color: #1B5E20 !important;
-            color: #FFFFFF !important;
-        }
-        div.stButton > button:hover p {
             color: #FFFFFF !important;
         }
 
@@ -147,7 +143,6 @@ with pestana1:
         cantidad = st.number_input("Cantidad", min_value=0.1, step=0.25, value=1.0)
         tipo = st.radio("Tipo de Movimiento", ["Venta", "Compra (Entrada)"])
         
-        # Botón sin 'type="primary"' para que obedezca por completo nuestro CSS verde sólido con letras blancas
         if st.button("Registrar Movimiento"):
             row_idx = None
             producto_obj = None
