@@ -10,7 +10,7 @@ import pandas as pd
 st.set_page_config(page_title="Nature’s Select - Inventario", page_icon="🌿", layout="wide")
 
 # ==========================================
-# TIPOGRAFÍAS, PALETA Y BOTÓN VERDE SÓLIDO (CSS FORZADO)
+# TIPOGRAFÍAS Y ESTILO CSS DEFINITIVO PARA BOTONES
 # ==========================================
 st.markdown("""
     <style>
@@ -31,8 +31,8 @@ st.markdown("""
             font-weight: 600;
         }
 
-        /* Forzar botón principal (Registrar Movimiento) en Verde Sólido con Letras Blancas */
-        div.stButton > button[kind="primary"], .stButton>button {
+        /* Forzar TODOS los botones a ser verdes con letras blancas */
+        div.stButton > button {
             font-family: 'Montserrat', sans-serif !important;
             background-color: #2E7D32 !important;
             color: #FFFFFF !important;
@@ -42,8 +42,14 @@ st.markdown("""
             box-shadow: 0 4px 10px rgba(46, 125, 50, 0.3);
             transition: 0.3s;
         }
-        div.stButton > button[kind="primary"]:hover, .stButton>button:hover {
+        div.stButton > button p {
+            color: #FFFFFF !important;
+        }
+        div.stButton > button:hover {
             background-color: #1B5E20 !important;
+            color: #FFFFFF !important;
+        }
+        div.stButton > button:hover p {
             color: #FFFFFF !important;
         }
 
@@ -141,7 +147,8 @@ with pestana1:
         cantidad = st.number_input("Cantidad", min_value=0.1, step=0.25, value=1.0)
         tipo = st.radio("Tipo de Movimiento", ["Venta", "Compra (Entrada)"])
         
-        if st.button("Registrar Movimiento", type="primary"):
+        # Botón sin 'type="primary"' para que obedezca por completo nuestro CSS verde sólido con letras blancas
+        if st.button("Registrar Movimiento"):
             row_idx = None
             producto_obj = None
             for i, p in enumerate(hoja_inv.get_all_records()):
@@ -297,7 +304,7 @@ with pestana2:
             precio_ven = st.number_input("Precio de Venta", min_value=0.0, step=1.0, value=0.0)
             categoria = st.text_input("Categoría")
             
-        submitted = st.form_submit_button("Guardar Producto en la Nube", type="primary")
+        submitted = st.form_submit_button("Guardar Producto en la Nube")
         if submitted:
             if not nuevo_nombre.strip():
                 st.error("¡El nombre del producto es obligatorio!")
