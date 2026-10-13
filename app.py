@@ -10,35 +10,36 @@ import pandas as pd
 st.set_page_config(page_title="Nature’s Select - Inventario", page_icon="🌿", layout="wide")
 
 # ==========================================
-# TIPOGRAFÍAS DEL LOGOTIPO Y PALETA CORPORATIVA (CSS)
+# TIPOGRAFÍAS, PALETA Y BOTÓN SÓLIDO (CSS)
 # ==========================================
 st.markdown("""
     <style>
-        /* Importar tipografías Google Fonts (Montserrat para títulos tipo 'Select' y Open Sans para el cuerpo) */
+        /* Importar tipografías Google Fonts */
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Open+Sans:wght@400;600&display=swap');
 
-        /* Cuerpo de la aplicación (Estilo 'Natural Health') */
+        /* Cuerpo de la aplicación */
         .stApp, html, body, [class*="css"], p, span, label, input, select {
             font-family: 'Open Sans', sans-serif !important;
             background-color: #FAFAFA;
             color: #263238;
         }
         
-        /* Títulos principales y subtítulos (Estilo 'Select') */
+        /* Títulos principales y subtítulos */
         h1, h2, h3, h4, h5, h6, .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p {
             font-family: 'Montserrat', sans-serif !important;
             color: #263238 !important;
             font-weight: 600;
         }
 
-        /* Botones principales (Verde Hoja Corporativo) */
+        /* Botones principales con fondo verde sólido */
         .stButton>button {
             font-family: 'Montserrat', sans-serif !important;
             background-color: #2E7D32 !important;
             color: white !important;
             border-radius: 8px;
             font-weight: 600;
-            border: none;
+            border: none !important;
+            box-shadow: 0 4px 10px rgba(46, 125, 50, 0.2);
             transition: 0.3s;
         }
         .stButton>button:hover {
