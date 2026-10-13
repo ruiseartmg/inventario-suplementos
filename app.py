@@ -6,11 +6,60 @@ import os
 import base64
 import pandas as pd
 
-# Configuración de la página en modo ancho para ocupar toda la pantalla del celular y PC
+# Configuración de la página en modo ancho
 st.set_page_config(page_title="Nature’s Select - Inventario", page_icon="🌿", layout="wide")
 
 # ==========================================
-# CONEXIÓN A GOOGLE SHEETS (Método Base64 + Limpieza Extrema)
+# APLICAR PALETA DE COLORES CORPORATIVA (CSS)
+# ==========================================
+st.markdown("""
+    <style>
+        /* Estilos generales y tipografía */
+        .stApp {
+            background-color: #FAFAFA;
+            color: #263238;
+        }
+        
+        /* Títulos principales */
+        h1, h2, h3 {
+            color: #263238 !important;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        }
+
+        /* Botones principales (Verde Hoja Corporativo) */
+        .stButton>button {
+            background-color: #2E7D32 !important;
+            color: white !important;
+            border-radius: 8px;
+            font-weight: bold;
+            border: none;
+            transition: 0.3s;
+        }
+        .stButton>button:hover {
+            background-color: #1B5E20 !important;
+            color: white !important;
+        }
+
+        /* Pestañas seleccionadas */
+        .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p {
+            font-size: 16px;
+            font-weight: bold;
+            color: #263238;
+        }
+        
+        /* Contenedores de resumen o métricas */
+        .metric-card {
+            background-color: #E8F5E9;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 5px solid #2E7D32;
+            margin-bottom: 15px;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
+# ==========================================
+# CONEXIÓN A GOOGLE SHEETS
 # ==========================================
 SCOPE = [
     "https://www.googleapis.com/auth/spreadsheets",
@@ -24,12 +73,9 @@ def conectar_sheets():
         if "private_key_base64" in creds_dict:
             pk_bytes = base64.b64decode(creds_dict["private_key_base64"])
             llave_sucia = pk_bytes.decode("utf-8")
-            
             llave_limpia = llave_sucia.replace("\\n", "\n").replace('"', '').replace("'", "").strip()
-            
             while llave_limpia.startswith("\\"):
                 llave_limpia = llave_limpia[1:].strip()
-                
             creds_dict["private_key"] = llave_limpia
             
         creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPE)
@@ -53,22 +99,20 @@ except Exception as e:
     st.error(f"Error al conectar con Google Sheets: {e}")
     st.stop()
 
-# Cargar datos actuales y encabezados
 registros_inv = hoja_inv.get_all_records()
 headers = hoja_inv.row_values(1)
 
-# === ORDENAR ALFABÉTICAMENTE LOS PRODUCTOS POR DEFAULT ===
 if registros_inv:
     registros_inv = sorted(registros_inv, key=lambda x: str(x.get("Nombre del Producto", "")).lower())
 
-# Cabecera con Logo Ampliado a Ancho Total
+# Cabecera con Logotipo
 try:
     with open("watermarked_img_3973813175880226978.jpg", "rb") as image_file:
         encoded_image = base64.b64encode(image_file.read()).decode()
     st.markdown(
         f"""
         <div style="text-align: center; margin-bottom: 20px; width: 100%;">
-            <img src="data:image/jpeg;base64,{encoded_image}" style="width: 100%; max-width: 800px; border-radius: 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.12);">
+            <img src="data:image/jpeg;base64,{encoded_image}" style="width: 100%; max-width: 700px; border-radius: 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.1);">
         </div>
         """,
         unsafe_allow_html=True
@@ -88,8 +132,6 @@ with pestana1:
     
     if nombres_productos:
         prod_seleccionado = st.selectbox("Selecciona Producto", nombres_productos)
-        
-        # Permitir decimales en la cantidad (ideal para granel)
         cantidad = st.number_input("Cantidad", min_value=0.1, step=0.25, value=1.0)
         tipo = st.radio("Tipo de Movimiento", ["Venta", "Compra (Entrada)"])
         
@@ -103,7 +145,6 @@ with pestana1:
                     break
             
             if producto_obj and row_idx:
-                # Stock actual (permitiendo decimales)
                 stock_actual = 0.0
                 for k, v in producto_obj.items():
                     if "stock" in k.lower() or "cantidad" in k.lower():
@@ -113,7 +154,6 @@ with pestana1:
                         except:
                             continue
                 
-                # Por surtir actual
                 por_surtir_actual = 0.0
                 for k, v in producto_obj.items():
                     if "por surtir" in k.lower() or "por_surtir" in k.lower():
@@ -122,7 +162,6 @@ with pestana1:
                         except:
                             pass
                 
-                # Obtener Precio de Venta
                 precio_venta = 0.0
                 for k, v in producto_obj.items():
                     if "precio de venta" in k.lower() or (k.lower().strip() == "precio de venta"):
@@ -144,7 +183,6 @@ with pestana1:
                             except:
                                 continue
 
-                # Obtener Precio Directo (para compras)
                 precio_directo = 0.0
                 for k, v in producto_obj.items():
                     if "precio directo" in k.lower() or "precio_directo" in k.lower() or "directo" in k.lower():
@@ -157,7 +195,6 @@ with pestana1:
                 if precio_directo == 0.0:
                     precio_directo = precio_venta
                                 
-                # Ubicar índices exactos de columnas en Google Sheets
                 col_stock_idx = 4
                 col_surtir_idx = None
                 for idx, h in enumerate(headers):
@@ -199,7 +236,7 @@ with pestana1:
                         st.success(f"¡Venta guardada con éxito! {cantidad}x {prod_seleccionado}")
                         st.rerun()
                         
-                else:  # === COMPRA / ENTRADA DE MATERIAL ===
+                else:
                     nuevo_stock = stock_actual + cantidad
                     total_movimiento = cantidad * precio_directo
                     
@@ -235,7 +272,6 @@ with pestana1:
                 df_inv[col] = pd.to_numeric(df_inv[col], errors="coerce").fillna(0)
                 df_inv[col] = df_inv[col].apply(lambda x: str(int(x)) if x.is_integer() else f"{x:g}")
         
-        # === CONGELAR EL NOMBRE DEL PRODUCTO A LA IZQUIERDA ===
         if "Nombre del Producto" in df_inv.columns:
             df_inv = df_inv.set_index("Nombre del Producto")
             
@@ -370,13 +406,17 @@ with pestana3:
             
         df_resurtido = pd.DataFrame(lista_resurtido)
         
-        # === CONGELAR EL NOMBRE DEL PRODUCTO EN RESURTIDO ===
         if "Producto" in df_resurtido.columns:
             df_resurtido = df_resurtido.set_index("Producto")
             
         st.dataframe(df_resurtido, use_container_width=True)
         
-        st.markdown(f"### 💰 Inversión Total Estimada: **${gran_total_inversion:,.2f}**")
+        # === TARJETA DE INVERSIÓN CON TONO CORPORATIVO MENTA/VERDE ===
+        st.markdown(f"""
+            <div class="metric-card">
+                <h3 style="margin: 0; color: #2E7D32 !important;">💰 Inversión Total Estimada: ${gran_total_inversion:,.2f}</h3>
+            </div>
+        """, unsafe_allow_html=True)
         
         st.markdown("---")
         if st.button("🖨️ Imprimir / Guardar Reporte en PDF"):
@@ -386,39 +426,14 @@ with pestana3:
                 <head>
                     <title>Reporte de Resurtido y Pedidos - Nature’s Select</title>
                     <style>
-                        @page {{
-                            size: letter portrait;
-                            margin: 1cm;
-                        }}
-                        body {{ 
-                            font-family: Arial, sans-serif; 
-                            margin: 0; 
-                            padding: 10px;
-                            color: #333;
-                        }}
-                        h2 {{ color: #2c3e50; font-size: 20px; margin-bottom: 5px; }}
+                        @page {{ size: letter portrait; margin: 1cm; }}
+                        body {{ font-family: Arial, sans-serif; margin: 0; padding: 10px; color: #263238; }}
+                        h2 {{ color: #2E7D32; font-size: 20px; margin-bottom: 5px; }}
                         p {{ font-size: 12px; color: #666; margin-top: 0; }}
-                        table {{ 
-                            width: 100%; 
-                            border-collapse: collapse; 
-                            margin-top: 15px; 
-                        }}
-                        th, td {{ 
-                            border: 1px solid #bdc3c7; 
-                            padding: 8px 10px; 
-                            text-align: left; 
-                            font-size: 13px; 
-                        }}
-                        th {{ 
-                            background-color: #f8f9fa; 
-                            color: #2c3e50; 
-                        }}
-                        .total {{ 
-                            font-size: 16px; 
-                            font-weight: bold; 
-                            margin-top: 20px; 
-                            color: #27ae60; 
-                        }}
+                        table {{ width: 100%; border-collapse: collapse; margin-top: 15px; }}
+                        th, td {{ border: 1px solid #bdc3c7; padding: 8px 10px; text-align: left; font-size: 13px; }}
+                        th {{ background-color: #E8F5E9; color: #2E7D32; }}
+                        .total {{ font-size: 16px; font-weight: bold; margin-top: 20px; color: #2E7D32; }}
                     </style>
                 </head>
                 <body>
@@ -426,11 +441,7 @@ with pestana3:
                     <p>Fecha de emisión: {datetime.utcnow().strftime('%d-%m-%Y %H:%M:%S')} (Hora México)</p>
                     {html_table}
                     <div class="total">Inversión Total Estimada: ${gran_total_inversion:,.2f}</div>
-                    <script>
-                        window.onload = function() {{
-                            window.print();
-                        }};
-                    </script>
+                    <script>window.onload = function() {{ window.print(); }};</script>
                 </body>
             </html>
             """
