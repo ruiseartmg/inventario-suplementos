@@ -13,9 +13,9 @@ st.set_page_config(page_title="Nature’s Select - Inventario", page_icon="🌿"
 # TIPOGRAFÍA Y PALETA DE COLORES CORPORATIVA (CSS)
 # ==========================================
 st.markdown("""
-    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
         /* Aplicar la fuente Poppins a toda la aplicación */
         .stApp, html, body, [class*="css"] {
             font-family: 'Poppins', sans-serif !important;
