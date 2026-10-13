@@ -61,16 +61,16 @@ headers = hoja_inv.row_values(1)
 if registros_inv:
     registros_inv = sorted(registros_inv, key=lambda x: str(x.get("Nombre del Producto", "")).lower())
 
-# Cabecera con Logo Nítido, Centrado y Sin Bordes Grises
-col1, col2, col3 = st.columns([1, 2, 1])
+# Cabecera con Logo más Grande, Centrado y Nítido
+col1, col2, col3 = st.columns([1, 3, 1])
 with col2:
     try:
         with open("watermarked_img_3973813175880226978.jpg", "rb") as image_file:
             encoded_image = base64.b64encode(image_file.read()).decode()
         st.markdown(
             f"""
-            <div style="text-align: center; margin-bottom: 10px;">
-                <img src="data:image/jpeg;base64,{encoded_image}" style="max-width: 240px; width: 100%; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+            <div style="text-align: center; margin-bottom: 15px;">
+                <img src="data:image/jpeg;base64,{encoded_image}" style="max-width: 340px; width: 100%; border-radius: 14px; box-shadow: 0 4px 14px rgba(0,0,0,0.1);">
             </div>
             """,
             unsafe_allow_html=True
