@@ -7,7 +7,7 @@ import base64
 import pandas as pd
 
 # Configuración de la página
-st.set_page_config(page_title="Gestión de Inventario", page_icon="📦", layout="centered")
+st.set_page_config(page_title="Nature's Blessings - Inventario", page_icon="📦", layout="centered")
 
 # ==========================================
 # CONEXIÓN A GOOGLE SHEETS (Método Base64 + Limpieza Extrema)
@@ -61,7 +61,7 @@ headers = hoja_inv.row_values(1)
 if registros_inv:
     registros_inv = sorted(registros_inv, key=lambda x: str(x.get("Nombre del Producto", "")).lower())
 
-st.title("📦 Productos Naturales - Inventario")
+st.title("🌿 Nature's Blessings")
 
 # Pestañas en la web
 pestana1, pestana2, pestana3, pestana4 = st.tabs(["🛒 Registrar Movimiento", "➕ Nuevo Producto", "📋 Resurtido y Pedidos", "📜 Historial"])
@@ -360,7 +360,7 @@ with pestana3:
             html_content = f"""
             <html>
                 <head>
-                    <title>Reporte de Resurtido y Pedidos</title>
+                    <title>Reporte de Resurtido y Pedidos - Nature's Blessings</title>
                     <style>
                         @page {{
                             size: letter portrait;
@@ -398,7 +398,7 @@ with pestana3:
                     </style>
                 </head>
                 <body>
-                    <h2>📦 Reporte de Sugerencia de Pedido y Resurtido</h2>
+                    <h2>🌿 Nature's Blessings - Reporte de Resurtido y Pedidos</h2>
                     <p>Fecha de emisión: {datetime.utcnow().strftime('%d-%m-%Y %H:%M:%S')} (Hora México)</p>
                     {html_table}
                     <div class="total">Inversión Total Estimada: ${gran_total_inversion:,.2f}</div>
