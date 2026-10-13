@@ -61,28 +61,46 @@ headers = hoja_inv.row_values(1)
 if registros_inv:
     registros_inv = sorted(registros_inv, key=lambda x: str(x.get("Nombre del Producto", "")).lower())
 
-# Cabecera con Logo Extendido para Celular y Computadora
+# Cabecera con Estilo de Ancho Total Forzado
 try:
     with open("watermarked_img_3973813175880226978.jpg", "rb") as image_file:
         encoded_image = base64.b64encode(image_file.read()).decode()
     st.markdown(
         f"""
         <style>
-            .logo-container {{
+            .full-width-logo {{
+                position: relative;
+                width: 100vw;
+                left: 50%;
+                right: 50%;
+                margin-left: -50vw;
+                margin-right: -50vw;
                 text-align: center;
-                margin-top: -20px;
-                margin-bottom: 20px;
-                width: 100%;
+                margin-top: -30px;
+                margin-bottom: 15px;
             }}
-            .logo-img {{
+            .full-width-logo img {{
                 width: 100%;
-                max-width: 650px;
-                border-radius: 14px;
-                box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+                max-width: 100%;
+                border-radius: 0px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            }}
+            @media (min-width: 768px) {{
+                .full-width-logo {{
+                    width: 100%;
+                    left: auto;
+                    right: auto;
+                    margin-left: 0;
+                    margin-right: 0;
+                }}
+                .full-width-logo img {{
+                    max-width: 600px;
+                    border-radius: 16px;
+                }}
             }}
         </style>
-        <div class="logo-container">
-            <img src="data:image/jpeg;base64,{encoded_image}" class="logo-img">
+        <div class="full-width-logo">
+            <img src="data:image/jpeg;base64,{encoded_image}">
         </div>
         """,
         unsafe_allow_html=True
@@ -425,7 +443,7 @@ with pestana3:
                         }}
                         th {{ 
                             background-color: #f8f9fa; 
-                    color: #2c3e50; 
+                            color: #2c3e50; 
                         }}
                         .total {{ 
                             font-size: 16px; 
