@@ -61,22 +61,20 @@ headers = hoja_inv.row_values(1)
 if registros_inv:
     registros_inv = sorted(registros_inv, key=lambda x: str(x.get("Nombre del Producto", "")).lower())
 
-# Cabecera con Logo más Grande, Centrado y Nítido
-col1, col2, col3 = st.columns([1, 4, 1])
-with col2:
-    try:
-        with open("watermarked_img_3973813175880226978.jpg", "rb") as image_file:
-            encoded_image = base64.b64encode(image_file.read()).decode()
-        st.markdown(
-            f"""
-            <div style="text-align: center; margin-bottom: 15px;">
-                <img src="data:image/jpeg;base64,{encoded_image}" style="max-width: 420px; width: 100%; border-radius: 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.12);">
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
-    except:
-        st.title("🌿 Nature’s Select")
+# Cabecera con Logo Ampliado al Máximo en Pantalla
+try:
+    with open("watermarked_img_3973813175880226978.jpg", "rb") as image_file:
+        encoded_image = base64.b64encode(image_file.read()).decode()
+    st.markdown(
+        f"""
+        <div style="text-align: center; margin-bottom: 15px; width: 100%;">
+            <img src="data:image/jpeg;base64,{encoded_image}" style="width: 100%; border-radius: 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.12);">
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+except:
+    st.title("🌿 Nature’s Select")
 
 st.markdown("---")
 
