@@ -10,33 +10,34 @@ import pandas as pd
 st.set_page_config(page_title="Nature’s Select - Inventario", page_icon="🌿", layout="wide")
 
 # ==========================================
-# TIPOGRAFÍA Y PALETA DE COLORES CORPORATIVA (CSS)
+# TIPOGRAFÍAS DEL LOGOTIPO Y PALETA CORPORATIVA (CSS)
 # ==========================================
 st.markdown("""
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        /* Importar tipografías Google Fonts (Montserrat para títulos tipo 'Select' y Open Sans para el cuerpo) */
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Open+Sans:wght@400;600&display=swap');
 
-        /* Aplicar la fuente Poppins a toda la aplicación */
-        .stApp, html, body, [class*="css"] {
-            font-family: 'Poppins', sans-serif !important;
+        /* Cuerpo de la aplicación (Estilo 'Natural Health') */
+        .stApp, html, body, [class*="css"], p, span, label, input, select {
+            font-family: 'Open Sans', sans-serif !important;
             background-color: #FAFAFA;
             color: #263238;
         }
         
-        /* Títulos principales y subtítulos con estilo orgánico y formal */
-        h1, h2, h3, h4, h5, h6 {
-            font-family: 'Poppins', sans-serif !important;
+        /* Títulos principales y subtítulos (Estilo 'Select') */
+        h1, h2, h3, h4, h5, h6, .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p {
+            font-family: 'Montserrat', sans-serif !important;
             color: #263238 !important;
             font-weight: 600;
         }
 
-        /* Botones principales (Verde Hoja Corporativo) con tipografía estilizada */
+        /* Botones principales (Verde Hoja Corporativo) */
         .stButton>button {
-            font-family: 'Poppins', sans-serif !important;
+            font-family: 'Montserrat', sans-serif !important;
             background-color: #2E7D32 !important;
             color: white !important;
             border-radius: 8px;
-            font-weight: 500;
+            font-weight: 600;
             border: none;
             transition: 0.3s;
         }
@@ -47,10 +48,7 @@ st.markdown("""
 
         /* Pestañas seleccionadas */
         .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p {
-            font-family: 'Poppins', sans-serif !important;
             font-size: 15px;
-            font-weight: 600;
-            color: #263238;
         }
         
         /* Tarjetas de métricas o totales con diseño natural */
@@ -433,15 +431,15 @@ with pestana3:
                 <head>
                     <title>Reporte de Resurtido y Pedidos - Nature’s Select</title>
                     <style>
-                        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+                        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Open+Sans:wght@400;600&display=swap');
                         @page {{ size: letter portrait; margin: 1cm; }}
-                        body {{ font-family: 'Poppins', Arial, sans-serif; margin: 0; padding: 10px; color: #263238; }}
-                        h2 {{ color: #2E7D32; font-size: 20px; margin-bottom: 5px; font-weight: 600; }}
+                        body {{ font-family: 'Open Sans', Arial, sans-serif; margin: 0; padding: 10px; color: #263238; }}
+                        h2 {{ font-family: 'Montserrat', sans-serif; color: #2E7D32; font-size: 20px; margin-bottom: 5px; font-weight: 600; }}
                         p {{ font-size: 12px; color: #666; margin-top: 0; }}
                         table {{ width: 100%; border-collapse: collapse; margin-top: 15px; }}
                         th, td {{ border: 1px solid #bdc3c7; padding: 8px 10px; text-align: left; font-size: 13px; }}
-                        th {{ background-color: #E8F5E9; color: #2E7D32; font-weight: 600; }}
-                        .total {{ font-size: 16px; font-weight: bold; margin-top: 20px; color: #2E7D32; }}
+                        th {{ background-color: #E8F5E9; color: #2E7D32; font-weight: 600; font-family: 'Montserrat', sans-serif; }}
+                        .total {{ font-size: 16px; font-weight: bold; margin-top: 20px; color: #2E7D32; font-family: 'Montserrat', sans-serif; }}
                     </style>
                 </head>
                 <body>
