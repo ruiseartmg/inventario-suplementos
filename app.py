@@ -61,13 +61,8 @@ headers = hoja_inv.row_values(1)
 if registros_inv:
     registros_inv = sorted(registros_inv, key=lambda x: str(x.get("Nombre del Producto", "")).lower())
 
-# Cabecera con Logo e Identidad de la Marca
-col_logo, col_titulo = st.columns([1, 3])
-with col_logo:
-    st.image("watermarked_img_3973813175880226978.jpg", width=90)
-with col_titulo:
-    st.title("🌿 Nature’s Select")
-
+# Título de la Marca
+st.title("🌿 Nature’s Select")
 st.markdown("---")
 
 # Pestañas en la web
