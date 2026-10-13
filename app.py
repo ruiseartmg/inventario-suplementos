@@ -10,7 +10,7 @@ import pandas as pd
 st.set_page_config(page_title="Nature’s Select - Inventario", page_icon="🌿", layout="wide")
 
 # ==========================================
-# TIPOGRAFÍAS, PALETA Y BOTÓN SÓLIDO (CSS)
+# TIPOGRAFÍAS, PALETA Y BOTÓN VERDE SÓLIDO (CSS FORZADO)
 # ==========================================
 st.markdown("""
     <style>
@@ -31,20 +31,20 @@ st.markdown("""
             font-weight: 600;
         }
 
-        /* Botones principales con fondo verde sólido */
-        .stButton>button {
+        /* Forzar botón principal (Registrar Movimiento) en Verde Sólido con Letras Blancas */
+        div.stButton > button[kind="primary"], .stButton>button {
             font-family: 'Montserrat', sans-serif !important;
             background-color: #2E7D32 !important;
-            color: white !important;
+            color: #FFFFFF !important;
             border-radius: 8px;
             font-weight: 600;
             border: none !important;
-            box-shadow: 0 4px 10px rgba(46, 125, 50, 0.2);
+            box-shadow: 0 4px 10px rgba(46, 125, 50, 0.3);
             transition: 0.3s;
         }
-        .stButton>button:hover {
+        div.stButton > button[kind="primary"]:hover, .stButton>button:hover {
             background-color: #1B5E20 !important;
-            color: white !important;
+            color: #FFFFFF !important;
         }
 
         /* Pestañas seleccionadas */
