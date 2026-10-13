@@ -6,8 +6,8 @@ import os
 import base64
 import pandas as pd
 
-# Configuración de la página
-st.set_page_config(page_title="Nature’s Select - Inventario", page_icon="🌿", layout="centered")
+# Configuración de la página en modo ancho para ocupar toda la pantalla del celular y PC
+st.set_page_config(page_title="Nature’s Select - Inventario", page_icon="🌿", layout="wide")
 
 # ==========================================
 # CONEXIÓN A GOOGLE SHEETS (Método Base64 + Limpieza Extrema)
@@ -61,46 +61,14 @@ headers = hoja_inv.row_values(1)
 if registros_inv:
     registros_inv = sorted(registros_inv, key=lambda x: str(x.get("Nombre del Producto", "")).lower())
 
-# Cabecera con Estilo de Ancho Total Forzado
+# Cabecera con Logo Ampliado a Ancho Total
 try:
     with open("watermarked_img_3973813175880226978.jpg", "rb") as image_file:
         encoded_image = base64.b64encode(image_file.read()).decode()
     st.markdown(
         f"""
-        <style>
-            .full-width-logo {{
-                position: relative;
-                width: 100vw;
-                left: 50%;
-                right: 50%;
-                margin-left: -50vw;
-                margin-right: -50vw;
-                text-align: center;
-                margin-top: -30px;
-                margin-bottom: 15px;
-            }}
-            .full-width-logo img {{
-                width: 100%;
-                max-width: 100%;
-                border-radius: 0px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            }}
-            @media (min-width: 768px) {{
-                .full-width-logo {{
-                    width: 100%;
-                    left: auto;
-                    right: auto;
-                    margin-left: 0;
-                    margin-right: 0;
-                }}
-                .full-width-logo img {{
-                    max-width: 600px;
-                    border-radius: 16px;
-                }}
-            }}
-        </style>
-        <div class="full-width-logo">
-            <img src="data:image/jpeg;base64,{encoded_image}">
+        <div style="text-align: center; margin-bottom: 20px; width: 100%;">
+            <img src="data:image/jpeg;base64,{encoded_image}" style="width: 100%; max-width: 800px; border-radius: 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.12);">
         </div>
         """,
         unsafe_allow_html=True
