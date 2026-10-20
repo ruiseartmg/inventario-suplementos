@@ -105,7 +105,27 @@ except Exception as e:
     st.error(f"Error al conectar con Google Sheets: {e}")
     st.stop()
 
-registros_inv = hoja_inv.get_all_records()
+# Funciones de lectura con caché para blindar la app contra el error 429
+@st.cache_data(ttl=60)
+def cargar_inventario_cache():
+    return hoja_inv.get_all_records()
+
+@st.cache_data(ttl=60)
+def cargar_pedidos_cache():
+    return hoja_pedidos.get_all_records()
+
+@st.cache_data(ttl=60)
+def cargar_historial_cache():
+    return hoja_hist.get_all_records()
+
+# Botón general para limpiar caché si el usuario quiere forzar datos nuevos
+col_master1, col_master2 = st.columns([6, 1])
+with col_master2:
+    if st.button("🔄 Recargar Nube"):
+        st.cache_data.clear()
+        st.rerun()
+
+registros_inv = cargar_inventario_cache()
 headers = hoja_inv.row_values(1)
 
 if registros_inv:
@@ -155,7 +175,8 @@ with pestana1:
             
             row_idx = None
             producto_obj = None
-            for i, p in enumerate(hoja_inv.get_all_records()):
+            inv_actuales = hoja_inv.get_all_records() # Lectura directa para actualización
+            for i, p in enumerate(inv_actuales):
                 if p.get("Nombre del Producto") == prod_seleccionado:
                     row_idx = i + 2 
                     producto_obj = p
@@ -222,6 +243,7 @@ with pestana1:
                     
                     hoja_inv.update_cell(row_idx, col_stock_idx, nuevo_stock)
                     hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), cli_final, prod_seleccionado, "Venta", cantidad, total_movimiento])
+                    st.cache_data.clear() # Limpiar caché para reflejar cambios
                     st.rerun()
                 else:
                     nuevo_stock = stock_actual + cantidad
@@ -230,6 +252,7 @@ with pestana1:
                     hoja_inv.update_cell(row_idx, col_stock_idx, nuevo_stock)
                     hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), cli_final, prod_seleccionado, "Compra", cantidad, total_movimiento])
                     st.success(f"📦 ¡Entrada de proveedor registrada con éxito! +{cantidad} al stock de {prod_seleccionado}.")
+                    st.cache_data.clear()
                     st.rerun()
     else:
         st.info("No hay productos registrados todavía.")
@@ -237,8 +260,7 @@ with pestana1:
     st.divider()
     st.subheader("Estado Actual del Inventario")
     if registros_inv:
-        # Calcular en tiempo real la cantidad "Por entregar" sumando los pedidos activos
-        todos_los_pedidos = hoja_pedidos.get_all_records()
+        todos_los_pedidos = cargar_pedidos_cache()
         suma_por_entregar = {}
         for p in todos_los_pedidos:
             if p.get("Estado") == "Por entregar":
@@ -252,11 +274,9 @@ with pestana1:
 
         df_inv = pd.DataFrame(registros_inv)
         
-        # Ocultar columnas innecesarias
         cols_a_quitar = [c for c in df_inv.columns if "precio directo" in c.lower() or "directo" in c.lower() or "por surtir" in c.lower() or "por_surtir" in c.lower()]
         df_inv = df_inv.drop(columns=cols_a_quitar, errors="ignore")
 
-        # Formatear números
         for col in df_inv.columns:
             if "precio" in col.lower():
                 df_inv[col] = pd.to_numeric(df_inv[col].astype(str).str.replace("$", "").str.replace(",", "").str.strip(), errors="coerce").fillna(0)
@@ -265,29 +285,23 @@ with pestana1:
                 df_inv[col] = pd.to_numeric(df_inv[col], errors="coerce").fillna(0)
                 df_inv[col] = df_inv[col].apply(lambda x: str(int(x)) if x.is_integer() else f"{x:g}")
 
-        # Reorganizar columnas asegurando que "Por entregar" quede entre stock y precio de venta
         columnas_disponibles = list(df_inv.columns)
-        
-        # Identificar nombres reales de las columnas en el DataFrame
         col_prod = next((c for c in columnas_disponibles if "nombre" in c.lower()), columnas_disponibles[0])
         col_pres = next((c for c in columnas_disponibles if "presentacion" in c.lower() or "presentación" in c.lower()), None)
         col_stock = next((c for c in columnas_disponibles if "stock" in c.lower() or "cantidad en stock" in c.lower()), None)
         col_precio = next((c for c in columnas_disponibles if "precio de venta" in c.lower()), None)
         
-        # Construir orden limpio
         orden_final = [col_prod]
         if col_pres and col_pres in columnas_disponibles:
             orden_final.append(col_pres)
         if col_stock and col_stock in columnas_disponibles:
             orden_final.append(col_stock)
         
-        # Insertar "Por entregar"
         orden_final.append("Por entregar")
         
         if col_precio and col_precio in columnas_disponibles:
             orden_final.append(col_precio)
             
-        # Añadir cualquier otra columna restante que no se haya incluido
         for c in columnas_disponibles:
             if c not in orden_final:
                 orden_final.append(c)
@@ -303,10 +317,7 @@ with pestana2:
     st.subheader("📦 Control de Pedidos y Entregas")
     st.markdown("Filtra por cliente para ver sus artículos pendientes y gestiona cada entrega de forma rápida.")
     
-    if st.button("🔄 Actualizar Lista"):
-        st.rerun()
-        
-    pedidos_pendientes = hoja_pedidos.get_all_records()
+    pedidos_pendientes = cargar_pedidos_cache()
     pendientes_activos = [p for p in pedidos_pendientes if p.get("Estado") == "Por entregar"]
     
     if pendientes_activos:
@@ -333,6 +344,7 @@ with pestana2:
                     if fila_real:
                         hoja_pedidos.update_cell(fila_real, 7, "Entregado")
                         st.success(f"¡Pedido entregado a {ped.get('Cliente')}!")
+                        st.cache_data.clear()
                         st.rerun()
             with col_btn2:
                 cancelar_key = f"cancelar_{ped.get('ID')}_{idx}"
@@ -362,7 +374,8 @@ with pestana2:
                         
                         row_inv_idx = None
                         prod_obj = None
-                        for i, inv_item in enumerate(hoja_inv.get_all_records()):
+                        inv_actuales = hoja_inv.get_all_records()
+                        for i, inv_item in enumerate(inv_actuales):
                             if inv_item.get("Nombre del Producto") == prod_ped:
                                 row_inv_idx = i + 2
                                 prod_obj = inv_item
@@ -380,6 +393,7 @@ with pestana2:
                             hoja_inv.update_cell(row_inv_idx, col_st_idx, nuevo_st)
                             
                         st.warning(f"Pedido cancelado. Se devolvieron **{cant_ped} unidades** de {prod_ped} al inventario.")
+                        st.cache_data.clear()
                         st.rerun()
             st.divider()
     else:
@@ -387,14 +401,11 @@ with pestana2:
 
 with pestana3:
     st.subheader("Historial de Transacciones")
-    if st.button("🔄 Actualizar Historial"):
-        st.rerun()
-        
-    registros_h = hoja_hist.get_all_records()
+    
+    registros_h = cargar_historial_cache()
     if registros_h:
         df_hist = pd.DataFrame(list(reversed(registros_h)))
         
-        # Asegurar que exista la columna Cliente en la vista si es un historial antiguo
         if "Cliente" not in df_hist.columns:
             df_hist.insert(2, "Cliente", "General / Mostrador")
             
@@ -409,10 +420,7 @@ with pestana4:
     st.subheader("📋 Sugerencia de Pedido (Por Surtir con Proveedor) y Costos")
     st.markdown("Consulta el pedido sugerido al proveedor, el costo estimado por artículo y el total a invertir.")
     
-    if st.button("🔄 Actualizar Datos de Resurtido"):
-        st.rerun()
-        
-    reg_hist_actuales = hoja_hist.get_all_records()
+    reg_hist_actuales = cargar_historial_cache()
     
     if registros_inv:
         df_h = pd.DataFrame(reg_hist_actuales) if reg_hist_actuales else pd.DataFrame()
@@ -442,7 +450,7 @@ with pestana4:
             nombre = p.get("Nombre del Producto", "")
             stock = float(str(p.get("Cantidad en Stock", 0) or 0).replace(",", ""))
             
-            todos_los_pedidos_res = hoja_pedidos.get_all_records()
+            todos_los_pedidos_res = cargar_pedidos_cache()
             por_entregar_val = 0.0
             for tp in todos_los_pedidos_res:
                 if tp.get("Estado") == "Por entregar" and tp.get("Producto") == nombre:
@@ -533,14 +541,14 @@ with pestana5:
                         "Precio Directo": precio_dir,
                         "Precio de Venta": precio_ven,
                         "Categoría": categoria,
-                        "Categoria": categoria,
-                        "Por surtir": 0
+                        "Categoria": categoria
                     }
                     for idx, header in enumerate(headers):
                         if header in datos_ingresados:
                             nueva_fila[idx] = datos_ingresados[header]
                     hoja_inv.append_row(nueva_fila)
                     st.success(f"¡El producto '{nuevo_nombre}' se ha dado de alta correctamente!")
+                    st.cache_data.clear()
                     st.rerun()
                 except Exception as e:
                     st.error(f"Error al guardar: {e}")
