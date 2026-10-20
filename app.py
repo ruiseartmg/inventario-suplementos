@@ -89,7 +89,8 @@ SCOPE = [
     "https://www.googleapis.com/auth/drive"
 ]
 
-def conectar_sheets():
+@st.cache_resource
+def obtener_conexion():
     if "GOOGLE_CREDS" in st.secrets:
         creds_dict = dict(st.secrets["GOOGLE_CREDS"])
         if "private_key_base64" in creds_dict:
@@ -107,10 +108,6 @@ def conectar_sheets():
     client = gspread.authorize(creds)
     sheet = client.open("Inventario Suplementos")
     return sheet
-
-@st.cache_resource
-def obtener_conexion():
-    return conectar_sheets()
 
 try:
     spreadsheet = obtener_conexion()
@@ -134,27 +131,32 @@ except Exception as e:
     st.error(f"Error al conectar con Google Sheets: {e}")
     st.stop()
 
-# Funciones de lectura con caché extendido (ttl=600 segundos) y pausa de seguridad
-@st.cache_data(ttl=600)
+# Funciones de lectura con caché de 900 segundos (15 mins) y pausas de seguridad
+@st.cache_data(ttl=900)
 def cargar_inventario_cache():
-    time.sleep(0.3)
+    time.sleep(0.5)
     return hoja_inv.get_all_records()
 
-@st.cache_data(ttl=600)
+@st.cache_data(ttl=900)
 def cargar_pedidos_cache():
-    time.sleep(0.3)
+    time.sleep(0.5)
     return hoja_pedidos.get_all_records()
 
-@st.cache_data(ttl=600)
+@st.cache_data(ttl=900)
 def cargar_historial_cache():
-    time.sleep(0.3)
+    time.sleep(0.5)
     return hoja_hist.get_all_records()
 
-registros_inv = cargar_inventario_cache()
-headers = hoja_inv.row_values(1)
-
-if registros_inv:
-    registros_inv = sorted(registros_inv, key=lambda x: str(x.get("Nombre del Producto", "")).lower())
+# Carga segura inicial de datos esenciales
+try:
+    registros_inv = cargar_inventario_cache()
+    headers = hoja_inv.row_values(1)
+    if registros_inv:
+        registros_inv = sorted(registros_inv, key=lambda x: str(x.get("Nombre del Producto", "")).lower())
+except Exception as e:
+    st.error(f"Error al leer el inventario: {e}")
+    registros_inv = []
+    headers = []
 
 # Cabecera con Logotipo
 try:
@@ -210,7 +212,6 @@ with pestana1:
         
         if st.button("Registrar en el Sistema") and prod_seleccionado:
             ahora_mexico = datetime.utcnow() - timedelta(hours=6)
-            
             cli_final = nombre_cliente.strip().title() if nombre_cliente.strip() else "Mostrador / General"
             
             row_idx = None
@@ -363,7 +364,6 @@ with pestana2:
     pendientes_activos = [p for p in pedidos_pendientes if p.get("Estado") == "Por entregar"]
     
     if pendientes_activos:
-        # Detectar qué productos tienen stock actual de 0 o menor al pendiente (déficit)
         stock_por_producto = {}
         for inv_p in registros_inv:
             nombre_p = inv_p.get("Nombre del Producto")
@@ -384,7 +384,6 @@ with pestana2:
             if stock_fisico_actual <= 0:
                 pedidos_en_deficit.append(ped)
 
-        # Mostrar sección especial de Déficit si existe alguno
         if pedidos_en_deficit:
             st.markdown("### 🚨 Pedidos en Espera por Déficit (Stock en 0 o Insuficiente)")
             st.markdown("Los siguientes clientes están esperando producto porque el inventario actual está agotado:")
@@ -421,7 +420,6 @@ with pestana2:
                     if fila_real:
                         hoja_pedidos.update_cell(fila_real, 7, "Entregado")
                         st.success(f"¡Pedido entregado a {ped.get('Cliente')}!")
-                        
                         st.cache_data.clear()
                         st.rerun()
             with col_btn2:
@@ -471,7 +469,6 @@ with pestana2:
                             hoja_inv.update_cell(row_inv_idx, col_st_idx, nuevo_st)
                             
                         st.warning(f"Pedido cancelado. Se devolvieron **{cant_ped} unidades** de {prod_ped} al inventario.")
-                        
                         st.cache_data.clear()
                         st.rerun()
             st.divider()
@@ -485,7 +482,7 @@ with pestana3:
     if registros_h:
         df_hist = pd.DataFrame(registros_h)
         if not df_hist.empty:
-            df_hist = df_hist.iloc[::-1] # Invertir para ver lo más reciente primero
+            df_hist = df_hist.iloc[::-1]
             
             if "Total" in df_hist.columns:
                 df_hist["Total"] = pd.to_numeric(df_hist["Total"].astype(str).str.replace("$", "").str.replace(",", "").str.strip(), errors="coerce").fillna(0)
