@@ -28,6 +28,7 @@ st.markdown("""
             font-weight: 600;
         }
 
+        /* Botón general verde */
         div.stButton > button, div.stButton > button * {
             background-color: #2E7D32 !important;
             color: #FFFFFF !important;
@@ -280,9 +281,9 @@ with pestana1:
 
 with pestana2:
     st.subheader("📦 Control de Pedidos y Entregas")
-    st.markdown("Tabla general de entregas pendientes. Puedes filtrar por cliente y marcar cada renglón.")
+    st.markdown("Filtra por cliente para ver sus artículos pendientes y gestiona cada entrega de forma rápida.")
     
-    if st.button("🔄 Actualizar Tabla de Entregas"):
+    if st.button("🔄 Actualizar Lista"):
         st.rerun()
         
     pedidos_pendientes = hoja_pedidos.get_all_records()
@@ -293,31 +294,14 @@ with pestana2:
         filtro_cliente = st.selectbox("🔍 Filtrar por Cliente específico:", ["-- Todos los Clientes --"] + clientes_disponibles)
         
         if filtro_cliente != "-- Todos los Clientes --":
-            pendientes_activos_tabla = [p for p in pendientes_activos if p.get("Cliente") == filtro_cliente]
-        else:
-            pendientes_activos_tabla = pendientes_activos
-        
-        # Construir tabla limpia estilo Historial para visualizar
-        tabla_datos = []
-        for p in pendientes_activos_tabla:
-            tabla_datos.append({
-                "ID": p.get("ID"),
-                "Fecha": p.get("Fecha"),
-                "Cliente": p.get("Cliente"),
-                "Producto": p.get("Producto"),
-                "Cantidad": p.get("Cantidad")
-            })
-        
-        df_tabla_pendientes = pd.DataFrame(tabla_datos)
-        st.dataframe(df_tabla_pendientes, use_container_width=True)
+            pendientes_activos = [p for p in pendientes_activos if p.get("Cliente") == filtro_cliente]
         
         st.markdown("---")
-        st.markdown("### ⚙️ Acciones por Pedido")
         
-        for idx, ped in enumerate(pendientes_activos_tabla):
-            col_info, col_btn1, col_btn2 = st.columns([5, 1.5, 1.5])
+        for idx, ped in enumerate(pendientes_activos):
+            col_info, col_btn1, col_btn2 = st.columns([4.5, 1.75, 1.75])
             with col_info:
-                st.markdown(f"**👤 {ped.get('Cliente')}** | 🛍️ **{ped.get('Producto')}** ({ped.get('Cantidad')} u.)  \n<span style='color: gray; font-size: 12px;'>ID: {ped.get('ID')} | Fecha: {ped.get('Fecha')}</span>", unsafe_allow_html=True)
+                st.markdown(f"**👤 {ped.get('Cliente')}**  \n🛍️ **{ped.get('Producto')}** — Cantidad: **{ped.get('Cantidad')}**  \n<span style='color: gray; font-size: 11px;'>ID: {ped.get('ID')} | Fecha: {ped.get('Fecha')}</span>", unsafe_allow_html=True)
             with col_btn1:
                 if st.button("✅ Entregar", key=f"entregar_{ped.get('ID')}_{idx}"):
                     todos_p = hoja_pedidos.get_all_records()
@@ -331,11 +315,15 @@ with pestana2:
                         st.success(f"¡Pedido entregado a {ped.get('Cliente')}!")
                         st.rerun()
             with col_btn2:
+                # Botón Cancelar con color rojo exclusivo mediante contenedor HTML
                 cancelar_key = f"cancelar_{ped.get('ID')}_{idx}"
                 st.markdown("""
                     <style>
-                        div[data-testid="column"] button:has(div:contains("❌")) {
+                        div[data-testid="column"]:nth-child(3) button {
                             background-color: #C62828 !important;
+                        }
+                        div[data-testid="column"]:nth-child(3) button:hover {
+                            background-color: #B71C1C !important;
                         }
                     </style>
                 """, unsafe_allow_html=True)
