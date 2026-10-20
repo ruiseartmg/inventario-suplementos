@@ -131,7 +131,7 @@ except Exception as e:
     st.error(f"Error al conectar con Google Sheets: {e}")
     st.stop()
 
-# Funciones de lectura con caché de 900 segundos (15 mins) y pausas de seguridad
+# Funciones de lectura con caché de 900 segundos y pausas de seguridad
 @st.cache_data(ttl=900)
 def cargar_inventario_cache():
     time.sleep(0.5)
@@ -147,7 +147,6 @@ def cargar_historial_cache():
     time.sleep(0.5)
     return hoja_hist.get_all_records()
 
-# Carga segura inicial de datos esenciales
 try:
     registros_inv = cargar_inventario_cache()
     headers = hoja_inv.row_values(1)
@@ -274,16 +273,14 @@ with pestana1:
                     ])
                     
                     nuevo_stock = stock_actual - cantidad
-                    total_movimiento = cantidad * precio_venta
-                    
                     if nuevo_stock < 0:
                         nuevo_stock = 0.0 
                         st.warning(f"⚠️ Stock insuficiente. Se ajustó el stock a 0 y se registró el pedido 'Por entregar'.")
                     else:
-                        st.success(f"🛒 ¡Pedido registrado y stock descontado para **{cli_final}**!")
+                        st.success(f"🛒 ¡Pedido registrado y stock descontado para **{cli_final}** (Pendiente de entrega)!")
                     
                     hoja_inv.update_cell(row_idx, col_stock_idx, nuevo_stock)
-                    hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), cli_final, prod_seleccionado, "Venta", cantidad, total_movimiento])
+                    # NOTA: Ya no registramos venta en el historial aquí para que solo refleje entregas reales.
                     
                     st.cache_data.clear()
                     st.rerun()
@@ -292,6 +289,7 @@ with pestana1:
                     total_movimiento = 0.0
                     
                     hoja_inv.update_cell(row_idx, col_stock_idx, nuevo_stock)
+                    # Las compras de proveedor sí van directo al historial
                     hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), cli_final, prod_seleccionado, "Compra", cantidad, total_movimiento])
                     st.success(f"📦 ¡Entrada de proveedor registrada con éxito! +{cantidad} al stock de {prod_seleccionado}.")
                     
@@ -397,7 +395,7 @@ with pestana2:
                 """, unsafe_allow_html=True)
             st.markdown("---")
 
-        clientes_disponibles = sorted(list(set([p.get("Cliente") for p in pendientes_activos])))
+        clientes_disponibles = sorted(list(set([p.get("Cliente"] for p in pendientes_activos])))
         filtro_cliente = st.selectbox("🔍 Filtrar por Cliente específico:", ["-- Todos los Clientes --"] + clientes_disponibles)
         
         if filtro_cliente != "-- Todos los Clientes --":
@@ -419,7 +417,38 @@ with pestana2:
                             break
                     if fila_real:
                         hoja_pedidos.update_cell(fila_real, 7, "Entregado")
-                        st.success(f"¡Pedido entregado a {ped.get('Cliente')}!")
+                        
+                        # AL MOMENTO DE ENTREGAR, REGISTRAR EN EL HISTORIAL LA VENTA REALIZADA
+                        ahora_mexico = datetime.utcnow() - timedelta(hours=6)
+                        cli_entregado = ped.get("Cliente")
+                        prod_entregado = ped.get("Producto")
+                        cant_entregada = float(str(ped.get("Cantidad", 0)).replace(",", ""))
+                        
+                        # Buscar precio de venta del producto
+                        precio_vta = 0.0
+                        inv_actuales = hoja_inv.get_all_records()
+                        for inv_item in inv_actuales:
+                            if inv_item.get("Nombre del Producto") == prod_entregado:
+                                for k, v in inv_item.items():
+                                    if "precio de venta" in k.lower():
+                                        try:
+                                            precio_vta = float(str(v).replace("$", "").replace(",", "").strip())
+                                            break
+                                        except:
+                                            pass
+                        total_vta = cant_entregada * precio_vta
+                        
+                        hoja_hist.append_row([
+                            ahora_mexico.strftime("%d-%m-%Y"), 
+                            ahora_mexico.strftime("%H:%M:%S"), 
+                            cli_entregado, 
+                            prod_entregado, 
+                            "Venta", 
+                            cant_entregada, 
+                            total_vta
+                        ])
+                        
+                        st.success(f"¡Pedido entregado a {cli_entregado} y registrado en el historial!")
                         st.cache_data.clear()
                         st.rerun()
             with col_btn2:
