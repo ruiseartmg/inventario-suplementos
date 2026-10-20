@@ -10,28 +10,24 @@ import pandas as pd
 st.set_page_config(page_title="Nature’s Select - Inventario", page_icon="🌿", layout="wide")
 
 # ==========================================
-# TIPOGRAFÍAS Y ESTILO CSS DEFINITIVO PARA BOTONES
+# TIPOGRAFÍAS Y ESTILO CSS
 # ==========================================
 st.markdown("""
     <style>
-        /* Importar tipografías Google Fonts */
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Open+Sans:wght@400;600&display=swap');
 
-        /* Cuerpo de la aplicación */
         .stApp, html, body, [class*="css"], p, span, label, input, select {
             font-family: 'Open Sans', sans-serif !important;
             background-color: #FAFAFA;
             color: #263238;
         }
         
-        /* Títulos principales y subtítulos */
         h1, h2, h3, h4, h5, h6, .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p {
             font-family: 'Montserrat', sans-serif !important;
             color: #263238 !important;
             font-weight: 600;
         }
 
-        /* Forzar botones principales a verde sólido con texto blanco visible */
         div.stButton > button, div.stButton > button * {
             background-color: #2E7D32 !important;
             color: #FFFFFF !important;
@@ -49,12 +45,10 @@ st.markdown("""
             color: #FFFFFF !important;
         }
 
-        /* Pestañas seleccionadas */
         .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p {
             font-size: 15px;
         }
         
-        /* Tarjetas de métricas o totales con diseño natural */
         .metric-card {
             background-color: #E8F5E9;
             padding: 18px;
@@ -77,7 +71,6 @@ SCOPE = [
 def conectar_sheets():
     if "GOOGLE_CREDS" in st.secrets:
         creds_dict = dict(st.secrets["GOOGLE_CREDS"])
-        
         if "private_key_base64" in creds_dict:
             pk_bytes = base64.b64decode(creds_dict["private_key_base64"])
             llave_sucia = pk_bytes.decode("utf-8")
@@ -85,7 +78,6 @@ def conectar_sheets():
             while llave_limpia.startswith("\\"):
                 llave_limpia = llave_limpia[1:].strip()
             creds_dict["private_key"] = llave_limpia
-            
         creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPE)
     else:
         ruta_json = os.path.join(os.path.dirname(os.path.abspath(__file__)), "credenciales.json")
@@ -103,6 +95,12 @@ try:
     spreadsheet = obtener_conexion()
     hoja_inv = spreadsheet.worksheet("Hoja 1")
     hoja_hist = spreadsheet.worksheet("Historial")
+    
+    try:
+        hoja_pedidos = spreadsheet.worksheet("Pedidos")
+    except:
+        hoja_pedidos = spreadsheet.add_worksheet(title="Pedidos", rows=100, cols=10)
+        hoja_pedidos.append_row(["ID", "Fecha", "Cliente", "Producto", "Cantidad", "Tipo", "Estado"])
 except Exception as e:
     st.error(f"Error al conectar con Google Sheets: {e}")
     st.stop()
@@ -130,20 +128,38 @@ except:
 
 st.markdown("---")
 
-# Pestañas en la web
-pestana1, pestana2, pestana3, pestana4 = st.tabs(["🛒 Registrar Movimiento", "➕ Nuevo Producto", "📋 Resurtido y Pedidos", "📜 Historial"])
+pestana1, pestana2, pestana3, pestana4, pestana5 = st.tabs([
+    "🛒 Pedidos y Ventas", 
+    "➕ Nuevo Producto", 
+    "📋 Resurtido y Pedidos", 
+    "📜 Historial",
+    "📦 Control de Pedidos"
+])
 
 with pestana1:
-    st.subheader("Registrar Venta o Entrada")
+    st.subheader("Registrar Pedido o Entrada")
     
     nombres_productos = [p.get("Nombre del Producto") for p in registros_inv if p.get("Nombre del Producto")]
     
     if nombres_productos:
-        prod_seleccionado = st.selectbox("Selecciona Producto", nombres_productos)
-        cantidad = st.number_input("Cantidad", min_value=0.1, step=0.25, value=1.0)
-        tipo = st.radio("Tipo de Movimiento", ["Venta", "Compra (Entrada)"])
+        # Buscador rápido
+        busqueda = st.text_input("🔍 Buscar producto por nombre (escribe para filtrar):", "")
+        productos_filtrados = [p for p in nombres_productos if busqueda.lower() in p.lower()]
         
-        if st.button("Registrar Movimiento"):
+        if not productos_filtrados:
+            st.warning("No se encontraron productos con ese nombre.")
+            prod_seleccionado = None
+        else:
+            prod_seleccionado = st.selectbox("Selecciona Producto de la lista", productos_filtrados)
+        
+        nombre_cliente = st.text_input("Nombre del Cliente (Opcional si es compra directa de proveedor):", "")
+        cantidad = st.number_input("Cantidad", min_value=0.1, step=0.25, value=1.0)
+        tipo = st.radio("Tipo de Transacción", ["Venta / Pedido de Cliente", "Compra (Entrada de Proveedor)"])
+        
+        if st.button("Registrar en el Sistema") and prod_seleccionado:
+            ahora_mexico = datetime.utcnow() - timedelta(hours=6)
+            
+            # Ubicar índices y datos del producto en Inventario
             row_idx = None
             producto_obj = None
             for i, p in enumerate(hoja_inv.get_all_records()):
@@ -193,7 +209,7 @@ with pestana1:
 
                 precio_directo = 0.0
                 for k, v in producto_obj.items():
-                    if "precio directo" in k.lower() or "precio_directo" in k.lower() or "directo" in k.lower():
+                    if "precio directo" in k.lower() or "directo" in k.lower():
                         raw_pd = str(v).replace("$", "").replace(",", "").strip()
                         try:
                             precio_directo = float(raw_pd)
@@ -201,8 +217,8 @@ with pestana1:
                         except:
                             pass
                 if precio_directo == 0.0:
-                    precio_directo = precio_venta
-                                
+                    precio_directo = precio_venta or 1.0
+
                 col_stock_idx = 4
                 col_surtir_idx = None
                 for idx, h in enumerate(headers):
@@ -212,9 +228,20 @@ with pestana1:
                     elif "por surtir" in h_limpio or "por_surtir" in h_limpio:
                         col_surtir_idx = idx + 1
 
-                ahora_mexico = datetime.utcnow() - timedelta(hours=6)
-
-                if tipo == "Venta":
+                if tipo == "Venta / Pedido de Cliente":
+                    # 1. Registrar el pedido en la hoja de Pedidos
+                    id_pedido = str(int(datetime.utcnow().timestamp()))
+                    hoja_pedidos.append_row([
+                        id_pedido, 
+                        ahora_mexico.strftime("%d-%m-%Y %H:%M:%S"), 
+                        nombre_cliente if nombre_cliente.strip() else "Mostrador / General", 
+                        prod_seleccionado, 
+                        cantidad, 
+                        "Venta", 
+                        "Pendiente de Entrega"
+                    ])
+                    
+                    # 2. Afectar inventario de inmediato (Apartado / Descuento)
                     nuevo_stock = stock_actual - cantidad
                     total_movimiento = cantidad * precio_venta
                     
@@ -222,48 +249,27 @@ with pestana1:
                         faltante = cantidad - stock_actual
                         vendible = stock_actual
                         nuevo_stock = 0.0 
-                        
-                        st.error(f"⚠️ Stock insuficiente. Solo tenías {stock_actual} en existencia.")
-                        st.warning(f"Se descontaron {vendible} y se mandaron **{faltante} unidades** a la lista de 'Por surtir'.")
-                        
+                        st.warning(f"⚠️ Stock insuficiente. Se descontaron {vendible} y se mandaron **{faltante} unidades** a 'Por surtir'.")
                         if col_surtir_idx:
                             hoja_inv.update_cell(row_idx, col_surtir_idx, por_surtir_actual + faltante)
-                        
-                        hoja_inv.update_cell(row_idx, col_stock_idx, nuevo_stock)
-                        hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), prod_seleccionado, "Venta", cantidad, total_movimiento])
-                        st.rerun()
-                    elif stock_actual == 0:
-                        st.warning(f"El producto estaba en stock 0. Se han sumado **{cantidad} unidades** directamente a 'Por surtir'.")
-                        if col_surtir_idx:
-                            hoja_inv.update_cell(row_idx, col_surtir_idx, por_surtir_actual + cantidad)
-                        hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), prod_seleccionado, "Venta", cantidad, total_movimiento])
-                        st.rerun()
                     else:
-                        hoja_inv.update_cell(row_idx, col_stock_idx, nuevo_stock)
-                        hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), prod_seleccionado, "Venta", cantidad, total_movimiento])
-                        st.success(f"¡Venta guardada con éxito! {cantidad}x {prod_seleccionado}")
-                        st.rerun()
-                        
+                        st.success(f"🛒 ¡Pedido registrado y stock descontado para **{nombre_cliente or 'General'}**!")
+                    
+                    hoja_inv.update_cell(row_idx, col_stock_idx, nuevo_stock)
+                    hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), prod_seleccionado, "Venta", cantidad, total_movimiento])
+                    st.rerun()
                 else:
+                    # Compra de proveedor
                     nuevo_stock = stock_actual + cantidad
                     total_movimiento = cantidad * precio_directo
-                    
-                    if por_surtir_actual > 0:
-                        if cantidad >= por_surtir_actual:
-                            nuevo_por_surtir = 0.0
-                            st.success(f"📦 ¡Entrada registrada! +{cantidad} al stock. Se cubrieron los {por_surtir_actual} pendientes de surtir.")
-                        else:
-                            nuevo_por_surtir = por_surtir_actual - cantidad
-                            st.warning(f"📦 ¡Entrada registrada! +{cantidad} al stock. Aún quedan {nuevo_por_surtir} pendientes por surtir.")
-                    else:
-                        nuevo_por_surtir = 0.0
-                        st.success(f"📦 Entrada registrada con éxito: +{cantidad} al stock de {prod_seleccionado}.")
+                    nuevo_por_surtir = max(0.0, por_surtir_actual - cantidad) if por_surtir_actual > 0 else 0.0
                     
                     hoja_inv.update_cell(row_idx, col_stock_idx, nuevo_stock)
                     if col_surtir_idx:
                         hoja_inv.update_cell(row_idx, col_surtir_idx, nuevo_por_surtir)
                         
                     hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), prod_seleccionado, "Compra", cantidad, total_movimiento])
+                    st.success(f"📦 ¡Entrada de proveedor registrada con éxito! +{cantidad} al stock de {prod_seleccionado}.")
                     st.rerun()
     else:
         st.info("No hay productos registrados todavía.")
@@ -419,45 +425,11 @@ with pestana3:
             
         st.dataframe(df_resurtido, use_container_width=True)
         
-        # === TARJETA DE INVERSIÓN CON TIPOGRAFÍA Y TONO CORPORATIVO ===
         st.markdown(f"""
             <div class="metric-card">
                 <h3 style="margin: 0; color: #2E7D32 !important; font-weight: 600;">💰 Inversión Total Estimada: ${gran_total_inversion:,.2f}</h3>
             </div>
         """, unsafe_allow_html=True)
-        
-        st.markdown("---")
-        if st.button("🖨️ Imprimir / Guardar Reporte en PDF"):
-            html_table = df_resurtido.to_html(classes='table')
-            html_content = f"""
-            <html>
-                <head>
-                    <title>Reporte de Resurtido y Pedidos - Nature’s Select</title>
-                    <style>
-                        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Open+Sans:wght@400;600&display=swap');
-                        @page {{ size: letter portrait; margin: 1cm; }}
-                        body {{ font-family: 'Open Sans', Arial, sans-serif; margin: 0; padding: 10px; color: #263238; }}
-                        h2 {{ font-family: 'Montserrat', sans-serif; color: #2E7D32; font-size: 20px; margin-bottom: 5px; font-weight: 600; }}
-                        p {{ font-size: 12px; color: #666; margin-top: 0; }}
-                        table {{ width: 100%; border-collapse: collapse; margin-top: 15px; }}
-                        th, td {{ border: 1px solid #bdc3c7; padding: 8px 10px; text-align: left; font-size: 13px; }}
-                        th {{ background-color: #E8F5E9; color: #2E7D32; font-weight: 600; font-family: 'Montserrat', sans-serif; }}
-                        .total {{ font-size: 16px; font-weight: bold; margin-top: 20px; color: #2E7D32; font-family: 'Montserrat', sans-serif; }}
-                    </style>
-                </head>
-                <body>
-                    <h2>🌿 Nature’s Select - Reporte de Resurtido y Pedidos</h2>
-                    <p>Fecha de emisión: {datetime.utcnow().strftime('%d-%m-%Y %H:%M:%S')} (Hora México)</p>
-                    {html_table}
-                    <div class="total">Inversión Total Estimada: ${gran_total_inversion:,.2f}</div>
-                    <script>window.onload = function() {{ window.print(); }};</script>
-                </body>
-            </html>
-            """
-            encoded_html = base64.b64encode(html_content.encode('utf-8')).decode('utf-8')
-            iframe_code = f'<iframe src="data:text/html;base64,{encoded_html}" width="100%" height="450px" style="border:1px solid #ccc; border-radius:5px;"></iframe>'
-            st.markdown(iframe_code, unsafe_allow_html=True)
-            st.info("💡 Se ha cargado la vista de impresión. Se abrirá automáticamente la ventana para imprimir o guardar como **PDF en tamaño carta**.")
     else:
         st.info("No hay productos en el inventario.")
 
@@ -474,3 +446,77 @@ with pestana4:
         st.dataframe(df_hist, use_container_width=True)
     else:
         st.info("Aún no hay registros en el historial.")
+
+with pestana5:
+    st.subheader("📦 Control de Pedidos y Entregas")
+    st.markdown("Aquí gestionas los pedidos activos. Si un pedido se **Entrega**, se marca como completado; si se **Cancela**, el producto regresa en automático al inventario.")
+    
+    if st.button("🔄 Actualizar Lista de Pedidos"):
+        st.rerun()
+        
+    pedidos_pendientes = hoja_pedidos.get_all_records()
+    pendientes_activos = [p for p in pedidos_pendientes if p.get("Estado") == "Pendiente de Entrega"]
+    
+    if pendientes_activos:
+        for idx, ped in enumerate(pendientes_activos):
+            col1, col2, col3, col4, col5 = st.columns([2, 3, 2, 2, 2])
+            with col1:
+                st.write(f"**Cliente:** {ped.get('Cliente')}")
+                st.caption(f"Fecha: {ped.get('Fecha')}")
+            with col2:
+                st.write(f"**Producto:** {ped.get('Producto')}")
+                st.write(f"**Cantidad:** {ped.get('Cantidad')}")
+            with col3:
+                st.write(f"**Estado:** 🕒 Pendiente")
+            with col4:
+                if st.button(f"✅ Entregar #{ped.get('ID')}", key=f"entregar_{ped.get('ID')}_{idx}"):
+                    todos_p = hoja_pedidos.get_all_records()
+                    fila_real = None
+                    for i, tp in enumerate(todos_p):
+                        if str(tp.get("ID")) == str(ped.get("ID")):
+                            fila_real = i + 2
+                            break
+                    if fila_real:
+                        hoja_pedidos.update_cell(fila_real, 7, "Entregado")
+                        st.success(f"¡Pedido de {ped.get('Cliente')} marcado como Entregado!")
+                        st.rerun()
+            with col5:
+                if st.button(f"❌ Cancelar #{ped.get('ID')}", key=f"cancelar_{ped.get('ID')}_{idx}"):
+                    todos_p = hoja_pedidos.get_all_records()
+                    fila_real = None
+                    for i, tp in enumerate(todos_p):
+                        if str(tp.get("ID")) == str(ped.get("ID")):
+                            fila_real = i + 2
+                            break
+                    if fila_real:
+                        # 1. Marcar como Cancelado en la hoja Pedidos
+                        hoja_pedidos.update_cell(fila_real, 7, "Cancelado")
+                        
+                        # 2. Devolver la mercancía al inventario en automático
+                        prod_ped = ped.get("Producto")
+                        cant_ped = float(ped.get("Cantidad"))
+                        
+                        row_inv_idx = None
+                        prod_obj = None
+                        for i, inv_item in enumerate(hoja_inv.get_all_records()):
+                            if inv_item.get("Nombre del Producto") == prod_ped:
+                                row_inv_idx = i + 2
+                                prod_obj = inv_item
+                                break
+                        
+                        if prod_obj and row_inv_idx:
+                            st_act = float(str(prod_obj.get("Cantidad en Stock", 0)).replace(",", ""))
+                            col_st_idx = 4
+                            for idx_h, h_name in enumerate(headers):
+                                if "stock" in h_name.lower():
+                                    col_st_idx = idx_h + 1
+                                    break
+                            
+                            nuevo_st = st_act + cant_ped
+                            hoja_inv.update_cell(row_inv_idx, col_st_idx, nuevo_st)
+                            
+                        st.warning(f"Pedido cancelado. Se han devuelto **{cant_ped} unidades** de {prod_ped} al inventario.")
+                        st.rerun()
+            st.divider()
+    else:
+        st.info("No hay pedidos pendientes de entrega en este momento.")
