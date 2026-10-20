@@ -105,7 +105,7 @@ except Exception as e:
     st.error(f"Error al conectar con Google Sheets: {e}")
     st.stop()
 
-# Funciones de lectura con caché inteligente (se limpian automáticamente al hacer cambios)
+# Funciones de lectura con caché inteligente
 @st.cache_data(ttl=300)
 def cargar_inventario_cache():
     return hoja_inv.get_all_records()
@@ -235,9 +235,9 @@ with pestana1:
                         st.success(f"🛒 ¡Pedido registrado y stock descontado para **{cli_final}**!")
                     
                     hoja_inv.update_cell(row_idx, col_stock_idx, nuevo_stock)
-                    hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), cli_final, prod_seleccionado, "Venta", cantidad, total_movimiento])
+                    # Guardar respetando el orden real de columnas de Google Sheets (Fecha, Hora, Producto, Compra/Venta, Cantidad, Total)
+                    hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), prod_seleccionado, "Venta", cantidad, total_movimiento])
                     
-                    # Limpieza automática de caché para reflejar cambios al instante
                     st.cache_data.clear()
                     st.rerun()
                 else:
@@ -245,7 +245,7 @@ with pestana1:
                     total_movimiento = 0.0
                     
                     hoja_inv.update_cell(row_idx, col_stock_idx, nuevo_stock)
-                    hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), cli_final, prod_seleccionado, "Compra", cantidad, total_movimiento])
+                    hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), prod_seleccionado, "Compra", cantidad, total_movimiento])
                     st.success(f"📦 ¡Entrada de proveedor registrada con éxito! +{cantidad} al stock de {prod_seleccionado}.")
                     
                     st.cache_data.clear()
@@ -341,7 +341,6 @@ with pestana2:
                         hoja_pedidos.update_cell(fila_real, 7, "Entregado")
                         st.success(f"¡Pedido entregado a {ped.get('Cliente')}!")
                         
-                        # Limpieza automática de caché y recarga instantánea
                         st.cache_data.clear()
                         st.rerun()
             with col_btn2:
@@ -401,17 +400,38 @@ with pestana2:
 with pestana3:
     st.subheader("Historial de Transacciones")
     
+    col_h1, col_h2 = st.columns([5, 2])
+    with col_h2:
+        st.markdown("""
+            <style>
+                div[data-testid="column"]:nth-child(2) button {
+                    background-color: #C62828 !important;
+                }
+                div[data-testid="column"]:nth-child(2) button:hover {
+                    background-color: #B71C1C !important;
+                }
+            </style>
+        """, unsafe_allow_html=True)
+        if st.button("🗑️ Borrar Todo el Historial"):
+            try:
+                hoja_hist.clear()
+                hoja_hist.append_row(["Fecha", "Hora", "Producto", "Compra/Venta", "Cantidad", "Total"])
+                st.cache_data.clear()
+                st.success("¡Historial borrado con éxito!")
+                st.rerun()
+            except Exception as e:
+                st.error(f"Error al borrar historial: {e}")
+        
     registros_h = cargar_historial_cache()
     if registros_h:
-        df_hist = pd.DataFrame(list(reversed(registros_h)))
-        
-        if "Cliente" not in df_hist.columns:
-            df_hist.insert(2, "Cliente", "General / Mostrador")
-            
-        if "Producto" in df_hist.columns:
-            df_hist = df_hist.set_index("Producto")
-            
-        st.dataframe(df_hist, use_container_width=True)
+        df_hist = pd.DataFrame(registros_h)
+        if not df_hist.empty:
+            df_hist = df_hist.iloc[::-1] # Invertir para ver lo más reciente primero
+            if "Producto" in df_hist.columns:
+                df_hist = df_hist.set_index("Producto")
+            st.dataframe(df_hist, use_container_width=True)
+        else:
+            st.info("Aún no hay registros en el historial.")
     else:
         st.info("Aún no hay registros en el historial.")
 
