@@ -96,15 +96,6 @@ try:
     hoja_inv = spreadsheet.worksheet("Hoja 1")
     hoja_hist = spreadsheet.worksheet("Historial")
     
-    # Verificar columnas del Historial y asegurar que tenga la columna Cliente
-    hist_headers = hoja_hist.row_values(1)
-    if not hist_headers or "Cliente" not in hist_headers:
-        if not hist_headers:
-            hoja_hist.append_row(["Fecha", "Hora", "Cliente", "Producto", "Compra/Venta", "Cantidad", "Total"])
-        else:
-            # Si le faltaba la columna cliente, la agregamos al final o reestructuramos
-            pass
-
     try:
         hoja_pedidos = spreadsheet.worksheet("Pedidos")
     except:
@@ -261,7 +252,7 @@ with pestana1:
 
         df_inv = pd.DataFrame(registros_inv)
         
-        # Ocultar columna de Precio Directo
+        # Ocultar columnas innecesarias
         cols_a_quitar = [c for c in df_inv.columns if "precio directo" in c.lower() or "directo" in c.lower() or "por surtir" in c.lower() or "por_surtir" in c.lower()]
         df_inv = df_inv.drop(columns=cols_a_quitar, errors="ignore")
 
@@ -274,18 +265,34 @@ with pestana1:
                 df_inv[col] = pd.to_numeric(df_inv[col], errors="coerce").fillna(0)
                 df_inv[col] = df_inv[col].apply(lambda x: str(int(x)) if x.is_integer() else f"{x:g}")
 
-        # Reorganizar columnas para que "Por entregar" quede entre "Cantidad en Stock" y "Precio de Venta"
-        cols_actuales = list(df_inv.columns)
-        stock_col = next((c for c in cols_actuales if "stock" in c.lower() or "cantidad" in c.lower()), None)
-        precio_col = next((c for c in cols_actuales if "precio" in c.lower()), None)
+        # Reorganizar columnas asegurando que "Por entregar" quede entre stock y precio de venta
+        columnas_disponibles = list(df_inv.columns)
         
-        if stock_col and precio_col:
-            otras_cols = [c for c in cols_actuales if c not in [stock_col, precio_col, "Por entregar"]]
-            idx_stock = otras_cols.index(stock_col)
-            nuevas_cols = otras_cols[:idx_stock+1] + [stock_col, "Por entregar", precio_col] + otras_cols[idx_stock+1:]
-            # Limpiar duplicados si los hubiera
-            nuevas_cols = [c for i, c in enumerate(nuevas_cols) if c not in nuevas_cols[:i]]
-            df_inv = df_inv[[c for c in nuevas_cols if c in df_inv.columns]]
+        # Identificar nombres reales de las columnas en el DataFrame
+        col_prod = next((c for c in columnas_disponibles if "nombre" in c.lower()), columnas_disponibles[0])
+        col_pres = next((c for c in columnas_disponibles if "presentacion" in c.lower() or "presentación" in c.lower()), None)
+        col_stock = next((c for c in columnas_disponibles if "stock" in c.lower() or "cantidad en stock" in c.lower()), None)
+        col_precio = next((c for c in columnas_disponibles if "precio de venta" in c.lower()), None)
+        
+        # Construir orden limpio
+        orden_final = [col_prod]
+        if col_pres and col_pres in columnas_disponibles:
+            orden_final.append(col_pres)
+        if col_stock and col_stock in columnas_disponibles:
+            orden_final.append(col_stock)
+        
+        # Insertar "Por entregar"
+        orden_final.append("Por entregar")
+        
+        if col_precio and col_precio in columnas_disponibles:
+            orden_final.append(col_precio)
+            
+        # Añadir cualquier otra columna restante que no se haya incluido
+        for c in columnas_disponibles:
+            if c not in orden_final:
+                orden_final.append(c)
+                
+        df_inv = df_inv[[c for c in orden_final if c in df_inv.columns]]
 
         if "Nombre del Producto" in df_inv.columns:
             df_inv = df_inv.set_index("Nombre del Producto")
