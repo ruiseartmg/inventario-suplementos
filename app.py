@@ -142,7 +142,6 @@ with pestana1:
     nombres_productos = [p.get("Nombre del Producto") for p in registros_inv if p.get("Nombre del Producto")]
     
     if nombres_productos:
-        # Menú desplegable directo sin buscador
         prod_seleccionado = st.selectbox("Selecciona Producto", nombres_productos)
         
         nombre_cliente = st.text_input("Nombre del Cliente (Opcional si es compra directa de proveedor):", "")
@@ -217,7 +216,7 @@ with pestana1:
                         prod_seleccionado, 
                         cantidad, 
                         "Venta", 
-                        "Pendiente de Entrega"
+                        "Por entregar"
                     ])
                     
                     nuevo_stock = stock_actual - cantidad
@@ -237,7 +236,6 @@ with pestana1:
                     hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), prod_seleccionado, "Venta", cantidad, total_movimiento])
                     st.rerun()
                 else:
-                    # Compra de proveedor con precio directo manejado internamente sin mostrarse en esta vista
                     precio_directo = 1.0
                     for k, v in producto_obj.items():
                         if "precio directo" in k.lower() or "directo" in k.lower():
@@ -323,8 +321,8 @@ with pestana2:
                     st.error(f"Error al guardar: {e}")
 
 with pestana3:
-    st.subheader("📋 Sugerencia de Pedido, Costos y Resurtido")
-    st.markdown("Consulta el pedido sugerido, el costo estimado por artículo y el total a invertir.")
+    st.subheader("📋 Sugerencia de Pedido (Por Surtir con Proveedor) y Costos")
+    st.markdown("Consulta el pedido sugerido al proveedor, el costo estimado por artículo y el total a invertir.")
     
     if st.button("🔄 Actualizar Datos de Pedidos"):
         st.rerun()
@@ -401,7 +399,7 @@ with pestana3:
             lista_resurtido.append({
                 "Producto": nombre,
                 "Stock Actual": stock_str,
-                "Por Surtir": surtir_str,
+                "Por Surtir (Proveedor)": surtir_str,
                 "Promedio/Mes": prom_str,
                 "Sugerido": sugerido_str,
                 "Costo Unit.": f"${p_directo:,.2f}",
@@ -438,14 +436,14 @@ with pestana4:
         st.info("Aún no hay registros en el historial.")
 
 with pestana5:
-    st.subheader("📦 Control de Pedidos y Entregas")
-    st.markdown("Aquí gestionas los pedidos activos. Si un pedido se **Entrega**, se marca como completado; si se **Cancela**, el producto regresa en automático al inventario.")
+    st.subheader("📦 Relación de Productos 'Por Entregar' a Clientes")
+    st.markdown("Aquí tienes la relación exacta de lo que tienes que entregar y a quién se lo debes entregar. Al presionar **'Entregar'**, se completa el proceso; si se **'Cancelar'**, la mercancía regresa al inventario.")
     
-    if st.button("🔄 Actualizar Lista de Pedidos"):
+    if st.button("🔄 Actualizar Relación de Entregas"):
         st.rerun()
         
     pedidos_pendientes = hoja_pedidos.get_all_records()
-    pendientes_activos = [p for p in pedidos_pendientes if p.get("Estado") == "Pendiente de Entrega"]
+    pendientes_activos = [p for p in pedidos_pendientes if p.get("Estado") == "Por entregar"]
     
     if pendientes_activos:
         for idx, ped in enumerate(pendientes_activos):
@@ -454,10 +452,10 @@ with pestana5:
                 st.write(f"**Cliente:** {ped.get('Cliente')}")
                 st.caption(f"Fecha: {ped.get('Fecha')}")
             with col2:
-                st.write(f"**Producto:** {ped.get('Producto')}")
+                st.write(f"**Producto a Entregar:** {ped.get('Producto')}")
                 st.write(f"**Cantidad:** {ped.get('Cantidad')}")
             with col3:
-                st.write(f"**Estado:** 🕒 Pendiente")
+                st.write(f"**Estatus:** 🕒 Por entregar")
             with col4:
                 if st.button(f"✅ Entregar #{ped.get('ID')}", key=f"entregar_{ped.get('ID')}_{idx}"):
                     todos_p = hoja_pedidos.get_all_records()
@@ -468,7 +466,7 @@ with pestana5:
                             break
                     if fila_real:
                         hoja_pedidos.update_cell(fila_real, 7, "Entregado")
-                        st.success(f"¡Pedido de {ped.get('Cliente')} marcado como Entregado!")
+                        st.success(f"¡Pedido entregado a {ped.get('Cliente')} con éxito!")
                         st.rerun()
             with col5:
                 if st.button(f"❌ Cancelar #{ped.get('ID')}", key=f"cancelar_{ped.get('ID')}_{idx}"):
@@ -507,4 +505,4 @@ with pestana5:
                         st.rerun()
             st.divider()
     else:
-        st.info("No hay pedidos pendientes de entrega en este momento.")
+        st.info("No hay productos 'Por entregar' a clientes en este momento.")
