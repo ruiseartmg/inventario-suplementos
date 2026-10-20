@@ -58,6 +58,17 @@ st.markdown("""
             margin-bottom: 15px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.04);
         }
+
+        .stock-badge {
+            background-color: #E8F5E9;
+            color: #1B5E20;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 15px;
+            border: 1px solid #C8E6C9;
+        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -97,7 +108,6 @@ try:
     hoja_inv = spreadsheet.worksheet("Hoja 1")
     hoja_hist = spreadsheet.worksheet("Historial")
     
-    # Asegurar que la hoja Historial tenga la columna Cliente en los encabezados
     try:
         headers_hist = hoja_hist.row_values(1)
         if not headers_hist or "Cliente" not in [h.strip() for h in headers_hist]:
@@ -115,7 +125,7 @@ except Exception as e:
     st.error(f"Error al conectar con Google Sheets: {e}")
     st.stop()
 
-# Funciones de lectura con caché extendido (ttl=600 segundos) y pausa de seguridad para evitar Error 429
+# Funciones de lectura con caché extendido (ttl=600 segundos) y pausa de seguridad
 @st.cache_data(ttl=600)
 def cargar_inventario_cache():
     time.sleep(0.3)
@@ -170,6 +180,20 @@ with pestana1:
     
     if nombres_productos:
         prod_seleccionado = st.selectbox("Selecciona Producto", nombres_productos)
+        
+        stock_en_selector = 0.0
+        for p_item in registros_inv:
+            if p_item.get("Nombre del Producto") == prod_seleccionado:
+                for k, v in p_item.items():
+                    if "stock" in k.lower() or "cantidad" in k.lower():
+                        try:
+                            stock_en_selector = float(str(v).replace(",", ""))
+                            break
+                        except:
+                            continue
+        
+        stock_str_fmt = str(int(stock_en_selector)) if stock_en_selector.is_integer() else f"{stock_en_selector:g}"
+        st.markdown(f'<div class="stock-badge">📦 Existencia Física Actual: <b>{stock_str_fmt} unidades</b></div>', unsafe_allow_html=True)
         
         nombre_cliente = st.text_input("Nombre del Cliente (Opcional si es compra directa de proveedor):", "")
         cantidad = st.number_input("Cantidad", min_value=0.1, step=0.25, value=1.0)
@@ -418,6 +442,15 @@ with pestana3:
         df_hist = pd.DataFrame(registros_h)
         if not df_hist.empty:
             df_hist = df_hist.iloc[::-1] # Invertir para ver lo más reciente primero
+            
+            # Formatear la columna Total con signo de pesos y la Cantidad como número limpio
+            if "Total" in df_hist.columns:
+                df_hist["Total"] = pd.to_numeric(df_hist["Total"].astype(str).str.replace("$", "").str.replace(",", "").str.strip(), errors="coerce").fillna(0)
+                df_hist["Total"] = df_hist["Total"].apply(lambda x: f"${x:,.2f}")
+            if "Cantidad" in df_hist.columns:
+                df_hist["Cantidad"] = pd.to_numeric(df_hist["Cantidad"].astype(str).str.replace("$", "").str.replace(",", "").str.strip(), errors="coerce").fillna(0)
+                df_hist["Cantidad"] = df_hist["Cantidad"].apply(lambda x: str(int(x)) if x.is_integer() else f"{x:g}")
+
             if "Producto" in df_hist.columns:
                 df_hist = df_hist.set_index("Producto")
             st.dataframe(df_hist, use_container_width=True)
@@ -427,7 +460,7 @@ with pestana3:
         st.info("Aún no hay registros en el historial.")
 
 with pestana4:
-    st.subheader("📋 Sugerencia de Pedido (Por Surtir con Proveedor) y Costos")
+    st.subheader("📋 Sugerencia de Pedido (Por Surtirกับ Proveedor) y Costos")
     st.markdown("Consulta el pedido sugerido al proveedor, el costo estimado por artículo y el total a invertir.")
     
     reg_hist_actuales = cargar_historial_cache()
