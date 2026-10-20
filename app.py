@@ -69,6 +69,15 @@ st.markdown("""
             margin-bottom: 15px;
             border: 1px solid #C8E6C9;
         }
+
+        .deficit-alert-card {
+            background-color: #FFEBEE;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 6px solid #C62828;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -354,6 +363,41 @@ with pestana2:
     pendientes_activos = [p for p in pedidos_pendientes if p.get("Estado") == "Por entregar"]
     
     if pendientes_activos:
+        # Detectar qué productos tienen stock actual de 0 o menor al pendiente (déficit)
+        stock_por_producto = {}
+        for inv_p in registros_inv:
+            nombre_p = inv_p.get("Nombre del Producto")
+            st_val = 0.0
+            for k, v in inv_p.items():
+                if "stock" in k.lower() or "cantidad" in k.lower():
+                    try:
+                        st_val = float(str(v).replace(",", ""))
+                        break
+                    except:
+                        continue
+            stock_por_producto[nombre_p] = st_val
+
+        pedidos_en_deficit = []
+        for ped in pendientes_activos:
+            p_nombre = ped.get("Producto")
+            stock_fisico_actual = stock_por_producto.get(p_nombre, 0.0)
+            if stock_fisico_actual <= 0:
+                pedidos_en_deficit.append(ped)
+
+        # Mostrar sección especial de Déficit si existe alguno
+        if pedidos_en_deficit:
+            st.markdown("### 🚨 Pedidos en Espera por Déficit (Stock en 0 o Insuficiente)")
+            st.markdown("Los siguientes clientes están esperando producto porque el inventario actual está agotado:")
+            for def_ped in pedidos_en_deficit:
+                st.markdown(f"""
+                    <div class="deficit-alert-card">
+                        <b>👤 Cliente:</b> {def_ped.get('Cliente')} <br>
+                        <b>🛍️ Producto sin Stock:</b> {def_ped.get('Producto')} (Cantidad pendiente: <b>{def_ped.get('Cantidad')}</b>) <br>
+                        <span style='color: gray; font-size: 11px;'>ID Pedido: {def_ped.get('ID')} | Fecha de registro: {def_ped.get('Fecha')}</span>
+                    </div>
+                """, unsafe_allow_html=True)
+            st.markdown("---")
+
         clientes_disponibles = sorted(list(set([p.get("Cliente") for p in pendientes_activos])))
         filtro_cliente = st.selectbox("🔍 Filtrar por Cliente específico:", ["-- Todos los Clientes --"] + clientes_disponibles)
         
@@ -443,7 +487,6 @@ with pestana3:
         if not df_hist.empty:
             df_hist = df_hist.iloc[::-1] # Invertir para ver lo más reciente primero
             
-            # Formatear la columna Total con signo de pesos y la Cantidad como número limpio
             if "Total" in df_hist.columns:
                 df_hist["Total"] = pd.to_numeric(df_hist["Total"].astype(str).str.replace("$", "").str.replace(",", "").str.strip(), errors="coerce").fillna(0)
                 df_hist["Total"] = df_hist["Total"].apply(lambda x: f"${x:,.2f}")
@@ -460,7 +503,7 @@ with pestana3:
         st.info("Aún no hay registros en el historial.")
 
 with pestana4:
-    st.subheader("📋 Sugerencia de Pedido (Por Surtirกับ Proveedor) y Costos")
+    st.subheader("📋 Sugerencia de Pedido (Por Surtir con Proveedor) y Costos")
     st.markdown("Consulta el pedido sugerido al proveedor, el costo estimado por artículo y el total a invertir.")
     
     reg_hist_actuales = cargar_historial_cache()
@@ -477,12 +520,14 @@ with pestana4:
                 
             if not df_ventas.empty:
                 try:
-                    df_ventas["Mes"] = df_ventas["Fecha"].str.slice(3, 10)
-                    df_ventas["Cantidad"] = pd.to_numeric(df_ventas["Cantidad"], errors="coerce").fillna(0)
-                    totales_prod_mes = df_ventas.groupby(["Producto", "Mes"])["Cantidad"].sum().reset_index()
-                    promedios = totales_prod_mes.groupby("Producto")["Cantidad"].mean().reset_index()
+                    df_ventas["Fecha_str"] = df_ventas["Fecha"].astype(str).str.strip()
+                    df_ventas["Mes"] = df_ventas["Fecha_str"].str.slice(3, 10)
+                    df_ventas["Cantidad_num"] = pd.to_numeric(df_ventas["Cantidad"].astype(str).str.replace("$", "").str.replace(",", "").str.strip(), errors="coerce").fillna(0)
+                    
+                    totales_prod_mes = df_ventas.groupby(["Producto", "Mes"])["Cantidad_num"].sum().reset_index()
+                    promedios = totales_prod_mes.groupby("Producto")["Cantidad_num"].mean().reset_index()
                     for _, row in promedios.iterrows():
-                        promedios_dict[row["Producto"]] = float(row["Cantidad"])
+                        promedios_dict[row["Producto"]] = float(row["Cantidad_num"])
                 except:
                     pass
 
