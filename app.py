@@ -105,25 +105,18 @@ except Exception as e:
     st.error(f"Error al conectar con Google Sheets: {e}")
     st.stop()
 
-# Funciones de lectura con caché para blindar la app contra el error 429
-@st.cache_data(ttl=60)
+# Funciones de lectura con caché inteligente (se limpian automáticamente al hacer cambios)
+@st.cache_data(ttl=300)
 def cargar_inventario_cache():
     return hoja_inv.get_all_records()
 
-@st.cache_data(ttl=60)
+@st.cache_data(ttl=300)
 def cargar_pedidos_cache():
     return hoja_pedidos.get_all_records()
 
-@st.cache_data(ttl=60)
+@st.cache_data(ttl=300)
 def cargar_historial_cache():
     return hoja_hist.get_all_records()
-
-# Botón general para limpiar caché si el usuario quiere forzar datos nuevos
-col_master1, col_master2 = st.columns([6, 1])
-with col_master2:
-    if st.button("🔄 Recargar Nube"):
-        st.cache_data.clear()
-        st.rerun()
 
 registros_inv = cargar_inventario_cache()
 headers = hoja_inv.row_values(1)
@@ -175,7 +168,7 @@ with pestana1:
             
             row_idx = None
             producto_obj = None
-            inv_actuales = hoja_inv.get_all_records() # Lectura directa para actualización
+            inv_actuales = hoja_inv.get_all_records()
             for i, p in enumerate(inv_actuales):
                 if p.get("Nombre del Producto") == prod_seleccionado:
                     row_idx = i + 2 
@@ -243,7 +236,9 @@ with pestana1:
                     
                     hoja_inv.update_cell(row_idx, col_stock_idx, nuevo_stock)
                     hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), cli_final, prod_seleccionado, "Venta", cantidad, total_movimiento])
-                    st.cache_data.clear() # Limpiar caché para reflejar cambios
+                    
+                    # Limpieza automática de caché para reflejar cambios al instante
+                    st.cache_data.clear()
                     st.rerun()
                 else:
                     nuevo_stock = stock_actual + cantidad
@@ -252,6 +247,7 @@ with pestana1:
                     hoja_inv.update_cell(row_idx, col_stock_idx, nuevo_stock)
                     hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), cli_final, prod_seleccionado, "Compra", cantidad, total_movimiento])
                     st.success(f"📦 ¡Entrada de proveedor registrada con éxito! +{cantidad} al stock de {prod_seleccionado}.")
+                    
                     st.cache_data.clear()
                     st.rerun()
     else:
@@ -344,6 +340,8 @@ with pestana2:
                     if fila_real:
                         hoja_pedidos.update_cell(fila_real, 7, "Entregado")
                         st.success(f"¡Pedido entregado a {ped.get('Cliente')}!")
+                        
+                        # Limpieza automática de caché y recarga instantánea
                         st.cache_data.clear()
                         st.rerun()
             with col_btn2:
@@ -393,6 +391,7 @@ with pestana2:
                             hoja_inv.update_cell(row_inv_idx, col_st_idx, nuevo_st)
                             
                         st.warning(f"Pedido cancelado. Se devolvieron **{cant_ped} unidades** de {prod_ped} al inventario.")
+                        
                         st.cache_data.clear()
                         st.rerun()
             st.divider()
@@ -548,6 +547,7 @@ with pestana5:
                             nueva_fila[idx] = datos_ingresados[header]
                     hoja_inv.append_row(nueva_fila)
                     st.success(f"¡El producto '{nuevo_nombre}' se ha dado de alta correctamente!")
+                    
                     st.cache_data.clear()
                     st.rerun()
                 except Exception as e:
