@@ -128,12 +128,15 @@ except:
 
 st.markdown("---")
 
+# ==========================================
+# ORDEN DE PESTAÑAS SOLICITADO
+# ==========================================
 pestana1, pestana2, pestana3, pestana4, pestana5 = st.tabs([
-    "🛒 Pedidos y Ventas", 
-    "➕ Nuevo Producto", 
-    "📋 Resurtido y Pedidos", 
-    "📜 Historial",
-    "📦 Control de Pedidos"
+    "🛒 Pedidos", 
+    "📦 Control de Pedidos", 
+    "📜 Historial", 
+    "📋 Resurtido",
+    "➕ Nuevo Producto"
 ])
 
 with pestana1:
@@ -236,20 +239,9 @@ with pestana1:
                     hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), prod_seleccionado, "Venta", cantidad, total_movimiento])
                     st.rerun()
                 else:
-                    precio_directo = 1.0
-                    for k, v in producto_obj.items():
-                        if "precio directo" in k.lower() or "directo" in k.lower():
-                            raw_pd = str(v).replace("$", "").replace(",", "").strip()
-                            try:
-                                precio_directo = float(raw_pd)
-                                break
-                            except:
-                                pass
-                    if precio_directo == 1.0 and precio_venta > 0:
-                        precio_directo = precio_venta
-
+                    # Entrada de proveedor sin mostrar costos directos
                     nuevo_stock = stock_actual + cantidad
-                    total_movimiento = cantidad * precio_directo
+                    total_movimiento = 0.0
                     nuevo_por_surtir = max(0.0, por_surtir_actual - cantidad) if por_surtir_actual > 0 else 0.0
                     
                     hoja_inv.update_cell(row_idx, col_stock_idx, nuevo_stock)
@@ -280,51 +272,106 @@ with pestana1:
         st.dataframe(df_inv, use_container_width=True)
 
 with pestana2:
-    st.subheader("Agregar un Producto Nuevo al Inventario")
-    with st.form("form_nuevo_producto"):
-        nuevo_nombre = st.text_input("Nombre del Producto * (ej. Miel 500 g, Granola 1 kg)")
-        col1, col2 = st.columns(2)
-        with col1:
-            nueva_presentacion = st.text_input("Presentación (ej. 500 g, 1 kg, frasco)")
-            stock_inicial = st.number_input("Cantidad Inicial en Stock", min_value=0.0, step=0.25, value=0.0)
-            precio_dir = st.number_input("Precio Directo", min_value=0.0, step=1.0, value=0.0)
-        with col2:
-            nueva_marca = st.text_input("Marca")
-            precio_ven = st.number_input("Precio de Venta", min_value=0.0, step=1.0, value=0.0)
-            categoria = st.text_input("Categoría")
-            
-        submitted = st.form_submit_button("Guardar Producto en la Nube")
-        if submitted:
-            if not nuevo_nombre.strip():
-                st.error("¡El nombre del producto es obligatorio!")
-            else:
-                try:
-                    nueva_fila = [""] * len(headers)
-                    datos_ingresados = {
-                        "Nombre del Producto": nuevo_nombre,
-                        "Presentacion": nueva_presentacion,
-                        "Marca": nueva_marca,
-                        "Cantidad en Stock": stock_inicial,
-                        "Precio Directo": precio_dir,
-                        "Precio de Venta": precio_ven,
-                        "Categoría": categoria,
-                        "Categoria": categoria,
-                        "Por surtir": 0
-                    }
-                    for idx, header in enumerate(headers):
-                        if header in datos_ingresados:
-                            nueva_fila[idx] = datos_ingresados[header]
-                    hoja_inv.append_row(nueva_fila)
-                    st.success(f"¡El producto '{nuevo_nombre}' se ha dado de alta correctamente!")
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Error al guardar: {e}")
+    st.subheader("📦 Control de Pedidos y Entregas")
+    st.markdown("Tabla dinámica con la relación de entregas pendientes. Selecciona una acción por cada pedido.")
+    
+    if st.button("🔄 Actualizar Tabla de Entregas"):
+        st.rerun()
+        
+    pedidos_pendientes = hoja_pedidos.get_all_records()
+    pendientes_activos = [p for p in pedidos_pendientes if p.get("Estado") == "Por entregar"]
+    
+    if pendientes_activos:
+        tabla_datos = []
+        for p in pendientes_activos:
+            tabla_datos.append({
+                "ID": p.get("ID"),
+                "Fecha": p.get("Fecha"),
+                "Cliente": p.get("Cliente"),
+                "Producto": p.get("Producto"),
+                "Cantidad": p.get("Cantidad")
+            })
+        
+        df_pendientes = pd.DataFrame(tabla_datos)
+        st.dataframe(df_pendientes, use_container_width=True)
+        
+        st.markdown("---")
+        st.markdown("### ⚙️ Gestionar Pedidos Individuales")
+        
+        for idx, ped in enumerate(pendientes_activos):
+            col_info, col_btn1, col_btn2 = st.columns([4, 2, 2])
+            with col_info:
+                st.text(f"ID: {ped.get('ID')} | Cliente: {ped.get('Cliente')} | Producto: {ped.get('Producto')} ({ped.get('Cantidad')} u.)")
+            with col_btn1:
+                if st.button(f"✅ Entregar", key=f"entregar_{ped.get('ID')}_{idx}"):
+                    todos_p = hoja_pedidos.get_all_records()
+                    fila_real = None
+                    for i, tp in enumerate(todos_p):
+                        if str(tp.get("ID")) == str(ped.get("ID")):
+                            fila_real = i + 2
+                            break
+                    if fila_real:
+                        hoja_pedidos.update_cell(fila_real, 7, "Entregado")
+                        st.success(f"¡Pedido entregado a {ped.get('Cliente')}!")
+                        st.rerun()
+            with col_btn2:
+                if st.button(f"❌ Cancelar", key=f"cancelar_{ped.get('ID')}_{idx}"):
+                    todos_p = hoja_pedidos.get_all_records()
+                    fila_real = None
+                    for i, tp in enumerate(todos_p):
+                        if str(tp.get("ID")) == str(ped.get("ID")):
+                            fila_real = i + 2
+                            break
+                    if fila_real:
+                        hoja_pedidos.update_cell(fila_real, 7, "Cancelado")
+                        
+                        prod_ped = ped.get("Producto")
+                        cant_ped = float(ped.get("Cantidad"))
+                        
+                        row_inv_idx = None
+                        prod_obj = None
+                        for i, inv_item in enumerate(hoja_inv.get_all_records()):
+                            if inv_item.get("Nombre del Producto") == prod_ped:
+                                row_inv_idx = i + 2
+                                prod_obj = inv_item
+                                break
+                        
+                        if prod_obj and row_inv_idx:
+                            st_act = float(str(prod_obj.get("Cantidad in Stock", 0) or prod_obj.get("Cantidad en Stock", 0)).replace(",", ""))
+                            col_st_idx = 4
+                            for idx_h, h_name in enumerate(headers):
+                                if "stock" in h_name.lower():
+                                    col_st_idx = idx_h + 1
+                                    break
+                            
+                            nuevo_st = st_act + cant_ped
+                            hoja_inv.update_cell(row_inv_idx, col_st_idx, nuevo_st)
+                            
+                        st.warning(f"Pedido cancelado. Se devolvieron **{cant_ped} unidades** de {prod_ped} al inventario.")
+                        st.rerun()
+            st.divider()
+    else:
+        st.info("No hay productos 'Por entregar' a clientes en este momento.")
 
 with pestana3:
+    st.subheader("Historial de Transacciones")
+    if st.button("🔄 Actualizar Historial"):
+        st.rerun()
+        
+    registros_h = hoja_hist.get_all_records()
+    if registros_h:
+        df_hist = pd.DataFrame(list(reversed(registros_h)))
+        if "Producto" in df_hist.columns:
+            df_hist = df_hist.set_index("Producto")
+        st.dataframe(df_hist, use_container_width=True)
+    else:
+        st.info("Aún no hay registros en el historial.")
+
+with pestana4:
     st.subheader("📋 Sugerencia de Pedido (Por Surtir con Proveedor) y Costos")
     st.markdown("Consulta el pedido sugerido al proveedor, el costo estimado por artículo y el total a invertir.")
     
-    if st.button("🔄 Actualizar Datos de Pedidos"):
+    if st.button("🔄 Actualizar Datos de Resurtido"):
         st.rerun()
         
     reg_hist_actuales = hoja_hist.get_all_records()
@@ -421,88 +468,43 @@ with pestana3:
     else:
         st.info("No hay productos en el inventario.")
 
-with pestana4:
-    st.subheader("Historial de Transacciones")
-    if st.button("🔄 Actualizar Historial"):
-        st.rerun()
-        
-    registros_h = hoja_hist.get_all_records()
-    if registros_h:
-        df_hist = pd.DataFrame(list(reversed(registros_h)))
-        if "Producto" in df_hist.columns:
-            df_hist = df_hist.set_index("Producto")
-        st.dataframe(df_hist, use_container_width=True)
-    else:
-        st.info("Aún no hay registros en el historial.")
-
 with pestana5:
-    st.subheader("📦 Relación de Productos 'Por Entregar' a Clientes")
-    st.markdown("Aquí tienes la relación exacta de lo que tienes que entregar y a quién se lo debes entregar. Al presionar **'Entregar'**, se completa el proceso; si se **'Cancelar'**, la mercancía regresa al inventario.")
-    
-    if st.button("🔄 Actualizar Relación de Entregas"):
-        st.rerun()
-        
-    pedidos_pendientes = hoja_pedidos.get_all_records()
-    pendientes_activos = [p for p in pedidos_pendientes if p.get("Estado") == "Por entregar"]
-    
-    if pendientes_activos:
-        for idx, ped in enumerate(pendientes_activos):
-            col1, col2, col3, col4, col5 = st.columns([2, 3, 2, 2, 2])
-            with col1:
-                st.write(f"**Cliente:** {ped.get('Cliente')}")
-                st.caption(f"Fecha: {ped.get('Fecha')}")
-            with col2:
-                st.write(f"**Producto a Entregar:** {ped.get('Producto')}")
-                st.write(f"**Cantidad:** {ped.get('Cantidad')}")
-            with col3:
-                st.write(f"**Estatus:** 🕒 Por entregar")
-            with col4:
-                if st.button(f"✅ Entregar #{ped.get('ID')}", key=f"entregar_{ped.get('ID')}_{idx}"):
-                    todos_p = hoja_pedidos.get_all_records()
-                    fila_real = None
-                    for i, tp in enumerate(todos_p):
-                        if str(tp.get("ID")) == str(ped.get("ID")):
-                            fila_real = i + 2
-                            break
-                    if fila_real:
-                        hoja_pedidos.update_cell(fila_real, 7, "Entregado")
-                        st.success(f"¡Pedido entregado a {ped.get('Cliente')} con éxito!")
-                        st.rerun()
-            with col5:
-                if st.button(f"❌ Cancelar #{ped.get('ID')}", key=f"cancelar_{ped.get('ID')}_{idx}"):
-                    todos_p = hoja_pedidos.get_all_records()
-                    fila_real = None
-                    for i, tp in enumerate(todos_p):
-                        if str(tp.get("ID")) == str(ped.get("ID")):
-                            fila_real = i + 2
-                            break
-                    if fila_real:
-                        hoja_pedidos.update_cell(fila_real, 7, "Cancelado")
-                        
-                        prod_ped = ped.get("Producto")
-                        cant_ped = float(ped.get("Cantidad"))
-                        
-                        row_inv_idx = None
-                        prod_obj = None
-                        for i, inv_item in enumerate(hoja_inv.get_all_records()):
-                            if inv_item.get("Nombre del Producto") == prod_ped:
-                                row_inv_idx = i + 2
-                                prod_obj = inv_item
-                                break
-                        
-                        if prod_obj and row_inv_idx:
-                            st_act = float(str(prod_obj.get("Cantidad en Stock", 0)).replace(",", ""))
-                            col_st_idx = 4
-                            for idx_h, h_name in enumerate(headers):
-                                if "stock" in h_name.lower():
-                                    col_st_idx = idx_h + 1
-                                    break
-                            
-                            nuevo_st = st_act + cant_ped
-                            hoja_inv.update_cell(row_inv_idx, col_st_idx, nuevo_st)
-                            
-                        st.warning(f"Pedido cancelado. Se han devuelto **{cant_ped} unidades** de {prod_ped} al inventario.")
-                        st.rerun()
-            st.divider()
-    else:
-        st.info("No hay productos 'Por entregar' a clientes en este momento.")
+    st.subheader("Agregar un Producto Nuevo al Inventario")
+    with st.form("form_nuevo_producto"):
+        nuevo_nombre = st.text_input("Nombre del Producto * (ej. Miel 500 g, Granola 1 kg)")
+        col1, col2 = st.columns(2)
+        with col1:
+            nueva_presentacion = st.text_input("Presentación (ej. 500 g, 1 kg, frasco)")
+            stock_inicial = st.number_input("Cantidad Inicial en Stock", min_value=0.0, step=0.25, value=0.0)
+            precio_dir = st.number_input("Precio Directo", min_value=0.0, step=1.0, value=0.0)
+        with col2:
+            nueva_marca = st.text_input("Marca")
+            precio_ven = st.number_input("Precio de Venta", min_value=0.0, step=1.0, value=0.0)
+            categoria = st.text_input("Categoría")
+            
+        submitted = st.form_submit_button("Guardar Producto en la Nube")
+        if submitted:
+            if not nuevo_nombre.strip():
+                st.error("¡El nombre del producto es obligatorio!")
+            else:
+                try:
+                    nueva_fila = [""] * len(headers)
+                    datos_ingresados = {
+                        "Nombre del Producto": nuevo_nombre,
+                        "Presentacion": nueva_presentacion,
+                        "Marca": nueva_marca,
+                        "Cantidad en Stock": stock_inicial,
+                        "Precio Directo": precio_dir,
+                        "Precio de Venta": precio_ven,
+                        "Categoría": categoria,
+                        "Categoria": categoria,
+                        "Por surtir": 0
+                    }
+                    for idx, header in enumerate(headers):
+                        if header in datos_ingresados:
+                            nueva_fila[idx] = datos_ingresados[header]
+                    hoja_inv.append_row(nueva_fila)
+                    st.success(f"¡El producto '{nuevo_nombre}' se ha dado de alta correctamente!")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Error al guardar: {e}")
