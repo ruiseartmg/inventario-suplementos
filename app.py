@@ -256,11 +256,9 @@ with pestana1:
     if registros_inv:
         df_inv = pd.DataFrame(registros_inv)
         
-        # Ocultar columna de Precio Directo de la visualización
         cols_a_quitar = [c for c in df_inv.columns if "precio directo" in c.lower() or "directo" in c.lower()]
         df_inv = df_inv.drop(columns=cols_a_quitar, errors="ignore")
         
-        # Renombrar columna "Por surtir" a "Por entregar" para claridad
         rename_cols = {}
         for c in df_inv.columns:
             if "por surtir" in c.lower() or "por_surtir" in c.lower():
@@ -282,7 +280,7 @@ with pestana1:
 
 with pestana2:
     st.subheader("📦 Control de Pedidos y Entregas")
-    st.markdown("Filtra por cliente o revisa la relación de entregas pendientes con sus botones directos.")
+    st.markdown("Tabla general de entregas pendientes. Puedes filtrar por cliente y marcar cada renglón.")
     
     if st.button("🔄 Actualizar Tabla de Entregas"):
         st.rerun()
@@ -295,11 +293,28 @@ with pestana2:
         filtro_cliente = st.selectbox("🔍 Filtrar por Cliente específico:", ["-- Todos los Clientes --"] + clientes_disponibles)
         
         if filtro_cliente != "-- Todos los Clientes --":
-            pendientes_activos = [p for p in pendientes_activos if p.get("Cliente") == filtro_cliente]
+            pendientes_activos_tabla = [p for p in pendientes_activos if p.get("Cliente") == filtro_cliente]
+        else:
+            pendientes_activos_tabla = pendientes_activos
+        
+        # Construir tabla limpia estilo Historial para visualizar
+        tabla_datos = []
+        for p in pendientes_activos_tabla:
+            tabla_datos.append({
+                "ID": p.get("ID"),
+                "Fecha": p.get("Fecha"),
+                "Cliente": p.get("Cliente"),
+                "Producto": p.get("Producto"),
+                "Cantidad": p.get("Cantidad")
+            })
+        
+        df_tabla_pendientes = pd.DataFrame(tabla_datos)
+        st.dataframe(df_tabla_pendientes, use_container_width=True)
         
         st.markdown("---")
+        st.markdown("### ⚙️ Acciones por Pedido")
         
-        for idx, ped in enumerate(pendientes_activos):
+        for idx, ped in enumerate(pendientes_activos_tabla):
             col_info, col_btn1, col_btn2 = st.columns([5, 1.5, 1.5])
             with col_info:
                 st.markdown(f"**👤 {ped.get('Cliente')}** | 🛍️ **{ped.get('Producto')}** ({ped.get('Cantidad')} u.)  \n<span style='color: gray; font-size: 12px;'>ID: {ped.get('ID')} | Fecha: {ped.get('Fecha')}</span>", unsafe_allow_html=True)
