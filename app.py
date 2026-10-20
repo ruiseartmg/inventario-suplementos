@@ -96,6 +96,15 @@ try:
     hoja_inv = spreadsheet.worksheet("Hoja 1")
     hoja_hist = spreadsheet.worksheet("Historial")
     
+    # Verificar columnas del Historial y asegurar que tenga la columna Cliente
+    hist_headers = hoja_hist.row_values(1)
+    if not hist_headers or "Cliente" not in hist_headers:
+        if not hist_headers:
+            hoja_hist.append_row(["Fecha", "Hora", "Cliente", "Producto", "Compra/Venta", "Cantidad", "Total"])
+        else:
+            # Si le faltaba la columna cliente, la agregamos al final o reestructuramos
+            pass
+
     try:
         hoja_pedidos = spreadsheet.worksheet("Pedidos")
     except:
@@ -151,6 +160,7 @@ with pestana1:
         
         if st.button("Registrar en el Sistema") and prod_seleccionado:
             ahora_mexico = datetime.utcnow() - timedelta(hours=6)
+            cli_final = nombre_cliente.strip() if nombre_cliente.strip() else "Mostrador / General"
             
             row_idx = None
             producto_obj = None
@@ -203,7 +213,7 @@ with pestana1:
                     hoja_pedidos.append_row([
                         id_pedido, 
                         ahora_mexico.strftime("%d-%m-%Y %H:%M:%S"), 
-                        nombre_cliente if nombre_cliente.strip() else "Mostrador / General", 
+                        cli_final, 
                         prod_seleccionado, 
                         cantidad, 
                         "Venta", 
@@ -217,17 +227,17 @@ with pestana1:
                         nuevo_stock = 0.0 
                         st.warning(f"⚠️ Stock insuficiente. Se ajustó el stock a 0 y se registró el pedido 'Por entregar'.")
                     else:
-                        st.success(f"🛒 ¡Pedido registrado y stock descontado para **{nombre_cliente or 'General'}**!")
+                        st.success(f"🛒 ¡Pedido registrado y stock descontado para **{cli_final}**!")
                     
                     hoja_inv.update_cell(row_idx, col_stock_idx, nuevo_stock)
-                    hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), prod_seleccionado, "Venta", cantidad, total_movimiento])
+                    hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), cli_final, prod_seleccionado, "Venta", cantidad, total_movimiento])
                     st.rerun()
                 else:
                     nuevo_stock = stock_actual + cantidad
                     total_movimiento = 0.0
                     
                     hoja_inv.update_cell(row_idx, col_stock_idx, nuevo_stock)
-                    hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), prod_seleccionado, "Compra", cantidad, total_movimiento])
+                    hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), cli_final, prod_seleccionado, "Compra", cantidad, total_movimiento])
                     st.success(f"📦 ¡Entrada de proveedor registrada con éxito! +{cantidad} al stock de {prod_seleccionado}.")
                     st.rerun()
     else:
@@ -236,7 +246,7 @@ with pestana1:
     st.divider()
     st.subheader("Estado Actual del Inventario")
     if registros_inv:
-        # Calcular en tiempo real la cantidad "Por entregar" sumando los pedidos activos de la hoja Pedidos
+        # Calcular en tiempo real la cantidad "Por entregar" sumando los pedidos activos
         todos_los_pedidos = hoja_pedidos.get_all_records()
         suma_por_entregar = {}
         for p in todos_los_pedidos:
@@ -245,25 +255,38 @@ with pestana1:
                 cant_p = float(str(p.get("Cantidad", 0)).replace(",", ""))
                 suma_por_entregar[prod_p] = suma_por_entregar.get(prod_p, 0.0) + cant_p
 
-        # Actualizar los registros locales para la tabla
         for r in registros_inv:
             n_prod = r.get("Nombre del Producto")
             r["Por entregar"] = suma_por_entregar.get(n_prod, 0.0)
 
         df_inv = pd.DataFrame(registros_inv)
         
-        # Ocultar columna de Precio Directo de la visualización
-        cols_a_quitar = [c for c in df_inv.columns if "precio directo" in c.lower() or "directo" in c.lower()]
+        # Ocultar columna de Precio Directo
+        cols_a_quitar = [c for c in df_inv.columns if "precio directo" in c.lower() or "directo" in c.lower() or "por surtir" in c.lower() or "por_surtir" in c.lower()]
         df_inv = df_inv.drop(columns=cols_a_quitar, errors="ignore")
 
+        # Formatear números
         for col in df_inv.columns:
             if "precio" in col.lower():
                 df_inv[col] = pd.to_numeric(df_inv[col].astype(str).str.replace("$", "").str.replace(",", "").str.strip(), errors="coerce").fillna(0)
                 df_inv[col] = df_inv[col].apply(lambda x: f"${x:,.2f}")
-            elif "stock" in col.lower() or "cantidad" in col.lower() or "entregar" in col.lower():
+            elif "stock" in col.lower() or "cantidad" in col.lower() or "por entregar" in col.lower():
                 df_inv[col] = pd.to_numeric(df_inv[col], errors="coerce").fillna(0)
                 df_inv[col] = df_inv[col].apply(lambda x: str(int(x)) if x.is_integer() else f"{x:g}")
+
+        # Reorganizar columnas para que "Por entregar" quede entre "Cantidad en Stock" y "Precio de Venta"
+        cols_actuales = list(df_inv.columns)
+        stock_col = next((c for c in cols_actuales if "stock" in c.lower() or "cantidad" in c.lower()), None)
+        precio_col = next((c for c in cols_actuales if "precio" in c.lower()), None)
         
+        if stock_col and precio_col:
+            otras_cols = [c for c in cols_actuales if c not in [stock_col, precio_col, "Por entregar"]]
+            idx_stock = otras_cols.index(stock_col)
+            nuevas_cols = otras_cols[:idx_stock+1] + [stock_col, "Por entregar", precio_col] + otras_cols[idx_stock+1:]
+            # Limpiar duplicados si los hubiera
+            nuevas_cols = [c for i, c in enumerate(nuevas_cols) if c not in nuevas_cols[:i]]
+            df_inv = df_inv[[c for c in nuevas_cols if c in df_inv.columns]]
+
         if "Nombre del Producto" in df_inv.columns:
             df_inv = df_inv.set_index("Nombre del Producto")
             
@@ -363,8 +386,14 @@ with pestana3:
     registros_h = hoja_hist.get_all_records()
     if registros_h:
         df_hist = pd.DataFrame(list(reversed(registros_h)))
+        
+        # Asegurar que exista la columna Cliente en la vista si es un historial antiguo
+        if "Cliente" not in df_hist.columns:
+            df_hist.insert(2, "Cliente", "General / Mostrador")
+            
         if "Producto" in df_hist.columns:
             df_hist = df_hist.set_index("Producto")
+            
         st.dataframe(df_hist, use_container_width=True)
     else:
         st.info("Aún no hay registros en el historial.")
@@ -406,7 +435,6 @@ with pestana4:
             nombre = p.get("Nombre del Producto", "")
             stock = float(str(p.get("Cantidad en Stock", 0) or 0).replace(",", ""))
             
-            # Calcular en tiempo real lo que está pendiente de entregar a clientes para el resurtido
             todos_los_pedidos_res = hoja_pedidos.get_all_records()
             por_entregar_val = 0.0
             for tp in todos_los_pedidos_res:
