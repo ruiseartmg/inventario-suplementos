@@ -10,7 +10,7 @@ import pandas as pd
 st.set_page_config(page_title="Nature’s Select - Inventario", page_icon="🌿", layout="wide")
 
 # ==========================================
-# TIPOGRAFÍAS Y ESTILO CSS (Incluyendo Botones de Colores)
+# TIPOGRAFÍAS Y ESTILO CSS
 # ==========================================
 st.markdown("""
     <style>
@@ -28,7 +28,6 @@ st.markdown("""
             font-weight: 600;
         }
 
-        /* Botón general verde */
         div.stButton > button, div.stButton > button * {
             background-color: #2E7D32 !important;
             color: #FFFFFF !important;
@@ -44,14 +43,6 @@ st.markdown("""
         div.stButton > button:hover, div.stButton > button:hover * {
             background-color: #1B5E20 !important;
             color: #FFFFFF !important;
-        }
-
-        /* Estilo específico para botones de Cancelar en rojo */
-        button[kind="secondary"], button[data-baseweb="button"]:has(p:contains("❌")) {
-            background-color: #C62828 !important;
-        }
-        button[kind="secondary"]:hover {
-            background-color: #B71C1C !important;
         }
 
         .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p {
@@ -236,7 +227,7 @@ with pestana1:
                         faltante = cantidad - stock_actual
                         vendible = stock_actual
                         nuevo_stock = 0.0 
-                        st.warning(f"⚠️ Stock insuficiente. Se descontaron {vendible} y se mandaron **{faltante} unidades** a 'Por surtir'.")
+                        st.warning(f"⚠️ Stock insuficiente. Se descontaron {vendible} y se mandaron **{faltante} unidades** a 'Por entregar'.")
                         if col_surtir_idx:
                             hoja_inv.update_cell(row_idx, col_surtir_idx, por_surtir_actual + faltante)
                     else:
@@ -264,11 +255,23 @@ with pestana1:
     st.subheader("Estado Actual del Inventario")
     if registros_inv:
         df_inv = pd.DataFrame(registros_inv)
+        
+        # Ocultar columna de Precio Directo de la visualización
+        cols_a_quitar = [c for c in df_inv.columns if "precio directo" in c.lower() or "directo" in c.lower()]
+        df_inv = df_inv.drop(columns=cols_a_quitar, errors="ignore")
+        
+        # Renombrar columna "Por surtir" a "Por entregar" para claridad
+        rename_cols = {}
+        for c in df_inv.columns:
+            if "por surtir" in c.lower() or "por_surtir" in c.lower():
+                rename_cols[c] = "Por entregar"
+        df_inv = df_inv.rename(columns=rename_cols)
+
         for col in df_inv.columns:
             if "precio" in col.lower():
                 df_inv[col] = pd.to_numeric(df_inv[col].astype(str).str.replace("$", "").str.replace(",", "").str.strip(), errors="coerce").fillna(0)
                 df_inv[col] = df_inv[col].apply(lambda x: f"${x:,.2f}")
-            elif "stock" in col.lower() or "cantidad" in col.lower() or "surtir" in col.lower():
+            elif "stock" in col.lower() or "cantidad" in col.lower() or "entregar" in col.lower():
                 df_inv[col] = pd.to_numeric(df_inv[col], errors="coerce").fillna(0)
                 df_inv[col] = df_inv[col].apply(lambda x: str(int(x)) if x.is_integer() else f"{x:g}")
         
@@ -288,7 +291,6 @@ with pestana2:
     pendientes_activos = [p for p in pedidos_pendientes if p.get("Estado") == "Por entregar"]
     
     if pendientes_activos:
-        # === FILTRO POR CLIENTE ===
         clientes_disponibles = sorted(list(set([p.get("Cliente") for p in pendientes_activos])))
         filtro_cliente = st.selectbox("🔍 Filtrar por Cliente específico:", ["-- Todos los Clientes --"] + clientes_disponibles)
         
@@ -314,7 +316,6 @@ with pestana2:
                         st.success(f"¡Pedido entregado a {ped.get('Cliente')}!")
                         st.rerun()
             with col_btn2:
-                # Botón de cancelar con estilo personalizado rojo mediante HTML/Markdown seguro o CSS
                 cancelar_key = f"cancelar_{ped.get('ID')}_{idx}"
                 st.markdown("""
                     <style>
@@ -455,7 +456,7 @@ with pestana4:
             lista_resurtido.append({
                 "Producto": nombre,
                 "Stock Actual": stock_str,
-                "Por Surtir (Proveedor)": surtir_str,
+                "Por Entregar (Clientes)": surtir_str,
                 "Promedio/Mes": prom_str,
                 "Sugerido": sugerido_str,
                 "Costo Unit.": f"${p_directo:,.2f}",
