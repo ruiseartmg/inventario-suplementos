@@ -164,7 +164,9 @@ with pestana1:
         
         if st.button("Registrar en el Sistema") and prod_seleccionado:
             ahora_mexico = datetime.utcnow() - timedelta(hours=6)
-            cli_final = nombre_cliente.strip() if nombre_cliente.strip() else "Mostrador / General"
+            
+            # Formatear automáticamente la primera letra de cada palabra en mayúscula
+            cli_final = nombre_cliente.strip().title() if nombre_cliente.strip() else "Mostrador / General"
             
             row_idx = None
             producto_obj = None
@@ -235,8 +237,7 @@ with pestana1:
                         st.success(f"🛒 ¡Pedido registrado y stock descontado para **{cli_final}**!")
                     
                     hoja_inv.update_cell(row_idx, col_stock_idx, nuevo_stock)
-                    # Guardar respetando el orden real de columnas de Google Sheets (Fecha, Hora, Producto, Compra/Venta, Cantidad, Total)
-                    hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), prod_seleccionado, "Venta", cantidad, total_movimiento])
+                    hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), cli_final, prod_seleccionado, "Venta", cantidad, total_movimiento])
                     
                     st.cache_data.clear()
                     st.rerun()
@@ -245,7 +246,7 @@ with pestana1:
                     total_movimiento = 0.0
                     
                     hoja_inv.update_cell(row_idx, col_stock_idx, nuevo_stock)
-                    hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), prod_seleccionado, "Compra", cantidad, total_movimiento])
+                    hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), cli_final, prod_seleccionado, "Compra", cantidad, total_movimiento])
                     st.success(f"📦 ¡Entrada de proveedor registrada con éxito! +{cantidad} al stock de {prod_seleccionado}.")
                     
                     st.cache_data.clear()
@@ -415,7 +416,7 @@ with pestana3:
         if st.button("🗑️ Borrar Todo el Historial"):
             try:
                 hoja_hist.clear()
-                hoja_hist.append_row(["Fecha", "Hora", "Producto", "Compra/Venta", "Cantidad", "Total"])
+                hoja_hist.append_row(["Fecha", "Hora", "Cliente", "Producto", "Compra/Venta", "Cantidad", "Total"])
                 st.cache_data.clear()
                 st.success("¡Historial borrado con éxito!")
                 st.rerun()
@@ -424,14 +425,15 @@ with pestana3:
         
     registros_h = cargar_historial_cache()
     if registros_h:
-        df_hist = pd.DataFrame(registros_h)
-        if not df_hist.empty:
-            df_hist = df_hist.iloc[::-1] # Invertir para ver lo más reciente primero
-            if "Producto" in df_hist.columns:
-                df_hist = df_hist.set_index("Producto")
-            st.dataframe(df_hist, use_container_width=True)
-        else:
-            st.info("Aún no hay registros en el historial.")
+        df_hist = pd.DataFrame(list(reversed(registros_h)))
+        
+        if "Cliente" not in df_hist.columns:
+            df_hist.insert(2, "Cliente", "General / Mostrador")
+            
+        if "Producto" in df_hist.columns:
+            df_hist = df_hist.set_index("Producto")
+            
+        st.dataframe(df_hist, use_container_width=True)
     else:
         st.info("Aún no hay registros en el historial.")
 
@@ -551,22 +553,28 @@ with pestana5:
                 st.error("¡El nombre del producto es obligatorio!")
             else:
                 try:
+                    # Formatear automáticamente nombres, presentaciones, marcas y categorías en Title Case
+                    n_nom_final = nuevo_nombre.strip().title()
+                    n_pres_final = nueva_presentacion.strip().title()
+                    n_marca_final = nueva_marca.strip().title()
+                    n_cat_final = categoria.strip().title()
+
                     nueva_fila = [""] * len(headers)
                     datos_ingresados = {
-                        "Nombre del Producto": nuevo_nombre,
-                        "Presentacion": nueva_presentacion,
-                        "Marca": nueva_marca,
+                        "Nombre del Producto": n_nom_final,
+                        "Presentacion": n_pres_final,
+                        "Marca": n_marca_final,
                         "Cantidad en Stock": stock_inicial,
                         "Precio Directo": precio_dir,
                         "Precio de Venta": precio_ven,
-                        "Categoría": categoria,
-                        "Categoria": categoria
+                        "Categoría": n_cat_final,
+                        "Categoria": n_cat_final
                     }
                     for idx, header in enumerate(headers):
                         if header in datos_ingresados:
                             nueva_fila[idx] = datos_ingresados[header]
                     hoja_inv.append_row(nueva_fila)
-                    st.success(f"¡El producto '{nuevo_nombre}' se ha dado de alta correctamente!")
+                    st.success(f"¡El producto '{n_nom_final}' se ha dado de alta correctamente!")
                     
                     st.cache_data.clear()
                     st.rerun()
