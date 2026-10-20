@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import os
 import base64
 import pandas as pd
+import time
 
 # Configuración de la página en modo ancho
 st.set_page_config(page_title="Nature’s Select - Inventario", page_icon="🌿", layout="wide")
@@ -114,17 +115,20 @@ except Exception as e:
     st.error(f"Error al conectar con Google Sheets: {e}")
     st.stop()
 
-# Funciones de lectura con caché inteligente
-@st.cache_data(ttl=300)
+# Funciones de lectura con caché extendido (ttl=600 segundos) y pausa de seguridad para evitar Error 429
+@st.cache_data(ttl=600)
 def cargar_inventario_cache():
+    time.sleep(0.3)
     return hoja_inv.get_all_records()
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=600)
 def cargar_pedidos_cache():
+    time.sleep(0.3)
     return hoja_pedidos.get_all_records()
 
-@st.cache_data(ttl=300)
+@st.cache_data(ttl=600)
 def cargar_historial_cache():
+    time.sleep(0.3)
     return hoja_hist.get_all_records()
 
 registros_inv = cargar_inventario_cache()
@@ -174,7 +178,6 @@ with pestana1:
         if st.button("Registrar en el Sistema") and prod_seleccionado:
             ahora_mexico = datetime.utcnow() - timedelta(hours=6)
             
-            # Formatear automáticamente la primera letra de cada palabra en mayúscula
             cli_final = nombre_cliente.strip().title() if nombre_cliente.strip() else "Mostrador / General"
             
             row_idx = None
