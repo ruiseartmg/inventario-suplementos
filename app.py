@@ -10,7 +10,7 @@ import pandas as pd
 st.set_page_config(page_title="Nature’s Select - Inventario", page_icon="🌿", layout="wide")
 
 # ==========================================
-# TIPOGRAFÍAS Y ESTILO CSS
+# TIPOGRAFÍAS Y ESTILO CSS (Incluyendo Botones de Colores)
 # ==========================================
 st.markdown("""
     <style>
@@ -28,6 +28,7 @@ st.markdown("""
             font-weight: 600;
         }
 
+        /* Botón general verde */
         div.stButton > button, div.stButton > button * {
             background-color: #2E7D32 !important;
             color: #FFFFFF !important;
@@ -43,6 +44,14 @@ st.markdown("""
         div.stButton > button:hover, div.stButton > button:hover * {
             background-color: #1B5E20 !important;
             color: #FFFFFF !important;
+        }
+
+        /* Estilo específico para botones de Cancelar en rojo */
+        button[kind="secondary"], button[data-baseweb="button"]:has(p:contains("❌")) {
+            background-color: #C62828 !important;
+        }
+        button[kind="secondary"]:hover {
+            background-color: #B71C1C !important;
         }
 
         .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p {
@@ -128,9 +137,7 @@ except:
 
 st.markdown("---")
 
-# ==========================================
-# ORDEN DE PESTAÑAS SOLICITADO
-# ==========================================
+# ORDEN DE PESTAÑAS
 pestana1, pestana2, pestana3, pestana4, pestana5 = st.tabs([
     "🛒 Pedidos", 
     "📦 Control de Pedidos", 
@@ -239,7 +246,6 @@ with pestana1:
                     hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), prod_seleccionado, "Venta", cantidad, total_movimiento])
                     st.rerun()
                 else:
-                    # Entrada de proveedor sin mostrar costos directos
                     nuevo_stock = stock_actual + cantidad
                     total_movimiento = 0.0
                     nuevo_por_surtir = max(0.0, por_surtir_actual - cantidad) if por_surtir_actual > 0 else 0.0
@@ -273,7 +279,7 @@ with pestana1:
 
 with pestana2:
     st.subheader("📦 Control de Pedidos y Entregas")
-    st.markdown("Tabla dinámica con la relación de entregas pendientes. Selecciona una acción por cada pedido.")
+    st.markdown("Filtra por cliente o revisa la relación de entregas pendientes con sus botones directos.")
     
     if st.button("🔄 Actualizar Tabla de Entregas"):
         st.rerun()
@@ -282,28 +288,21 @@ with pestana2:
     pendientes_activos = [p for p in pedidos_pendientes if p.get("Estado") == "Por entregar"]
     
     if pendientes_activos:
-        tabla_datos = []
-        for p in pendientes_activos:
-            tabla_datos.append({
-                "ID": p.get("ID"),
-                "Fecha": p.get("Fecha"),
-                "Cliente": p.get("Cliente"),
-                "Producto": p.get("Producto"),
-                "Cantidad": p.get("Cantidad")
-            })
+        # === FILTRO POR CLIENTE ===
+        clientes_disponibles = sorted(list(set([p.get("Cliente") for p in pendientes_activos])))
+        filtro_cliente = st.selectbox("🔍 Filtrar por Cliente específico:", ["-- Todos los Clientes --"] + clientes_disponibles)
         
-        df_pendientes = pd.DataFrame(tabla_datos)
-        st.dataframe(df_pendientes, use_container_width=True)
+        if filtro_cliente != "-- Todos los Clientes --":
+            pendientes_activos = [p for p in pendientes_activos if p.get("Cliente") == filtro_cliente]
         
         st.markdown("---")
-        st.markdown("### ⚙️ Gestionar Pedidos Individuales")
         
         for idx, ped in enumerate(pendientes_activos):
-            col_info, col_btn1, col_btn2 = st.columns([4, 2, 2])
+            col_info, col_btn1, col_btn2 = st.columns([5, 1.5, 1.5])
             with col_info:
-                st.text(f"ID: {ped.get('ID')} | Cliente: {ped.get('Cliente')} | Producto: {ped.get('Producto')} ({ped.get('Cantidad')} u.)")
+                st.markdown(f"**👤 {ped.get('Cliente')}** | 🛍️ **{ped.get('Producto')}** ({ped.get('Cantidad')} u.)  \n<span style='color: gray; font-size: 12px;'>ID: {ped.get('ID')} | Fecha: {ped.get('Fecha')}</span>", unsafe_allow_html=True)
             with col_btn1:
-                if st.button(f"✅ Entregar", key=f"entregar_{ped.get('ID')}_{idx}"):
+                if st.button("✅ Entregar", key=f"entregar_{ped.get('ID')}_{idx}"):
                     todos_p = hoja_pedidos.get_all_records()
                     fila_real = None
                     for i, tp in enumerate(todos_p):
@@ -315,7 +314,17 @@ with pestana2:
                         st.success(f"¡Pedido entregado a {ped.get('Cliente')}!")
                         st.rerun()
             with col_btn2:
-                if st.button(f"❌ Cancelar", key=f"cancelar_{ped.get('ID')}_{idx}"):
+                # Botón de cancelar con estilo personalizado rojo mediante HTML/Markdown seguro o CSS
+                cancelar_key = f"cancelar_{ped.get('ID')}_{idx}"
+                st.markdown("""
+                    <style>
+                        div[data-testid="column"] button:has(div:contains("❌")) {
+                            background-color: #C62828 !important;
+                        }
+                    </style>
+                """, unsafe_allow_html=True)
+                
+                if st.button("❌ Cancelar", key=cancelar_key):
                     todos_p = hoja_pedidos.get_all_records()
                     fila_real = None
                     for i, tp in enumerate(todos_p):
@@ -337,7 +346,7 @@ with pestana2:
                                 break
                         
                         if prod_obj and row_inv_idx:
-                            st_act = float(str(prod_obj.get("Cantidad in Stock", 0) or prod_obj.get("Cantidad en Stock", 0)).replace(",", ""))
+                            st_act = float(str(prod_obj.get("Cantidad en Stock", 0)).replace(",", ""))
                             col_st_idx = 4
                             for idx_h, h_name in enumerate(headers):
                                 if "stock" in h_name.lower():
