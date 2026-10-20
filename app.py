@@ -28,7 +28,6 @@ st.markdown("""
             font-weight: 600;
         }
 
-        /* Botón general verde */
         div.stButton > button, div.stButton > button * {
             background-color: #2E7D32 !important;
             color: #FFFFFF !important;
@@ -171,14 +170,6 @@ with pestana1:
                         except:
                             continue
                 
-                por_surtir_actual = 0.0
-                for k, v in producto_obj.items():
-                    if "por surtir" in k.lower() or "por_surtir" in k.lower():
-                        try:
-                            por_surtir_actual = float(str(v or 0).replace(",", ""))
-                        except:
-                            pass
-                
                 precio_venta = 0.0
                 for k, v in producto_obj.items():
                     if "precio de venta" in k.lower() or (k.lower().strip() == "precio de venta"):
@@ -201,13 +192,11 @@ with pestana1:
                                 continue
 
                 col_stock_idx = 4
-                col_surtir_idx = None
                 for idx, h in enumerate(headers):
                     h_limpio = h.strip().lower()
                     if "stock" in h_limpio or "cantidad en stock" in h_limpio:
                         col_stock_idx = idx + 1
-                    elif "por surtir" in h_limpio or "por_surtir" in h_limpio:
-                        col_surtir_idx = idx + 1
+                        break
 
                 if tipo == "Venta / Pedido de Cliente":
                     id_pedido = str(int(datetime.utcnow().timestamp()))
@@ -225,12 +214,8 @@ with pestana1:
                     total_movimiento = cantidad * precio_venta
                     
                     if nuevo_stock < 0:
-                        faltante = cantidad - stock_actual
-                        vendible = stock_actual
                         nuevo_stock = 0.0 
-                        st.warning(f"⚠️ Stock insuficiente. Se descontaron {vendible} y se mandaron **{faltante} unidades** a 'Por entregar'.")
-                        if col_surtir_idx:
-                            hoja_inv.update_cell(row_idx, col_surtir_idx, por_surtir_actual + faltante)
+                        st.warning(f"⚠️ Stock insuficiente. Se ajustó el stock a 0 y se registró el pedido 'Por entregar'.")
                     else:
                         st.success(f"🛒 ¡Pedido registrado y stock descontado para **{nombre_cliente or 'General'}**!")
                     
@@ -240,12 +225,8 @@ with pestana1:
                 else:
                     nuevo_stock = stock_actual + cantidad
                     total_movimiento = 0.0
-                    nuevo_por_surtir = max(0.0, por_surtir_actual - cantidad) if por_surtir_actual > 0 else 0.0
                     
                     hoja_inv.update_cell(row_idx, col_stock_idx, nuevo_stock)
-                    if col_surtir_idx:
-                        hoja_inv.update_cell(row_idx, col_surtir_idx, nuevo_por_surtir)
-                        
                     hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), prod_seleccionado, "Compra", cantidad, total_movimiento])
                     st.success(f"📦 ¡Entrada de proveedor registrada con éxito! +{cantidad} al stock de {prod_seleccionado}.")
                     st.rerun()
@@ -255,16 +236,25 @@ with pestana1:
     st.divider()
     st.subheader("Estado Actual del Inventario")
     if registros_inv:
+        # Calcular en tiempo real la cantidad "Por entregar" sumando los pedidos activos de la hoja Pedidos
+        todos_los_pedidos = hoja_pedidos.get_all_records()
+        suma_por_entregar = {}
+        for p in todos_los_pedidos:
+            if p.get("Estado") == "Por entregar":
+                prod_p = p.get("Producto")
+                cant_p = float(str(p.get("Cantidad", 0)).replace(",", ""))
+                suma_por_entregar[prod_p] = suma_por_entregar.get(prod_p, 0.0) + cant_p
+
+        # Actualizar los registros locales para la tabla
+        for r in registros_inv:
+            n_prod = r.get("Nombre del Producto")
+            r["Por entregar"] = suma_por_entregar.get(n_prod, 0.0)
+
         df_inv = pd.DataFrame(registros_inv)
         
+        # Ocultar columna de Precio Directo de la visualización
         cols_a_quitar = [c for c in df_inv.columns if "precio directo" in c.lower() or "directo" in c.lower()]
         df_inv = df_inv.drop(columns=cols_a_quitar, errors="ignore")
-        
-        rename_cols = {}
-        for c in df_inv.columns:
-            if "por surtir" in c.lower() or "por_surtir" in c.lower():
-                rename_cols[c] = "Por entregar"
-        df_inv = df_inv.rename(columns=rename_cols)
 
         for col in df_inv.columns:
             if "precio" in col.lower():
@@ -315,7 +305,6 @@ with pestana2:
                         st.success(f"¡Pedido entregado a {ped.get('Cliente')}!")
                         st.rerun()
             with col_btn2:
-                # Botón Cancelar con color rojo exclusivo mediante contenedor HTML
                 cancelar_key = f"cancelar_{ped.get('ID')}_{idx}"
                 st.markdown("""
                     <style>
@@ -417,13 +406,12 @@ with pestana4:
             nombre = p.get("Nombre del Producto", "")
             stock = float(str(p.get("Cantidad en Stock", 0) or 0).replace(",", ""))
             
-            por_surtir = 0.0
-            for k, v in p.items():
-                if "por surtir" in k.lower() or "por_surtir" in k.lower():
-                    try:
-                        por_surtir = float(str(v or 0).replace(",", ""))
-                    except:
-                        pass
+            # Calcular en tiempo real lo que está pendiente de entregar a clientes para el resurtido
+            todos_los_pedidos_res = hoja_pedidos.get_all_records()
+            por_entregar_val = 0.0
+            for tp in todos_los_pedidos_res:
+                if tp.get("Estado") == "Por entregar" and tp.get("Producto") == nombre:
+                    por_entregar_val += float(str(tp.get("Cantidad", 0)).replace(",", ""))
             
             p_directo = 0.0
             for k, v in p.items():
@@ -447,12 +435,12 @@ with pestana4:
                             continue
 
             promedio_mes_val = promedios_dict.get(nombre, 0.0)
-            sugerido_pedido = por_surtir + promedio_mes_val
+            sugerido_pedido = por_entregar_val + promedio_mes_val
             costo_total_producto = sugerido_pedido * p_directo
             gran_total_inversion += costo_total_producto
             
             stock_str = str(int(stock)) if stock.is_integer() else f"{stock:g}"
-            surtir_str = str(int(por_surtir)) if por_surtir.is_integer() else f"{por_surtir:g}"
+            surtir_str = str(int(por_entregar_val)) if por_entregar_val.is_integer() else f"{por_entregar_val:g}"
             prom_str = str(int(promedio_mes_val)) if promedio_mes_val.is_integer() else f"{promedio_mes_val:g}"
             sugerido_str = str(int(sugerido_pedido)) if sugerido_pedido.is_integer() else f"{sugerido_pedido:g}"
             
