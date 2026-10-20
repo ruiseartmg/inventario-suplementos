@@ -280,7 +280,6 @@ with pestana1:
                         st.success(f"🛒 ¡Pedido registrado y stock descontado para **{cli_final}** (Pendiente de entrega)!")
                     
                     hoja_inv.update_cell(row_idx, col_stock_idx, nuevo_stock)
-                    # NOTA: Ya no registramos venta en el historial aquí para que solo refleje entregas reales.
                     
                     st.cache_data.clear()
                     st.rerun()
@@ -289,7 +288,6 @@ with pestana1:
                     total_movimiento = 0.0
                     
                     hoja_inv.update_cell(row_idx, col_stock_idx, nuevo_stock)
-                    # Las compras de proveedor sí van directo al historial
                     hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), cli_final, prod_seleccionado, "Compra", cantidad, total_movimiento])
                     st.success(f"📦 ¡Entrada de proveedor registrada con éxito! +{cantidad} al stock de {prod_seleccionado}.")
                     
@@ -395,7 +393,7 @@ with pestana2:
                 """, unsafe_allow_html=True)
             st.markdown("---")
 
-        clientes_disponibles = sorted(list(set([p.get("Cliente"] for p in pendientes_activos])))
+        clientes_disponibles = sorted(list(set(p.get("Cliente") for p in pendientes_activos)))
         filtro_cliente = st.selectbox("🔍 Filtrar por Cliente específico:", ["-- Todos los Clientes --"] + clientes_disponibles)
         
         if filtro_cliente != "-- Todos los Clientes --":
@@ -418,13 +416,11 @@ with pestana2:
                     if fila_real:
                         hoja_pedidos.update_cell(fila_real, 7, "Entregado")
                         
-                        # AL MOMENTO DE ENTREGAR, REGISTRAR EN EL HISTORIAL LA VENTA REALIZADA
                         ahora_mexico = datetime.utcnow() - timedelta(hours=6)
                         cli_entregado = ped.get("Cliente")
                         prod_entregado = ped.get("Producto")
                         cant_entregada = float(str(ped.get("Cantidad", 0)).replace(",", ""))
                         
-                        # Buscar precio de venta del producto
                         precio_vta = 0.0
                         inv_actuales = hoja_inv.get_all_records()
                         for inv_item in inv_actuales:
