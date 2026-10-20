@@ -96,6 +96,15 @@ try:
     hoja_inv = spreadsheet.worksheet("Hoja 1")
     hoja_hist = spreadsheet.worksheet("Historial")
     
+    # Asegurar que la hoja Historial tenga la columna Cliente en los encabezados
+    try:
+        headers_hist = hoja_hist.row_values(1)
+        if not headers_hist or "Cliente" not in [h.strip() for h in headers_hist]:
+            hoja_hist.clear()
+            hoja_hist.append_row(["Fecha", "Hora", "Cliente", "Producto", "Compra/Venta", "Cantidad", "Total"])
+    except:
+        pass
+    
     try:
         hoja_pedidos = spreadsheet.worksheet("Pedidos")
     except:
@@ -401,39 +410,16 @@ with pestana2:
 with pestana3:
     st.subheader("Historial de Transacciones")
     
-    col_h1, col_h2 = st.columns([5, 2])
-    with col_h2:
-        st.markdown("""
-            <style>
-                div[data-testid="column"]:nth-child(2) button {
-                    background-color: #C62828 !important;
-                }
-                div[data-testid="column"]:nth-child(2) button:hover {
-                    background-color: #B71C1C !important;
-                }
-            </style>
-        """, unsafe_allow_html=True)
-        if st.button("🗑️ Borrar Todo el Historial"):
-            try:
-                hoja_hist.clear()
-                hoja_hist.append_row(["Fecha", "Hora", "Cliente", "Producto", "Compra/Venta", "Cantidad", "Total"])
-                st.cache_data.clear()
-                st.success("¡Historial borrado con éxito!")
-                st.rerun()
-            except Exception as e:
-                st.error(f"Error al borrar historial: {e}")
-        
     registros_h = cargar_historial_cache()
     if registros_h:
-        df_hist = pd.DataFrame(list(reversed(registros_h)))
-        
-        if "Cliente" not in df_hist.columns:
-            df_hist.insert(2, "Cliente", "General / Mostrador")
-            
-        if "Producto" in df_hist.columns:
-            df_hist = df_hist.set_index("Producto")
-            
-        st.dataframe(df_hist, use_container_width=True)
+        df_hist = pd.DataFrame(registros_h)
+        if not df_hist.empty:
+            df_hist = df_hist.iloc[::-1] # Invertir para ver lo más reciente primero
+            if "Producto" in df_hist.columns:
+                df_hist = df_hist.set_index("Producto")
+            st.dataframe(df_hist, use_container_width=True)
+        else:
+            st.info("Aún no hay registros en el historial.")
     else:
         st.info("Aún no hay registros en el historial.")
 
@@ -553,7 +539,6 @@ with pestana5:
                 st.error("¡El nombre del producto es obligatorio!")
             else:
                 try:
-                    # Formatear automáticamente nombres, presentaciones, marcas y categorías en Title Case
                     n_nom_final = nuevo_nombre.strip().title()
                     n_pres_final = nueva_presentacion.strip().title()
                     n_marca_final = nueva_marca.strip().title()
