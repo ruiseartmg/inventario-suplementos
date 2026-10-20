@@ -142,15 +142,8 @@ with pestana1:
     nombres_productos = [p.get("Nombre del Producto") for p in registros_inv if p.get("Nombre del Producto")]
     
     if nombres_productos:
-        # Buscador rápido
-        busqueda = st.text_input("🔍 Buscar producto por nombre (escribe para filtrar):", "")
-        productos_filtrados = [p for p in nombres_productos if busqueda.lower() in p.lower()]
-        
-        if not productos_filtrados:
-            st.warning("No se encontraron productos con ese nombre.")
-            prod_seleccionado = None
-        else:
-            prod_seleccionado = st.selectbox("Selecciona Producto de la lista", productos_filtrados)
+        # Menú desplegable directo sin buscador
+        prod_seleccionado = st.selectbox("Selecciona Producto", nombres_productos)
         
         nombre_cliente = st.text_input("Nombre del Cliente (Opcional si es compra directa de proveedor):", "")
         cantidad = st.number_input("Cantidad", min_value=0.1, step=0.25, value=1.0)
@@ -159,7 +152,6 @@ with pestana1:
         if st.button("Registrar en el Sistema") and prod_seleccionado:
             ahora_mexico = datetime.utcnow() - timedelta(hours=6)
             
-            # Ubicar índices y datos del producto en Inventario
             row_idx = None
             producto_obj = None
             for i, p in enumerate(hoja_inv.get_all_records()):
@@ -207,18 +199,6 @@ with pestana1:
                             except:
                                 continue
 
-                precio_directo = 0.0
-                for k, v in producto_obj.items():
-                    if "precio directo" in k.lower() or "directo" in k.lower():
-                        raw_pd = str(v).replace("$", "").replace(",", "").strip()
-                        try:
-                            precio_directo = float(raw_pd)
-                            break
-                        except:
-                            pass
-                if precio_directo == 0.0:
-                    precio_directo = precio_venta or 1.0
-
                 col_stock_idx = 4
                 col_surtir_idx = None
                 for idx, h in enumerate(headers):
@@ -229,7 +209,6 @@ with pestana1:
                         col_surtir_idx = idx + 1
 
                 if tipo == "Venta / Pedido de Cliente":
-                    # 1. Registrar el pedido en la hoja de Pedidos
                     id_pedido = str(int(datetime.utcnow().timestamp()))
                     hoja_pedidos.append_row([
                         id_pedido, 
@@ -241,7 +220,6 @@ with pestana1:
                         "Pendiente de Entrega"
                     ])
                     
-                    # 2. Afectar inventario de inmediato (Apartado / Descuento)
                     nuevo_stock = stock_actual - cantidad
                     total_movimiento = cantidad * precio_venta
                     
@@ -259,7 +237,19 @@ with pestana1:
                     hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), prod_seleccionado, "Venta", cantidad, total_movimiento])
                     st.rerun()
                 else:
-                    # Compra de proveedor
+                    # Compra de proveedor con precio directo manejado internamente sin mostrarse en esta vista
+                    precio_directo = 1.0
+                    for k, v in producto_obj.items():
+                        if "precio directo" in k.lower() or "directo" in k.lower():
+                            raw_pd = str(v).replace("$", "").replace(",", "").strip()
+                            try:
+                                precio_directo = float(raw_pd)
+                                break
+                            except:
+                                pass
+                    if precio_directo == 1.0 and precio_venta > 0:
+                        precio_directo = precio_venta
+
                     nuevo_stock = stock_actual + cantidad
                     total_movimiento = cantidad * precio_directo
                     nuevo_por_surtir = max(0.0, por_surtir_actual - cantidad) if por_surtir_actual > 0 else 0.0
@@ -489,10 +479,8 @@ with pestana5:
                             fila_real = i + 2
                             break
                     if fila_real:
-                        # 1. Marcar como Cancelado en la hoja Pedidos
                         hoja_pedidos.update_cell(fila_real, 7, "Cancelado")
                         
-                        # 2. Devolver la mercancía al inventario en automático
                         prod_ped = ped.get("Producto")
                         cant_ped = float(ped.get("Cantidad"))
                         
