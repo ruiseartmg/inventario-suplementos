@@ -186,14 +186,14 @@ pestana1, pestana2, pestana3, pestana4, pestana5 = st.tabs([
 with pestana1:
     st.subheader("Registrar Pedido o Entrada")
     
-    nombres_productos = [p.get("Nombre del Producto") for p in registros_inv if p.get("Nombre del Producto")]
+    nombres_productos = [str(p.get("Nombre del Producto", "")).strip() for p in registros_inv if p.get("Nombre del Producto")]
     
     if nombres_productos:
         prod_seleccionado = st.selectbox("Selecciona Producto", nombres_productos)
         
         stock_en_selector = 0.0
         for p_item in registros_inv:
-            if p_item.get("Nombre del Producto") == prod_seleccionado:
+            if str(p_item.get("Nombre del Producto", "")).strip() == prod_seleccionado:
                 for k, v in p_item.items():
                     if "stock" in k.lower() or "cantidad" in k.lower():
                         try:
@@ -217,7 +217,7 @@ with pestana1:
             producto_obj = None
             inv_actuales = hoja_inv.get_all_records()
             for i, p in enumerate(inv_actuales):
-                if p.get("Nombre del Producto") == prod_seleccionado:
+                if str(p.get("Nombre del Producto", "")).strip() == prod_seleccionado:
                     row_idx = i + 2 
                     producto_obj = p
                     break
@@ -253,7 +253,7 @@ with pestana1:
                             except:
                                 continue
 
-                col_stock_idx = 4
+                col_stock_idx = 2  # Columna B por defecto (Cantidad en Stock)
                 for idx, h in enumerate(headers):
                     h_limpio = h.strip().lower()
                     if "stock" in h_limpio or "cantidad en stock" in h_limpio:
@@ -308,12 +308,12 @@ with pestana1:
                 suma_por_entregar[prod_p] = suma_por_entregar.get(prod_p, 0.0) + cant_p
 
         for r in registros_inv:
-            n_prod = r.get("Nombre del Producto")
+            n_prod = str(r.get("Nombre del Producto", "")).strip()
             r["Por entregar"] = suma_por_entregar.get(n_prod, 0.0)
 
         df_inv = pd.DataFrame(registros_inv)
         
-        cols_a_quitar = [c for c in df_inv.columns if "precio directo" in c.lower() or "directo" in c.lower() or "por surtir" in c.lower() or "por_surtir" in c.lower()]
+        cols_a_quitar = [c for c in df_inv.columns if "precio directo" in c.lower() or "directo" in c.lower() or "por surtir" in c.lower() or "por_surtir" in c.lower() or "presentacion" in c.lower() or "presentación" in c.lower()]
         df_inv = df_inv.drop(columns=cols_a_quitar, errors="ignore")
 
         for col in df_inv.columns:
@@ -326,13 +326,10 @@ with pestana1:
 
         columnas_disponibles = list(df_inv.columns)
         col_prod = next((c for c in columnas_disponibles if "nombre" in c.lower()), columnas_disponibles[0])
-        col_pres = next((c for c in columnas_disponibles if "presentacion" in c.lower() or "presentación" in c.lower()), None)
         col_stock = next((c for c in columnas_disponibles if "stock" in c.lower() or "cantidad en stock" in c.lower()), None)
         col_precio = next((c for c in columnas_disponibles if "precio de venta" in c.lower()), None)
         
         orden_final = [col_prod]
-        if col_pres and col_pres in columnas_disponibles:
-            orden_final.append(col_pres)
         if col_stock and col_stock in columnas_disponibles:
             orden_final.append(col_stock)
         
@@ -362,7 +359,7 @@ with pestana2:
     if pendientes_activos:
         stock_por_producto = {}
         for inv_p in registros_inv:
-            nombre_p = inv_p.get("Nombre del Producto")
+            nombre_p = str(inv_p.get("Nombre del Producto", "")).strip()
             st_val = 0.0
             for k, v in inv_p.items():
                 if "stock" in k.lower() or "cantidad" in k.lower():
@@ -424,7 +421,7 @@ with pestana2:
                         precio_vta = 0.0
                         inv_actuales = hoja_inv.get_all_records()
                         for inv_item in inv_actuales:
-                            if inv_item.get("Nombre del Producto") == prod_entregado:
+                            if str(inv_item.get("Nombre del Producto", "")).strip() == prod_entregado:
                                 for k, v in inv_item.items():
                                     if "precio de venta" in k.lower():
                                         try:
@@ -477,14 +474,14 @@ with pestana2:
                         prod_obj = None
                         inv_actuales = hoja_inv.get_all_records()
                         for i, inv_item in enumerate(inv_actuales):
-                            if inv_item.get("Nombre del Producto") == prod_ped:
+                            if str(inv_item.get("Nombre del Producto", "")).strip() == prod_ped:
                                 row_inv_idx = i + 2
                                 prod_obj = inv_item
                                 break
                         
                         if prod_obj and row_inv_idx:
                             st_act = float(str(prod_obj.get("Cantidad en Stock", 0)).replace(",", ""))
-                            col_st_idx = 4
+                            col_st_idx = 2
                             for idx_h, h_name in enumerate(headers):
                                 if "stock" in h_name.lower():
                                     col_st_idx = idx_h + 1
@@ -557,7 +554,7 @@ with pestana4:
         gran_total_inversion = 0.0
 
         for p in registros_inv:
-            nombre = p.get("Nombre del Producto", "")
+            nombre = str(p.get("Nombre del Producto", "")).strip()
             stock = float(str(p.get("Cantidad en Stock", 0) or 0).replace(",", ""))
             
             todos_los_pedidos_res = cargar_pedidos_cache()
@@ -625,14 +622,12 @@ with pestana4:
 with pestana5:
     st.subheader("Agregar un Producto Nuevo al Inventario")
     with st.form("form_nuevo_producto"):
-        nuevo_nombre = st.text_input("Nombre del Producto * (ej. Miel 500 g, Granola 1 kg)")
+        nuevo_nombre = st.text_input("Nombre del Producto con Presentación * (ej. Miel de Abeja 500g)")
         col1, col2 = st.columns(2)
         with col1:
-            nueva_presentacion = st.text_input("Presentación (ej. 500 g, 1 kg, frasco)")
             stock_inicial = st.number_input("Cantidad Inicial en Stock", min_value=0.0, step=0.25, value=0.0)
             precio_dir = st.number_input("Precio Directo", min_value=0.0, step=1.0, value=0.0)
         with col2:
-            nueva_marca = st.text_input("Marca")
             precio_ven = st.number_input("Precio de Venta", min_value=0.0, step=1.0, value=0.0)
             categoria = st.text_input("Categoría")
             
@@ -642,25 +637,22 @@ with pestana5:
                 st.error("¡El nombre del producto es obligatorio!")
             else:
                 try:
-                    n_nom_final = nuevo_nombre.strip().title()
-                    n_pres_final = nueva_presentacion.strip().title()
-                    n_marca_final = nueva_marca.strip().title()
-                    n_cat_final = categoria.strip().title()
+                    n_nom_final = nuevo_nombre.strip()
+                    n_cat_final = categoria.strip() if categoria.strip() else "2"
 
                     nueva_fila = [""] * len(headers)
                     datos_ingresados = {
                         "Nombre del Producto": n_nom_final,
-                        "Presentacion": n_pres_final,
-                        "Marca": n_marca_final,
                         "Cantidad en Stock": stock_inicial,
-                        "Precio Directo": precio_dir,
                         "Precio de Venta": precio_ven,
-                        "Categoría": n_cat_final,
-                        "Categoria": n_cat_final
+                        "Nivel Mínimo de Alerta": 2,
+                        "Precio Directo": precio_dir,
+                        "Categoría.": n_cat_final
                     }
                     for idx, header in enumerate(headers):
-                        if header in datos_ingresados:
-                            nueva_fila[idx] = datos_ingresados[header]
+                        h_limpio = header.strip()
+                        if h_limpio in datos_ingresados:
+                            nueva_fila[idx] = datos_ingresados[h_limpio]
                     hoja_inv.append_row(nueva_fila)
                     st.success(f"¡El producto '{n_nom_final}' se ha dado de alta correctamente!")
                     
