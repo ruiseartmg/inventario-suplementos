@@ -7,7 +7,7 @@ import base64
 import pandas as pd
 import time
 from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 from reportlab.pdfgen import canvas
@@ -185,6 +185,7 @@ class NumberedCanvas(canvas.Canvas):
 
     def draw_page_decorations(self, page_count):
         self.saveState()
+        # Marca de agua central tenue
         if os.path.exists(LOGO_PATH):
             try:
                 self.setFillAlpha(0.08)
@@ -192,6 +193,7 @@ class NumberedCanvas(canvas.Canvas):
             except:
                 pass
         
+        # Fecha de emisión abajo a la derecha
         self.setFont("Helvetica", 8)
         self.setFillColor(colors.HexColor('#555555'))
         fecha_emision_str = f"Fecha de emisión: {datetime.utcnow().strftime('%d-%m-%Y %H:%M:%S')}"
@@ -424,13 +426,28 @@ with pestana2:
             elements = []
             
             styles = getSampleStyleSheet()
-            title_style = ParagraphStyle('TitleStyle', parent=styles['Heading1'], fontSize=16, textColor=colors.HexColor('#4A1525'), spaceAfter=15, alignment=1)
+            title_style = ParagraphStyle('TitleStyle', parent=styles['Heading1'], fontSize=15, textColor=colors.HexColor('#4A1525'), spaceAfter=15, alignment=1)
             header_style = ParagraphStyle('HeaderStyle', parent=styles['Normal'], fontSize=9, textColor=colors.whitesmoke, fontName='Helvetica-Bold', alignment=1)
             cell_style = ParagraphStyle('CellStyle', parent=styles['Normal'], fontSize=8, leading=10, alignment=1)
             cell_left = ParagraphStyle('CellLeft', parent=styles['Normal'], fontSize=8, leading=10, alignment=0)
             
-            elements.append(Paragraph("Nature’s Select - Reporte de Pedidos Pendientes", title_style))
-            elements.append(Spacer(1, 5))
+            # Encabezado con Logo a la izquierda y Título centrado/a la derecha
+            if os.path.exists(LOGO_PATH):
+                try:
+                    logo_img = Image(LOGO_PATH, width=70, height=50)
+                    logo_img.hAlign = 'LEFT'
+                    title_table = Table([[logo_img, Paragraph("<b>Nature’s Select - Reporte de Pedidos Pendientes</b>", title_style)]], colWidths=[80, 472])
+                    title_table.setStyle(TableStyle([
+                        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+                        ('ALIGN', (1,0), (1,0), 'CENTER'),
+                    ]))
+                    elements.append(title_table)
+                except:
+                    elements.append(Paragraph("Nature’s Select - Reporte de Pedidos Pendientes", title_style))
+            else:
+                elements.append(Paragraph("Nature’s Select - Reporte de Pedidos Pendientes", title_style))
+                
+            elements.append(Spacer(1, 10))
             
             data = [[Paragraph("Cliente", header_style), Paragraph("Producto", header_style), Paragraph("Cantidad", header_style), Paragraph("Estado", header_style), Paragraph("Fecha", header_style)]]
             for p in pendientes:
@@ -700,13 +717,28 @@ with pestana3:
             elements = []
             
             styles = getSampleStyleSheet()
-            title_style = ParagraphStyle('TitleStyle', parent=styles['Heading1'], fontSize=16, textColor=colors.HexColor('#4A1525'), spaceAfter=15, alignment=1)
+            title_style = ParagraphStyle('TitleStyle', parent=styles['Heading1'], fontSize=15, textColor=colors.HexColor('#4A1525'), spaceAfter=15, alignment=1)
             header_style = ParagraphStyle('HeaderStyle', parent=styles['Normal'], fontSize=9, textColor=colors.whitesmoke, fontName='Helvetica-Bold', alignment=1)
             cell_style = ParagraphStyle('CellStyle', parent=styles['Normal'], fontSize=8, leading=10, alignment=1)
             cell_left = ParagraphStyle('CellLeft', parent=styles['Normal'], fontSize=8, leading=10, alignment=0)
             
-            elements.append(Paragraph("Nature’s Select - Historial de Transacciones", title_style))
-            elements.append(Spacer(1, 5))
+            # Encabezado con Logo a la izquierda y Título
+            if os.path.exists(LOGO_PATH):
+                try:
+                    logo_img = Image(LOGO_PATH, width=70, height=50)
+                    logo_img.hAlign = 'LEFT'
+                    title_table = Table([[logo_img, Paragraph("<b>Nature’s Select - Historial de Transacciones</b>", title_style)]], colWidths=[80, 472])
+                    title_table.setStyle(TableStyle([
+                        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+                        ('ALIGN', (1,0), (1,0), 'CENTER'),
+                    ]))
+                    elements.append(title_table)
+                except:
+                    elements.append(Paragraph("Nature’s Select - Historial de Transacciones", title_style))
+            else:
+                elements.append(Paragraph("Nature’s Select - Historial de Transacciones", title_style))
+                
+            elements.append(Spacer(1, 10))
             
             historial_ordenado = sorted(historial, key=lambda x: str(x.get("Cliente", "")).lower())
 
@@ -780,7 +812,7 @@ with pestana3:
         st.info("Aún no hay registros en el historial.")
 
 with pestana4:
-    st.subheader("📋 Sugerencia de Pedido (Por Surtirกับ Proveedor) y Costos")
+    st.subheader("📋 Sugerencia de Pedido (Por Surtir con Proveedor) y Costos")
     st.markdown("Consulta el pedido sugerido al proveedor, el costo estimado por artículo y el total a invertir.")
     
     reg_hist_actuales = cargar_historial_cache()
@@ -870,13 +902,28 @@ with pestana4:
             elements = []
             
             styles = getSampleStyleSheet()
-            title_style = ParagraphStyle('TitleStyle', parent=styles['Heading1'], fontSize=16, textColor=colors.HexColor('#4A1525'), spaceAfter=15, alignment=1)
+            title_style = ParagraphStyle('TitleStyle', parent=styles['Heading1'], fontSize=15, textColor=colors.HexColor('#4A1525'), spaceAfter=15, alignment=1)
             header_style = ParagraphStyle('HeaderStyle', parent=styles['Normal'], fontSize=9, textColor=colors.whitesmoke, fontName='Helvetica-Bold', alignment=1)
             cell_style = ParagraphStyle('CellStyle', parent=styles['Normal'], fontSize=8, leading=10, alignment=1)
             cell_left = ParagraphStyle('CellLeft', parent=styles['Normal'], fontSize=8, leading=10, alignment=0)
             
-            elements.append(Paragraph("Nature’s Select - Sugerencia de Pedido (Resurtido)", title_style))
-            elements.append(Spacer(1, 5))
+            # Encabezado con Logo a la izquierda y Título
+            if os.path.exists(LOGO_PATH):
+                try:
+                    logo_img = Image(LOGO_PATH, width=70, height=50)
+                    logo_img.hAlign = 'LEFT'
+                    title_table = Table([[logo_img, Paragraph("<b>Nature’s Select - Sugerencia de Pedido (Resurtido)</b>", title_style)]], colWidths=[80, 472])
+                    title_table.setStyle(TableStyle([
+                        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+                        ('ALIGN', (1,0), (1,0), 'CENTER'),
+                    ]))
+                    elements.append(title_table)
+                except:
+                    elements.append(Paragraph("Nature’s Select - Sugerencia de Pedido (Resurtido)", title_style))
+            else:
+                elements.append(Paragraph("Nature’s Select - Sugerencia de Pedido (Resurtido)", title_style))
+                
+            elements.append(Spacer(1, 10))
             
             data = [[Paragraph("Producto", header_style), Paragraph("Stock", header_style), Paragraph("Por Entregar", header_style), Paragraph("Prom./Mes", header_style), Paragraph("Sugerido", header_style), Paragraph("Costo Unit.", header_style), Paragraph("Inversión Est.", header_style)]]
             for r in resurtido:
