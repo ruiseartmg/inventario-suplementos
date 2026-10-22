@@ -7,7 +7,7 @@ import base64
 import pandas as pd
 import time
 from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, Image
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
 from reportlab.pdfgen import canvas
@@ -185,13 +185,24 @@ class NumberedCanvas(canvas.Canvas):
 
     def draw_page_decorations(self, page_count):
         self.saveState()
+        
+        # 1. Marca de agua central tenue
         if os.path.exists(LOGO_PATH):
             try:
                 self.setFillAlpha(0.08)
                 self.drawImage(LOGO_PATH, 106, 246, width=400, height=300, preserveAspectRatio=True, mask='auto')
             except:
                 pass
+                
+        # 2. Logo corporativo en la esquina superior izquierda dentro del margen (X=30, Y=730)
+        if os.path.exists(LOGO_PATH):
+            try:
+                self.setFillAlpha(1.0)
+                self.drawImage(LOGO_PATH, 30, 725, width=65, height=45, preserveAspectRatio=True, mask='auto')
+            except:
+                pass
         
+        # 3. Fecha de emisión abajo a la derecha
         self.setFont("Helvetica", 8)
         self.setFillColor(colors.HexColor('#555555'))
         fecha_emision_str = f"Fecha de emisión: {datetime.utcnow().strftime('%d-%m-%Y %H:%M:%S')}"
@@ -420,7 +431,8 @@ with pestana2:
     if pendientes_activos:
         def generar_pdf_pedidos(pendientes):
             buffer = io.BytesIO()
-            doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=40)
+            # Margen superior incrementado a 55 para dejar espacio libre al logo superior izquierdo
+            doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=55, bottomMargin=40)
             elements = []
             
             styles = getSampleStyleSheet()
@@ -429,23 +441,7 @@ with pestana2:
             cell_style = ParagraphStyle('CellStyle', parent=styles['Normal'], fontSize=8, leading=10, alignment=1)
             cell_left = ParagraphStyle('CellLeft', parent=styles['Normal'], fontSize=8, leading=10, alignment=0)
             
-            # Encabezado con logo dentro del margen (ancho total útil de 552 puntos)
-            if os.path.exists(LOGO_PATH):
-                try:
-                    logo_img = Image(LOGO_PATH, width=55, height=40)
-                    logo_img.hAlign = 'LEFT'
-                    title_table = Table([[logo_img, Paragraph("<b>Nature’s Select - Reporte de Pedidos Pendientes</b>", title_style)]], colWidths=[65, 487])
-                    title_table.setStyle(TableStyle([
-                        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-                        ('ALIGN', (1,0), (1,0), 'CENTER'),
-                        ('LEFTPADDING', (0,0), (-1,-1), 0),
-                    ]))
-                    elements.append(title_table)
-                except:
-                    elements.append(Paragraph("Nature’s Select - Reporte de Pedidos Pendientes", title_style))
-            else:
-                elements.append(Paragraph("Nature’s Select - Reporte de Pedidos Pendientes", title_style))
-                
+            elements.append(Paragraph("Nature’s Select - Reporte de Pedidos Pendientes", title_style))
             elements.append(Spacer(1, 10))
             
             data = [[Paragraph("Cliente", header_style), Paragraph("Producto", header_style), Paragraph("Cantidad", header_style), Paragraph("Estado", header_style), Paragraph("Fecha", header_style)]]
@@ -712,7 +708,8 @@ with pestana3:
     if registros_h:
         def generar_pdf_historial(historial):
             buffer = io.BytesIO()
-            doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=40)
+            # Margen superior incrementado a 55 para dejar espacio libre al logo superior izquierdo
+            doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=55, bottomMargin=40)
             elements = []
             
             styles = getSampleStyleSheet()
@@ -721,23 +718,7 @@ with pestana3:
             cell_style = ParagraphStyle('CellStyle', parent=styles['Normal'], fontSize=8, leading=10, alignment=1)
             cell_left = ParagraphStyle('CellLeft', parent=styles['Normal'], fontSize=8, leading=10, alignment=0)
             
-            # Encabezado con logo dentro del margen
-            if os.path.exists(LOGO_PATH):
-                try:
-                    logo_img = Image(LOGO_PATH, width=55, height=40)
-                    logo_img.hAlign = 'LEFT'
-                    title_table = Table([[logo_img, Paragraph("<b>Nature’s Select - Historial de Transacciones</b>", title_style)]], colWidths=[65, 487])
-                    title_table.setStyle(TableStyle([
-                        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-                        ('ALIGN', (1,0), (1,0), 'CENTER'),
-                        ('LEFTPADDING', (0,0), (-1,-1), 0),
-                    ]))
-                    elements.append(title_table)
-                except:
-                    elements.append(Paragraph("Nature’s Select - Historial de Transacciones", title_style))
-            else:
-                elements.append(Paragraph("Nature’s Select - Historial de Transacciones", title_style))
-                
+            elements.append(Paragraph("Nature’s Select - Historial de Transacciones", title_style))
             elements.append(Spacer(1, 10))
             
             historial_ordenado = sorted(historial, key=lambda x: str(x.get("Cliente", "")).lower())
@@ -898,7 +879,8 @@ with pestana4:
 
         def generar_pdf_resurtido(resurtido, total_inv):
             buffer = io.BytesIO()
-            doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=40)
+            # Margen superior incrementado a 55 para dejar espacio libre al logo superior izquierdo
+            doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=55, bottomMargin=40)
             elements = []
             
             styles = getSampleStyleSheet()
@@ -907,23 +889,7 @@ with pestana4:
             cell_style = ParagraphStyle('CellStyle', parent=styles['Normal'], fontSize=8, leading=10, alignment=1)
             cell_left = ParagraphStyle('CellLeft', parent=styles['Normal'], fontSize=8, leading=10, alignment=0)
             
-            # Encabezado con logo dentro del margen
-            if os.path.exists(LOGO_PATH):
-                try:
-                    logo_img = Image(LOGO_PATH, width=55, height=40)
-                    logo_img.hAlign = 'LEFT'
-                    title_table = Table([[logo_img, Paragraph("<b>Nature’s Select - Sugerencia de Pedido (Resurtido)</b>", title_style)]], colWidths=[65, 487])
-                    title_table.setStyle(TableStyle([
-                        ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-                        ('ALIGN', (1,0), (1,0), 'CENTER'),
-                        ('LEFTPADDING', (0,0), (-1,-1), 0),
-                    ]))
-                    elements.append(title_table)
-                except:
-                    elements.append(Paragraph("Nature’s Select - Sugerencia de Pedido (Resurtido)", title_style))
-            else:
-                elements.append(Paragraph("Nature’s Select - Sugerencia de Pedido (Resurtido)", title_style))
-                
+            elements.append(Paragraph("Nature’s Select - Sugerencia de Pedido (Resurtido)", title_style))
             elements.append(Spacer(1, 10))
             
             data = [[Paragraph("Producto", header_style), Paragraph("Stock", header_style), Paragraph("Por Entregar", header_style), Paragraph("Prom./Mes", header_style), Paragraph("Sugerido", header_style), Paragraph("Costo Unit.", header_style), Paragraph("Inversión Est.", header_style)]]
@@ -998,7 +964,7 @@ with pestana5:
                 st.error("¡El nombre del producto es obligatorio!")
             else:
                 try:
-                    n_nom_final = nuevo_nombre.strip()
+                    n_nom_final = nuevo_nombre.strip()  
                     n_cat_final = categoria.strip() if categoria.strip() else "2"
 
                     nueva_fila = [""] * len(headers)
