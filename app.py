@@ -321,7 +321,8 @@ with pestana1:
 
         df_inv = pd.DataFrame(registros_inv)
         
-        cols_a_quitar = [c for c in df_inv.columns if "precio directo" in c.lower() or "directo" in c.lower() or "por surtir" in c.lower() or "por_surtir" in c.lower() or "presentacion" in c.lower() or "presentación" in c.lower()]
+        # Eliminar las columnas no deseadas
+        cols_a_quitar = [c for c in df_inv.columns if "precio directo" in c.lower() or "directo" in c.lower() or "por surtir" in c.lower() or "por_surtir" in c.lower() or "presentacion" in c.lower() or "presentación" in c.lower() or "alerta" in c.lower() or "categoria" in c.lower() or "categoría" in c.lower()]
         df_inv = df_inv.drop(columns=cols_a_quitar, errors="ignore")
 
         for col in df_inv.columns:
@@ -355,7 +356,7 @@ with pestana1:
         if "Nombre del Producto" in df_inv.columns:
             df_inv = df_inv.set_index("Nombre del Producto")
             
-        st.dataframe(df_inv, use_container_width=True)
+        st.table(df_inv)
 
 with pestana2:
     st.subheader("📦 Control de Pedidos y Entregas")
