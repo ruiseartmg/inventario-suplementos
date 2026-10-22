@@ -369,6 +369,19 @@ with pestana2:
     pedidos_pendientes = cargar_pedidos_cache()
     pendientes_activos = [p for p in pedidos_pendientes if p.get("Estado") in ["Por entregar", "Déficit"]]
     
+    stock_por_producto = {}
+    for inv_p in registros_inv:
+        nombre_p = str(inv_p.get("Nombre del Producto", "")).strip()
+        st_val = 0.0
+        for k, v in inv_p.items():
+            if "stock" in k.lower() or "cantidad" in k.lower():
+                try:
+                    st_val = float(str(v).replace(",", ""))
+                    break
+                except:
+                    continue
+        stock_por_producto[nombre_p] = st_val
+
     if pendientes_activos:
         def generar_pdf_pedidos(pendientes):
             buffer = io.BytesIO()
@@ -387,11 +400,20 @@ with pestana2:
             
             data = [[Paragraph("Cliente", header_style), Paragraph("Producto", header_style), Paragraph("Cantidad", header_style), Paragraph("Estado", header_style), Paragraph("Fecha", header_style)]]
             for p in pendientes:
+                p_estado = str(p.get("Estado", ""))
+                p_prod = str(p.get("Producto", ""))
+                p_cant = float(str(p.get("Cantidad", 0)).replace(",", ""))
+                
+                if p_estado == "Déficit":
+                    st_disp = stock_por_producto.get(p_prod, 0.0)
+                    if st_disp >= p_cant:
+                        p_estado = "Listo para Entregar"
+
                 data.append([
                     Paragraph(str(p.get("Cliente", "")), cell_left),
-                    Paragraph(str(p.get("Producto", "")), cell_left),
+                    Paragraph(p_prod, cell_left),
                     Paragraph(str(p.get("Cantidad", "")), cell_style),
-                    Paragraph(str(p.get("Estado", "")), cell_style),
+                    Paragraph(p_estado, cell_style),
                     Paragraph(str(p.get("Fecha", "")), cell_style)
                 ])
                 
@@ -418,19 +440,6 @@ with pestana2:
             mime="application/pdf"
         )
         st.markdown("---")
-
-        stock_por_producto = {}
-        for inv_p in registros_inv:
-            nombre_p = str(inv_p.get("Nombre del Producto", "")).strip()
-            st_val = 0.0
-            for k, v in inv_p.items():
-                if "stock" in k.lower() or "cantidad" in k.lower():
-                    try:
-                        st_val = float(str(v).replace(",", ""))
-                        break
-                    except:
-                        continue
-            stock_por_producto[nombre_p] = st_val
 
         pedidos_deficit_real = []
         pedidos_deficit_surtible = []
@@ -613,7 +622,6 @@ with pestana3:
     
     registros_h = cargar_historial_cache()
     if registros_h:
-        # Función PDF para Historial
         def generar_pdf_historial(historial):
             buffer = io.BytesIO()
             doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
@@ -769,7 +777,6 @@ with pestana4:
             
         df_resurtido = pd.DataFrame(lista_resurtido)
 
-        # Función PDF para Resurtido
         def generar_pdf_resurtido(resurtido, total_inv):
             buffer = io.BytesIO()
             doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
