@@ -676,8 +676,11 @@ with pestana3:
             elements.append(Paragraph(f"Fecha de emisión: {datetime.utcnow().strftime('%d-%m-%Y %H:%M:%S')}", styles['Normal']))
             elements.append(Spacer(1, 15))
             
+            # ORDENAMOS EL HISTORIAL ALFABÉTICAMENTE POR CLIENTE PARA EL PDF
+            historial_ordenado = sorted(historial, key=lambda x: str(x.get("Cliente", "")).lower())
+
             data = [[Paragraph("Fecha", header_style), Paragraph("Hora", header_style), Paragraph("Cliente", header_style), Paragraph("Producto", header_style), Paragraph("Tipo", header_style), Paragraph("Cant.", header_style), Paragraph("Total", header_style)]]
-            for h in historial:
+            for h in historial_ordenado:
                 raw_tot = str(h.get("Total", "0")).replace("$", "").replace(",", "").strip()
                 try:
                     val_tot = float(raw_tot)
@@ -728,8 +731,6 @@ with pestana3:
 
         df_hist = pd.DataFrame(registros_h)
         if not df_hist.empty:
-            df_hist = df_hist.iloc[::-1]
-            
             if "Total" in df_hist.columns:
                 df_hist["Total"] = pd.to_numeric(df_hist["Total"].astype(str).str.replace("$", "").str.replace(",", "").str.strip(), errors="coerce").fillna(0)
                 df_hist["Total"] = df_hist["Total"].apply(lambda x: f"${x:,.2f}")
@@ -931,7 +932,7 @@ with pestana5:
                     }
                     for idx, header in enumerate(headers):
                         h_limpio = header.strip()
-                        if h_limpio in datos_ngresados if 'datos_ingresados' in locals() else h_limpio in datos_ingresados:
+                        if h_limpio in datos_ingresados:
                             nueva_fila[idx] = datos_ingresados[h_limpio]
                     hoja_inv.append_row(nueva_fila)
                     st.success(f"¡El producto '{n_nom_final}' se ha dado de alta correctamente!")
