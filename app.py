@@ -678,14 +678,30 @@ with pestana3:
             
             data = [[Paragraph("Fecha", header_style), Paragraph("Hora", header_style), Paragraph("Cliente", header_style), Paragraph("Producto", header_style), Paragraph("Tipo", header_style), Paragraph("Cant.", header_style), Paragraph("Total", header_style)]]
             for h in historial:
+                # Formateamos el total en PDF como moneda
+                raw_tot = str(h.get("Total", "0")).replace("$", "").replace(",", "").strip()
+                try:
+                    val_tot = float(raw_tot)
+                    tot_fmt = f"${val_tot:,.2f}"
+                except:
+                    tot_fmt = f"${0.0:,.2f}"
+
+                # Formateamos la cantidad limpia sin símbolo de pesos
+                raw_cant = str(h.get("Cantidad", "0")).replace("$", "").replace(",", "").strip()
+                try:
+                    val_cant = float(raw_cant)
+                    cant_fmt = str(int(val_cant)) if val_cant.is_integer() else f"{val_cant:g}"
+                except:
+                    cant_fmt = raw_cant
+
                 data.append([
                     Paragraph(str(h.get("Fecha", "")), cell_style),
                     Paragraph(str(h.get("Hora", "")), cell_style),
                     Paragraph(str(h.get("Cliente", "")), cell_left),
                     Paragraph(str(h.get("Producto", "")), cell_left),
                     Paragraph(str(h.get("Compra/Venta", "")), cell_style),
-                    Paragraph(str(h.get("Cantidad", "")), cell_style),
-                    Paragraph(str(h.get("Total", "")), cell_style)
+                    Paragraph(cant_fmt, cell_style),
+                    Paragraph(tot_fmt, cell_style)
                 ])
                 
             t = Table(data, colWidths=[65, 50, 110, 130, 75, 40, 70])
