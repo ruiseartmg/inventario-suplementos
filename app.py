@@ -7,12 +7,8 @@ import base64
 import pandas as pd
 import time
 
-# Configuración de la página en modo ancho
 st.set_page_config(page_title="Nature’s Select - Inventario", page_icon="🌿", layout="wide")
 
-# ==========================================
-# TIPOGRAFÍAS Y ESTILO CSS
-# ==========================================
 st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Open+Sans:wght@400;600&display=swap');
@@ -78,12 +74,18 @@ st.markdown("""
             margin-bottom: 12px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.04);
         }
+
+        .surtible-alert-card {
+            background-color: #E8F5E9;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 6px solid #2E7D32;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+        }
     </style>
 """, unsafe_allow_html=True)
 
-# ==========================================
-# CONEXIÓN A GOOGLE SHEETS
-# ==========================================
 SCOPE = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive"
@@ -131,7 +133,6 @@ except Exception as e:
     st.error(f"Error al conectar con Google Sheets: {e}")
     st.stop()
 
-# Funciones de lectura con caché de 900 segundos y pausas de seguridad
 @st.cache_data(ttl=900)
 def cargar_inventario_cache():
     time.sleep(0.5)
@@ -157,7 +158,6 @@ except Exception as e:
     registros_inv = []
     headers = []
 
-# Cabecera con Logotipo
 try:
     with open("watermarked_img_3973813175880226978.jpg", "rb") as image_file:
         encoded_image = base64.b64encode(image_file.read()).decode()
@@ -174,7 +174,6 @@ except:
 
 st.markdown("---")
 
-# ORDEN DE PESTAÑAS
 pestana1, pestana2, pestana3, pestana4, pestana5 = st.tabs([
     "🛒 Pedidos", 
     "📦 Control de Pedidos", 
@@ -376,17 +375,39 @@ with pestana2:
                         continue
             stock_por_producto[nombre_p] = st_val
 
-        pedidos_en_deficit = [p for p in pendientes_activos if p.get("Estado") == "Déficit"]
+        pedidos_deficit_real = []
+        pedidos_deficit_surtible = []
+        
+        for ped in pendientes_activos:
+            if ped.get("Estado") == "Déficit":
+                p_nom = ped.get("Producto")
+                c_ped = float(str(ped.get("Cantidad", 0)).replace(",", ""))
+                st_disp = stock_por_producto.get(p_nom, 0.0)
+                if st_disp >= c_ped:
+                    pedidos_deficit_surtible.append(ped)
+                else:
+                    pedidos_deficit_real.append(ped)
 
-        if pedidos_en_deficit:
+        if pedidos_deficit_real:
             st.markdown("### 🚨 Pedidos en Espera por Déficit (Falta Stock)")
-            st.markdown("Las siguientes fracciones de pedidos están pendientes porque superan el inventario actual:")
-            for def_ped in pedidos_en_deficit:
+            for def_ped in pedidos_deficit_real:
                 st.markdown(f"""
                     <div class="deficit-alert-card">
                         <b>👤 Cliente:</b> {def_ped.get('Cliente')} <br>
                         <b>🛍️ Producto:</b> {def_ped.get('Producto')} (Cantidad en espera de proveedor: <b>{def_ped.get('Cantidad')}</b>) <br>
                         <span style='color: gray; font-size: 11px;'>ID Pedido: {def_ped.get('ID')} | Fecha de registro: {def_ped.get('Fecha')}</span>
+                    </div>
+                """, unsafe_allow_html=True)
+            st.markdown("---")
+
+        if pedidos_deficit_surtible:
+            st.markdown("### 🟢 Déficits Listos para Entregar (Ya hay Stock)")
+            for sur_ped in pedidos_deficit_surtible:
+                st.markdown(f"""
+                    <div class="surtible-alert-card">
+                        <b>👤 Cliente:</b> {sur_ped.get('Cliente')} <br>
+                        <b>🛍️ Producto:</b> {sur_ped.get('Producto')} (Cantidad lista para entrega: <b>{sur_ped.get('Cantidad')}</b>) <br>
+                        <span style='color: gray; font-size: 11px;'><i>Ya entró mercancía suficiente al inventario para cubrir este pedido. Puedes entregarlo directamente abajo.</i></span>
                     </div>
                 """, unsafe_allow_html=True)
             st.markdown("---")
@@ -403,15 +424,22 @@ with pestana2:
             col_info, col_btn1, col_btn2 = st.columns([4.5, 1.75, 1.75])
             
             estado_ped = ped.get('Estado')
-            estado_lbl = "📦 Reservado (Listo)" if estado_ped == "Por entregar" else "🚨 Déficit (Falta Stock)"
             prod_ped = str(ped.get("Producto", ""))
             cant_ped = float(str(ped.get("Cantidad", 0)).replace(",", ""))
             stock_disponible = stock_por_producto.get(prod_ped, 0.0)
             
+            if estado_ped == "Por entregar":
+                estado_lbl = "📦 Reservado (Listo)"
+            elif estado_ped == "Déficit":
+                if stock_disponible >= cant_ped:
+                    estado_lbl = "🟢 Listo para Entregar (Ya hay stock)"
+                else:
+                    estado_lbl = "🚨 Déficit (Falta Stock)"
+            
             with col_info:
                 st.markdown(f"**👤 {ped.get('Cliente')}**  \n🛍️ **{prod_ped}** — Cantidad: **{cant_ped:g}** [{estado_lbl}] \n<span style='color: gray; font-size: 11px;'>ID: {ped.get('ID')} | Fecha: {ped.get('Fecha')}</span>", unsafe_allow_html=True)
+            
             with col_btn1:
-                # Lógica de deshabilitación: si es déficit y no hay stock, desactivar botón
                 if estado_ped == "Déficit" and stock_disponible < cant_ped:
                     st.button("⏳ Sin Stock", key=f"entregar_dis_{ped.get('ID')}_{idx}", disabled=True)
                 else:
@@ -474,11 +502,10 @@ with pestana2:
                                     hoja_inv.update_cell(row_inv_idx, col_st_idx, stock_fisc - cant_ped)
                                     hoja_pedidos.update_cell(fila_real, 7, "Entregado")
                                     hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), cli_con_desc, prod_ped, "Venta", cant_ped, total_vta])
-                                    st.success(f"¡Pedido en déficit surtido y entregado con éxito a {cli_con_desc}!")
+                                    st.success(f"¡Pedido surtido directamente y entregado a {cli_con_desc}!")
                                     st.cache_data.clear()
                                     st.rerun()
-                                else:
-                                    st.error(f"❌ Stock insuficiente ({stock_fisc} disponibles) para cubrir el déficit de {cant_ped} unidades.")
+
             with col_btn2:
                 cancelar_key = f"cancelar_{ped.get('ID')}_{idx}"
                 st.markdown("""
@@ -586,3 +613,104 @@ with pestana4:
             
             todos_los_pedidos_res = cargar_pedidos_cache()
             por_entregar_val = 0.0
+            for tp in todos_los_pedidos_res:
+                if tp.get("Estado") in ["Por entregar", "Déficit"] and tp.get("Producto") == nombre:
+                    por_entregar_val += float(str(tp.get("Cantidad", 0)).replace(",", ""))
+            
+            p_directo = 0.0
+            for k, v in p.items():
+                if "precio directo" in k.lower() or "directo" in k.lower():
+                    raw_pd = str(v).replace("$", "").replace(",", "").strip()
+                    try:
+                        p_directo = float(raw_pd)
+                        break
+                    except:
+                        pass
+            if p_directo == 0.0:
+                for k, v in p.items():
+                    if "precio" in k.lower():
+                        raw_pd = str(v).replace("$", "").replace(",", "").strip()
+                        try:
+                            val_p = float(raw_pd)
+                            if val_p > 0:
+                                p_directo = val_p
+                                break
+                        except:
+                            continue
+
+            promedio_mes_val = promedios_dict.get(nombre, 0.0)
+            sugerido_pedido = por_entregar_val + promedio_mes_val
+            costo_total_producto = sugerido_pedido * p_directo
+            gran_total_inversion += costo_total_producto
+            
+            stock_str = str(int(stock)) if stock.is_integer() else f"{stock:g}"
+            surtir_str = str(int(por_entregar_val)) if por_entregar_val.is_integer() else f"{por_entregar_val:g}"
+            prom_str = str(int(promedio_mes_val)) if promedio_mes_val.is_integer() else f"{promedio_mes_val:g}"
+            sugerido_str = str(int(sugerido_pedido)) if sugerido_pedido.is_integer() else f"{sugerido_pedido:g}"
+            
+            lista_resurtido.append({
+                "Producto": nombre,
+                "Stock Actual": stock_str,
+                "Por Entregar (Clientes)": surtir_str,
+                "Promedio/Mes": prom_str,
+                "Sugerido": sugerido_str,
+                "Costo Unit.": f"${p_directo:,.2f}",
+                "Inversión Est.": f"${costo_total_producto:,.2f}"
+            })
+            
+        df_resurtido = pd.DataFrame(lista_resurtido)
+        
+        if "Producto" in df_resurtido.columns:
+            df_resurtido = df_resurtido.set_index("Producto")
+            
+        st.dataframe(df_resurtido, use_container_width=True)
+        
+        st.markdown(f"""
+            <div class="metric-card">
+                <h3 style="margin: 0; color: #2E7D32 !important; font-weight: 600;">💰 Inversión Total Estimada: ${gran_total_inversion:,.2f}</h3>
+            </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.info("No hay productos en el inventario.")
+
+with pestana5:
+    st.subheader("Agregar un Producto Nuevo al Inventario")
+    with st.form("form_nuevo_producto"):
+        nuevo_nombre = st.text_input("Nombre del Producto con Presentación * (ej. Miel de Abeja 500g)")
+        col1, col2 = st.columns(2)
+        with col1:
+            stock_inicial = st.number_input("Cantidad Inicial en Stock", min_value=0.0, step=1.0, value=0.0)
+            precio_dir = st.number_input("Precio Directo", min_value=0.0, step=1.0, value=0.0)
+        with col2:
+            precio_ven = st.number_input("Precio de Venta", min_value=0.0, step=1.0, value=0.0)
+            categoria = st.text_input("Categoría")
+            
+        submitted = st.form_submit_button("Guardar Producto en la Nube")
+        if submitted:
+            if not nuevo_nombre.strip():
+                st.error("¡El nombre del producto es obligatorio!")
+            else:
+                try:
+                    n_nom_final = nuevo_nombre.strip()
+                    n_cat_final = categoria.strip() if categoria.strip() else "2"
+
+                    nueva_fila = [""] * len(headers)
+                    datos_ingresados = {
+                        "Nombre del Producto": n_nom_final,
+                        "Cantidad en Stock": stock_inicial,
+                        "Precio de Venta": precio_ven,
+                        "Nivel Mínimo de Alerta": 2,
+                        "Precio Directo": precio_dir,
+                        "Categoría.": n_cat_final
+                    }
+                    for idx, header in enumerate(headers):
+                        h_limpio = header.strip()
+                        if h_limpio in datos_ingresados:
+                            nueva_fila[idx] = datos_ingresados[h_limpio]
+                    hoja_inv.append_row(nueva_fila)
+                    st.success(f"¡El producto '{n_nom_final}' se ha dado de alta correctamente!")
+                    
+                    st.cache_data.clear()
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Error al guardar: {e}")
