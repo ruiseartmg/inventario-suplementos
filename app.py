@@ -185,16 +185,13 @@ class NumberedCanvas(canvas.Canvas):
 
     def draw_page_decorations(self, page_count):
         self.saveState()
-        # Marca de agua del logo al fondo
         if os.path.exists(LOGO_PATH):
             try:
-                self.setFillAlpha(0.08)  # Transparencia tenue para la marca de agua
-                # Posicionada al centro de la hoja carta (612 x 792 puntos)
+                self.setFillAlpha(0.08)
                 self.drawImage(LOGO_PATH, 106, 246, width=400, height=300, preserveAspectRatio=True, mask='auto')
             except:
                 pass
         
-        # Fecha de emisión en la parte inferior derecha
         self.setFont("Helvetica", 8)
         self.setFillColor(colors.HexColor('#555555'))
         fecha_emision_str = f"Fecha de emisión: {datetime.utcnow().strftime('%d-%m-%Y %H:%M:%S')}"
@@ -744,4 +741,235 @@ with pestana3:
                 ('ALIGN', (0,0), (-1,-1), 'CENTER'),
                 ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
                 ('BOTTOMPADDING', (0,0), (-1,0), 6),
-                ('TOPPADDING', (0,0), (-1
+                ('TOPPADDING', (0,0), (-1,0), 6),
+                ('BACKGROUND', (0,1), (-1,-1), colors.HexColor('#FDFBFB')),
+                ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#D1C4E9')),
+            ]))
+            elements.append(t)
+            doc.build(elements, canvasmaker=NumberedCanvas)
+            buffer.seek(0)
+            return buffer.getvalue()
+
+        pdf_bytes_hist = generar_pdf_historial(registros_h)
+        st.download_button(
+            label="📄 Descargar Historial en PDF",
+            data=pdf_bytes_hist,
+            file_name=f"reporte_historial_{datetime.now().strftime('%d-%m-%Y')}.pdf",
+            mime="application/pdf"
+        )
+        st.markdown("---")
+
+        df_hist = pd.DataFrame(registros_h)
+        if not df_hist.empty:
+            if "Total" in df_hist.columns:
+                df_hist["Total"] = pd.to_numeric(df_hist["Total"].astype(str).str.replace("$", "").str.replace(",", "").str.strip(), errors="coerce").fillna(0)
+                df_hist["Total"] = df_hist["Total"].apply(lambda x: f"${x:,.2f}")
+            if "Cantidad" in df_hist.columns:
+                df_hist["Cantidad"] = pd.to_numeric(df_hist["Cantidad"].astype(str).str.replace("$", "").str.replace(",", "").str.strip(), errors="coerce").fillna(0)
+                df_hist["Cantidad"] = df_hist["Cantidad"].apply(lambda x: str(int(x)) if x.is_integer() else f"{x:g}")
+
+            cols_ordenadas = ["Fecha", "Producto", "Cliente", "Compra/Venta", "Cantidad", "Total"]
+            df_hist = df_hist[[c for c in cols_ordenadas if c in df_hist.columns]]
+
+            if "Producto" in df_hist.columns:
+                df_hist = df_hist.set_index("Producto")
+            st.dataframe(df_hist, use_container_width=True)
+        else:
+            st.info("Aún no hay registros en el historial.")
+    else:
+        st.info("Aún no hay registros en el historial.")
+
+with pestana4:
+    st.subheader("📋 Sugerencia de Pedido (Por Surtirกับ Proveedor) y Costos")
+    st.markdown("Consulta el pedido sugerido al proveedor, el costo estimado por artículo y el total a invertir.")
+    
+    reg_hist_actuales = cargar_historial_cache()
+    
+    if registros_inv:
+        df_h = pd.DataFrame(reg_hist_actuales) if reg_hist_actuales else pd.DataFrame()
+        promedios_dict = {}
+        
+        if not df_h.empty and "Producto" in df_h.columns and "Cantidad" in df_h.columns and "Fecha" in df_h.columns:
+            if "Compra/Venta" in df_h.columns:
+                df_ventas = df_h[df_h["Compra/Venta"] == "Venta"].copy()
+            else:
+                df_ventas = df_h.copy()
+                
+            if not df_ventas.empty:
+                try:
+                    df_ventas["Fecha_str"] = df_ventas["Fecha"].astype(str).str.strip()
+                    df_ventas["Mes"] = df_ventas["Fecha_str"].str.slice(3, 10)
+                    df_ventas["Cantidad_num"] = pd.to_numeric(df_ventas["Cantidad"].astype(str).str.replace("$", "").str.replace(",", "").str.strip(), errors="coerce").fillna(0)
+                    
+                    totales_prod_mes = df_ventas.groupby(["Producto", "Mes"])["Cantidad_num"].sum().reset_index()
+                    promedios = totales_prod_mes.groupby("Producto")["Cantidad_num"].mean().reset_index()
+                    for _, row in promedios.iterrows():
+                        promedios_dict[row["Producto"]] = float(row["Cantidad_num"])
+                except:
+                    pass
+
+        lista_resurtido = []
+        gran_total_inversion = 0.0
+
+        for p in registros_inv:
+            nombre = str(p.get("Nombre del Producto", "")).strip()
+            stock = float(str(p.get("Cantidad in Stock", 0) or 0).replace(",", ""))
+            
+            todos_los_pedidos_res = cargar_pedidos_cache()
+            por_entregar_val = 0.0
+            for tp in todos_los_pedidos_res:
+                if tp.get("Estado") in ["Por entregar", "Déficit"] and tp.get("Producto") == nombre:
+                    por_entregar_val += float(str(tp.get("Cantidad", 0)).replace(",", ""))
+            
+            p_directo = 0.0
+            for k, v in p.items():
+                if "precio directo" in k.lower() or "directo" in k.lower():
+                    raw_pd = str(v).replace("$", "").replace(",", "").strip()
+                    try:
+                        p_directo = float(raw_pd)
+                        break
+                    except:
+                        pass
+            if p_directo == 0.0:
+                for k, v in p.items():
+                    if "precio" in k.lower():
+                        raw_pd = str(v).replace("$", "").replace(",", "").strip()
+                        try:
+                            val_p = float(raw_pd)
+                            if val_p > 0:
+                                p_directo = val_p
+                                break
+                        except:
+                            continue
+
+            promedio_mes_val = promedios_dict.get(nombre, 0.0)
+            sugerido_pedido = por_entregar_val + promedio_mes_val
+            costo_total_producto = sugerido_pedido * p_directo
+            gran_total_inversion += costo_total_producto
+            
+            stock_str = str(int(stock)) if stock.is_integer() else f"{stock:g}"
+            surtir_str = str(int(por_entregar_val)) if por_entregar_val.is_integer() else f"{por_entregar_val:g}"
+            prom_str = str(int(promedio_mes_val)) if promedio_mes_val.is_integer() else f"{promedio_mes_val:g}"
+            sugerido_str = str(int(sugerido_pedido)) if sugerido_pedido.is_integer() else f"{sugerido_pedido:g}"
+            
+            lista_resurtido.append({
+                "Producto": nombre,
+                "Stock Actual": stock_str,
+                "Por Entregar (Clientes)": surtir_str,
+                "Promedio/Mes": prom_str,
+                "Sugerido": sugerido_str,
+                "Costo Unit.": f"${p_directo:,.2f}",
+                "Inversión Est.": f"${costo_total_producto:,.2f}"
+            })
+            
+        df_resurtido = pd.DataFrame(lista_resurtido)
+
+        def generar_pdf_resurtido(resurtido, total_inv):
+            buffer = io.BytesIO()
+            doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=40)
+            elements = []
+            
+            styles = getSampleStyleSheet()
+            title_style = ParagraphStyle('TitleStyle', parent=styles['Heading1'], fontSize=16, textColor=colors.HexColor('#4A1525'), spaceAfter=15, alignment=1)
+            header_style = ParagraphStyle('HeaderStyle', parent=styles['Normal'], fontSize=9, textColor=colors.whitesmoke, fontName='Helvetica-Bold', alignment=1)
+            cell_style = ParagraphStyle('CellStyle', parent=styles['Normal'], fontSize=8, leading=10, alignment=1)
+            cell_left = ParagraphStyle('CellLeft', parent=styles['Normal'], fontSize=8, leading=10, alignment=0)
+            
+            elements.append(Paragraph("Nature’s Select - Sugerencia de Pedido (Resurtido)", title_style))
+            elements.append(Spacer(1, 5))
+            
+            data = [[Paragraph("Producto", header_style), Paragraph("Stock", header_style), Paragraph("Por Entregar", header_style), Paragraph("Prom./Mes", header_style), Paragraph("Sugerido", header_style), Paragraph("Costo Unit.", header_style), Paragraph("Inversión Est.", header_style)]]
+            for r in resurtido:
+                data.append([
+                    Paragraph(str(r.get("Producto", "")), cell_left),
+                    Paragraph(str(r.get("Stock Actual", "")), cell_style),
+                    Paragraph(str(r.get("Por Entregar (Clientes)", "")), cell_style),
+                    Paragraph(str(r.get("Promedio/Mes", "")), cell_style),
+                    Paragraph(str(r.get("Sugerido", "")), cell_style),
+                    Paragraph(str(r.get("Costo Unit.", "")), cell_style),
+                    Paragraph(str(r.get("Inversión Est.", "")), cell_style)
+                ])
+                
+            t = Table(data, colWidths=[140, 50, 70, 60, 60, 65, 95])
+            t.setStyle(TableStyle([
+                ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#4A1525')),
+                ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+                ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+                ('BOTTOMPADDING', (0,0), (-1,0), 6),
+                ('TOPPADDING', (0,0), (-1,0), 6),
+                ('BACKGROUND', (0,1), (-1,-1), colors.HexColor('#FDFBFB')),
+                ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#D1C4E9')),
+            ]))
+            elements.append(t)
+            elements.append(Spacer(1, 15))
+            
+            total_style = ParagraphStyle('TotalStyle', parent=styles['Normal'], fontSize=12, textColor=colors.HexColor('#4A1525'), fontName='Helvetica-Bold', alignment=2)
+            elements.append(Paragraph(f"Inversión Total Estimada: ${total_inv:,.2f}", total_style))
+            
+            doc.build(elements, canvasmaker=NumberedCanvas)
+            buffer.seek(0)
+            return buffer.getvalue()
+
+        pdf_bytes_res = generar_pdf_resurtido(lista_resurtido, gran_total_inversion)
+        st.download_button(
+            label="📄 Descargar Reporte de Resurtido en PDF",
+            data=pdf_bytes_res,
+            file_name=f"reporte_resurtido_{datetime.now().strftime('%d-%m-%Y')}.pdf",
+            mime="application/pdf"
+        )
+        st.markdown("---")
+        
+        if "Producto" in df_resurtido.columns:
+            df_resurtido = df_resurtido.set_index("Producto")
+            
+        st.dataframe(df_resurtido, use_container_width=True)
+        
+        st.markdown(f"""
+            <div class="metric-card">
+                <h3 style="margin: 0; color: #2E7D32 !important; font-weight: 600;">💰 Inversión Total Estimada: ${gran_total_inversion:,.2f}</h3>
+            </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.info("No hay productos en el inventario.")
+
+with pestana5:
+    st.subheader("Agregar un Producto Nuevo al Inventario")
+    with st.form("form_nuevo_producto"):
+        nuevo_nombre = st.text_input("Nombre del Producto con Presentación * (ej. Miel de Abeja 500g)")
+        col1, col2 = st.columns(2)
+        with col1:
+            stock_inicial = st.number_input("Cantidad Inicial en Stock", min_value=0.0, step=1.0, value=0.0)
+            precio_dir = st.number_input("Precio Directo", min_value=0.0, step=1.0, value=0.0)
+        with col2:
+            precio_ven = st.number_input("Precio de Venta", min_value=0.0, step=1.0, value=0.0)
+            categoria = st.text_input("Categoría")
+            
+        submitted = st.form_submit_button("Guardar Producto en la Nube")
+        if submitted:
+            if not nuevo_nombre.strip():
+                st.error("¡El nombre del producto es obligatorio!")
+            else:
+                try:
+                    n_nom_final = nuevo_nombre.strip()
+                    n_cat_final = categoria.strip() if categoria.strip() else "2"
+
+                    nueva_fila = [""] * len(headers)
+                    datos_ingresados = {
+                        "Nombre del Producto": n_nom_final,
+                        "Cantidad en Stock": stock_inicial,
+                        "Precio de Venta": precio_ven,
+                        "Nivel Mínimo de Alerta": 2,
+                        "Precio Directo": precio_dir,
+                        "Categoría.": n_cat_final
+                    }
+                    for idx, header in enumerate(headers):
+                        h_limpio = header.strip()
+                        if h_limpio in datos_ingresados:
+                            nueva_fila[idx] = datos_ingresados[h_limpio]
+                    hoja_inv.append_row(nueva_fila)
+                    st.success(f"¡El producto '{n_nom_final}' se ha dado de alta correctamente!")
+                    
+                    st.cache_data.clear()
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Error al guardar: {e}")
