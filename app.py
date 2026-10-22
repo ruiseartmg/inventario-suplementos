@@ -186,7 +186,6 @@ class NumberedCanvas(canvas.Canvas):
     def draw_page_decorations(self, page_count):
         self.saveState()
         
-        # 1. Marca de agua central tenue
         if os.path.exists(LOGO_PATH):
             try:
                 self.setFillAlpha(0.08)
@@ -194,16 +193,13 @@ class NumberedCanvas(canvas.Canvas):
             except:
                 pass
                 
-        # 2. Logo corporativo en la esquina superior izquierda (más grande y alineado al margen de la tabla)
         if os.path.exists(LOGO_PATH):
             try:
                 self.setFillAlpha(1.0)
-                # Ajustado a X=45 y dimensiones más grandes (95x65)
                 self.drawImage(LOGO_PATH, 45, 710, width=95, height=65, preserveAspectRatio=True, mask='auto')
             except:
                 pass
         
-        # 3. Fecha de emisión abajo a la derecha
         self.setFont("Helvetica", 8)
         self.setFillColor(colors.HexColor('#555555'))
         fecha_emision_str = f"Fecha de emisión: {datetime.utcnow().strftime('%d-%m-%Y %H:%M:%S')}"
@@ -432,7 +428,6 @@ with pestana2:
     if pendientes_activos:
         def generar_pdf_pedidos(pendientes):
             buffer = io.BytesIO()
-            # Margen superior a 75 para no chocar con el logo grande
             doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=75, bottomMargin=40)
             elements = []
             
@@ -709,7 +704,6 @@ with pestana3:
     if registros_h:
         def generar_pdf_historial(historial):
             buffer = io.BytesIO()
-            # Margen superior a 75 para no chocar con el logo grande
             doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=75, bottomMargin=40)
             elements = []
             
@@ -827,7 +821,16 @@ with pestana4:
 
         for p in registros_inv:
             nombre = str(p.get("Nombre del Producto", "")).strip()
-            stock = float(str(p.get("Cantidad in Stock", 0) or 0).replace(",", ""))
+            
+            # CORRECCIÓN: Búsqueda dinámica de la columna de stock
+            stock = 0.0
+            for k, v in p.items():
+                if "stock" in k.lower() or "cantidad" in k.lower():
+                    try:
+                        stock = float(str(v).replace(",", ""))
+                        break
+                    except:
+                        pass
             
             todos_los_pedidos_res = cargar_pedidos_cache()
             por_entregar_val = 0.0
@@ -880,7 +883,6 @@ with pestana4:
 
         def generar_pdf_resurtido(resurtido, total_inv):
             buffer = io.BytesIO()
-            # Margen superior a 75 para no chocar con el logo grande
             doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=75, bottomMargin=40)
             elements = []
             
