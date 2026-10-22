@@ -194,11 +194,12 @@ class NumberedCanvas(canvas.Canvas):
             except:
                 pass
                 
-        # 2. Logo corporativo en la esquina superior izquierda dentro del margen (X=30, Y=730)
+        # 2. Logo corporativo en la esquina superior izquierda (más grande y alineado al margen de la tabla)
         if os.path.exists(LOGO_PATH):
             try:
                 self.setFillAlpha(1.0)
-                self.drawImage(LOGO_PATH, 30, 725, width=65, height=45, preserveAspectRatio=True, mask='auto')
+                # Ajustado a X=45 y dimensiones más grandes (95x65)
+                self.drawImage(LOGO_PATH, 45, 710, width=95, height=65, preserveAspectRatio=True, mask='auto')
             except:
                 pass
         
@@ -431,8 +432,8 @@ with pestana2:
     if pendientes_activos:
         def generar_pdf_pedidos(pendientes):
             buffer = io.BytesIO()
-            # Margen superior incrementado a 55 para dejar espacio libre al logo superior izquierdo
-            doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=55, bottomMargin=40)
+            # Margen superior a 75 para no chocar con el logo grande
+            doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=75, bottomMargin=40)
             elements = []
             
             styles = getSampleStyleSheet()
@@ -708,8 +709,8 @@ with pestana3:
     if registros_h:
         def generar_pdf_historial(historial):
             buffer = io.BytesIO()
-            # Margen superior incrementado a 55 para dejar espacio libre al logo superior izquierdo
-            doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=55, bottomMargin=40)
+            # Margen superior a 75 para no chocar con el logo grande
+            doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=75, bottomMargin=40)
             elements = []
             
             styles = getSampleStyleSheet()
@@ -879,8 +880,8 @@ with pestana4:
 
         def generar_pdf_resurtido(resurtido, total_inv):
             buffer = io.BytesIO()
-            # Margen superior incrementado a 55 para dejar espacio libre al logo superior izquierdo
-            doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=55, bottomMargin=40)
+            # Margen superior a 75 para no chocar con el logo grande
+            doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=75, bottomMargin=40)
             elements = []
             
             styles = getSampleStyleSheet()
