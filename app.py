@@ -491,7 +491,7 @@ with pestana2:
         filtro_cliente = st.selectbox("🔍 Filtrar por Cliente específico:", ["-- Todos los Clientes --"] + clientes_disponibles)
         
         if filtro_cliente != "-- Todos los Clientes --":
-            pendientes_activos = [p for p in pendientes_activos if p.get("Cliente") == filtro_cliente]
+            pendientes_activos = [p for p in pendientes_activos if p.get("Cliente"] == filtro_cliente]
         
         st.markdown("---")
         
@@ -679,7 +679,8 @@ with pestana3:
             # ORDENAMOS EL HISTORIAL ALFABÉTICAMENTE POR CLIENTE PARA EL PDF
             historial_ordenado = sorted(historial, key=lambda x: str(x.get("Cliente", "")).lower())
 
-            data = [[Paragraph("Fecha", header_style), Paragraph("Hora", header_style), Paragraph("Cliente", header_style), Paragraph("Producto", header_style), Paragraph("Tipo", header_style), Paragraph("Cant.", header_style), Paragraph("Total", header_style)]]
+            # ORDEN DE COLUMNAS EN PDF: Fecha, Producto, Cliente, Tipo, Cant., Total
+            data = [[Paragraph("Fecha", header_style), Paragraph("Producto", header_style), Paragraph("Cliente", header_style), Paragraph("Tipo", header_style), Paragraph("Cant.", header_style), Paragraph("Total", header_style)]]
             for h in historial_ordenado:
                 raw_tot = str(h.get("Total", "0")).replace("$", "").replace(",", "").strip()
                 try:
@@ -697,15 +698,14 @@ with pestana3:
 
                 data.append([
                     Paragraph(str(h.get("Fecha", "")), cell_style),
-                    Paragraph(str(h.get("Hora", "")), cell_style),
-                    Paragraph(str(h.get("Cliente", "")), cell_left),
                     Paragraph(str(h.get("Producto", "")), cell_left),
+                    Paragraph(str(h.get("Cliente", "")), cell_left),
                     Paragraph(str(h.get("Compra/Venta", "")), cell_style),
                     Paragraph(cant_fmt, cell_style),
                     Paragraph(tot_fmt, cell_style)
                 ])
                 
-            t = Table(data, colWidths=[65, 50, 110, 130, 75, 40, 70])
+            t = Table(data, colWidths=[70, 140, 120, 75, 45, 64])
             t.setStyle(TableStyle([
                 ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#4A1525')),
                 ('ALIGN', (0,0), (-1,-1), 'CENTER'),
@@ -737,6 +737,10 @@ with pestana3:
             if "Cantidad" in df_hist.columns:
                 df_hist["Cantidad"] = pd.to_numeric(df_hist["Cantidad"].astype(str).str.replace("$", "").str.replace(",", "").str.strip(), errors="coerce").fillna(0)
                 df_hist["Cantidad"] = df_hist["Cantidad"].apply(lambda x: str(int(x)) if x.is_integer() else f"{x:g}")
+
+            # REORGANIZAMOS LAS COLUMNAS EN PANTALLA (SIN HORA)
+            cols_ordenadas = ["Fecha", "Producto", "Cliente", "Compra/Venta", "Cantidad", "Total"]
+            df_hist = df_hist[[c for c in cols_ordenadas if c in df_hist.columns]]
 
             if "Producto" in df_hist.columns:
                 df_hist = df_hist.set_index("Producto")
