@@ -376,52 +376,16 @@ with pestana2:
             elements = []
             
             styles = getSampleStyleSheet()
-            title_style = ParagraphStyle(
-                'TitleStyle',
-                parent=styles['Heading1'],
-                fontSize=16,
-                textColor=colors.HexColor('#4A1525'), # Color tinto institucional
-                spaceAfter=10,
-                alignment=1
-            )
-            
-            header_style = ParagraphStyle(
-                'HeaderStyle',
-                parent=styles['Normal'],
-                fontSize=9,
-                textColor=colors.whitesmoke,
-                fontName='Helvetica-Bold',
-                alignment=1
-            )
-            
-            cell_style = ParagraphStyle(
-                'CellStyle',
-                parent=styles['Normal'],
-                fontSize=8,
-                leading=10,
-                alignment=1
-            )
-            
-            cell_left = ParagraphStyle(
-                'CellLeft',
-                parent=styles['Normal'],
-                fontSize=8,
-                leading=10,
-                alignment=0
-            )
+            title_style = ParagraphStyle('TitleStyle', parent=styles['Heading1'], fontSize=16, textColor=colors.HexColor('#4A1525'), spaceAfter=10, alignment=1)
+            header_style = ParagraphStyle('HeaderStyle', parent=styles['Normal'], fontSize=9, textColor=colors.whitesmoke, fontName='Helvetica-Bold', alignment=1)
+            cell_style = ParagraphStyle('CellStyle', parent=styles['Normal'], fontSize=8, leading=10, alignment=1)
+            cell_left = ParagraphStyle('CellLeft', parent=styles['Normal'], fontSize=8, leading=10, alignment=0)
             
             elements.append(Paragraph("Nature’s Select - Reporte de Pedidos Pendientes", title_style))
             elements.append(Paragraph(f"Fecha de emisión: {datetime.utcnow().strftime('%d-%m-%Y %H:%M:%S')}", styles['Normal']))
             elements.append(Spacer(1, 15))
             
-            data = [[
-                Paragraph("Cliente", header_style),
-                Paragraph("Producto", header_style),
-                Paragraph("Cantidad", header_style),
-                Paragraph("Estado", header_style),
-                Paragraph("Fecha", header_style)
-            ]]
-            
+            data = [[Paragraph("Cliente", header_style), Paragraph("Producto", header_style), Paragraph("Cantidad", header_style), Paragraph("Estado", header_style), Paragraph("Fecha", header_style)]]
             for p in pendientes:
                 data.append([
                     Paragraph(str(p.get("Cliente", "")), cell_left),
@@ -433,13 +397,13 @@ with pestana2:
                 
             t = Table(data, colWidths=[130, 140, 55, 85, 90])
             t.setStyle(TableStyle([
-                ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#4A1525')), # Fondo tinto institucional
+                ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#4A1525')),
                 ('ALIGN', (0,0), (-1,-1), 'CENTER'),
                 ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
                 ('BOTTOMPADDING', (0,0), (-1,0), 6),
                 ('TOPPADDING', (0,0), (-1,0), 6),
-                ('BACKGROUND', (0,1), (-1,-1), colors.HexColor('#FDFBFB')), # Fondo muy suave
-                ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#D1C4E9')), # Bordes en tono cálido/oro rosa sutil
+                ('BACKGROUND', (0,1), (-1,-1), colors.HexColor('#FDFBFB')),
+                ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#D1C4E9')),
             ]))
             elements.append(t)
             doc.build(elements)
@@ -649,6 +613,58 @@ with pestana3:
     
     registros_h = cargar_historial_cache()
     if registros_h:
+        # Función PDF para Historial
+        def generar_pdf_historial(historial):
+            buffer = io.BytesIO()
+            doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
+            elements = []
+            
+            styles = getSampleStyleSheet()
+            title_style = ParagraphStyle('TitleStyle', parent=styles['Heading1'], fontSize=16, textColor=colors.HexColor('#4A1525'), spaceAfter=10, alignment=1)
+            header_style = ParagraphStyle('HeaderStyle', parent=styles['Normal'], fontSize=9, textColor=colors.whitesmoke, fontName='Helvetica-Bold', alignment=1)
+            cell_style = ParagraphStyle('CellStyle', parent=styles['Normal'], fontSize=8, leading=10, alignment=1)
+            cell_left = ParagraphStyle('CellLeft', parent=styles['Normal'], fontSize=8, leading=10, alignment=0)
+            
+            elements.append(Paragraph("Nature’s Select - Historial de Transacciones", title_style))
+            elements.append(Paragraph(f"Fecha de emisión: {datetime.utcnow().strftime('%d-%m-%Y %H:%M:%S')}", styles['Normal']))
+            elements.append(Spacer(1, 15))
+            
+            data = [[Paragraph("Fecha", header_style), Paragraph("Hora", header_style), Paragraph("Cliente", header_style), Paragraph("Producto", header_style), Paragraph("Tipo", header_style), Paragraph("Cant.", header_style), Paragraph("Total", header_style)]]
+            for h in historial:
+                data.append([
+                    Paragraph(str(h.get("Fecha", "")), cell_style),
+                    Paragraph(str(h.get("Hora", "")), cell_style),
+                    Paragraph(str(h.get("Cliente", "")), cell_left),
+                    Paragraph(str(h.get("Producto", "")), cell_left),
+                    Paragraph(str(h.get("Compra/Venta", "")), cell_style),
+                    Paragraph(str(h.get("Cantidad", "")), cell_style),
+                    Paragraph(str(h.get("Total", "")), cell_style)
+                ])
+                
+            t = Table(data, colWidths=[65, 50, 110, 130, 75, 40, 70])
+            t.setStyle(TableStyle([
+                ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#4A1525')),
+                ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+                ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+                ('BOTTOMPADDING', (0,0), (-1,0), 6),
+                ('TOPPADDING', (0,0), (-1,0), 6),
+                ('BACKGROUND', (0,1), (-1,-1), colors.HexColor('#FDFBFB')),
+                ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#D1C4E9')),
+            ]))
+            elements.append(t)
+            doc.build(elements)
+            buffer.seek(0)
+            return buffer.getvalue()
+
+        pdf_bytes_hist = generar_pdf_historial(registros_h)
+        st.download_button(
+            label="📄 Descargar Historial en PDF",
+            data=pdf_bytes_hist,
+            file_name=f"reporte_historial_{datetime.now().strftime('%d-%m-%Y')}.pdf",
+            mime="application/pdf"
+        )
+        st.markdown("---")
+
         df_hist = pd.DataFrame(registros_h)
         if not df_hist.empty:
             df_hist = df_hist.iloc[::-1]
@@ -752,6 +768,63 @@ with pestana4:
             })
             
         df_resurtido = pd.DataFrame(lista_resurtido)
+
+        # Función PDF para Resurtido
+        def generar_pdf_resurtido(resurtido, total_inv):
+            buffer = io.BytesIO()
+            doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
+            elements = []
+            
+            styles = getSampleStyleSheet()
+            title_style = ParagraphStyle('TitleStyle', parent=styles['Heading1'], fontSize=16, textColor=colors.HexColor('#4A1525'), spaceAfter=10, alignment=1)
+            header_style = ParagraphStyle('HeaderStyle', parent=styles['Normal'], fontSize=9, textColor=colors.whitesmoke, fontName='Helvetica-Bold', alignment=1)
+            cell_style = ParagraphStyle('CellStyle', parent=styles['Normal'], fontSize=8, leading=10, alignment=1)
+            cell_left = ParagraphStyle('CellLeft', parent=styles['Normal'], fontSize=8, leading=10, alignment=0)
+            
+            elements.append(Paragraph("Nature’s Select - Sugerencia de Pedido (Resurtido)", title_style))
+            elements.append(Paragraph(f"Fecha de emisión: {datetime.utcnow().strftime('%d-%m-%Y %H:%M:%S')}", styles['Normal']))
+            elements.append(Spacer(1, 15))
+            
+            data = [[Paragraph("Producto", header_style), Paragraph("Stock", header_style), Paragraph("Por Entregar", header_style), Paragraph("Prom./Mes", header_style), Paragraph("Sugerido", header_style), Paragraph("Costo Unit.", header_style), Paragraph("Inversión Est.", header_style)]]
+            for r in resurtido:
+                data.append([
+                    Paragraph(str(r.get("Producto", "")), cell_left),
+                    Paragraph(str(r.get("Stock Actual", "")), cell_style),
+                    Paragraph(str(r.get("Por Entregar (Clientes)", "")), cell_style),
+                    Paragraph(str(r.get("Promedio/Mes", "")), cell_style),
+                    Paragraph(str(r.get("Sugerido", "")), cell_style),
+                    Paragraph(str(r.get("Costo Unit.", "")), cell_style),
+                    Paragraph(str(r.get("Inversión Est.", "")), cell_style)
+                ])
+                
+            t = Table(data, colWidths=[140, 50, 70, 60, 60, 65, 95])
+            t.setStyle(TableStyle([
+                ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#4A1525')),
+                ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+                ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+                ('BOTTOMPADDING', (0,0), (-1,0), 6),
+                ('TOPPADDING', (0,0), (-1,0), 6),
+                ('BACKGROUND', (0,1), (-1,-1), colors.HexColor('#FDFBFB')),
+                ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#D1C4E9')),
+            ]))
+            elements.append(t)
+            elements.append(Spacer(1, 15))
+            
+            total_style = ParagraphStyle('TotalStyle', parent=styles['Normal'], fontSize=12, textColor=colors.HexColor('#4A1525'), fontName='Helvetica-Bold', alignment=2)
+            elements.append(Paragraph(f"Inversión Total Estimada: ${total_inv:,.2f}", total_style))
+            
+            doc.build(elements)
+            buffer.seek(0)
+            return buffer.getvalue()
+
+        pdf_bytes_res = generar_pdf_resurtido(lista_resurtido, gran_total_inversion)
+        st.download_button(
+            label="📄 Descargar Reporte de Resurtido en PDF",
+            data=pdf_bytes_res,
+            file_name=f"reporte_resurtido_{datetime.now().strftime('%d-%m-%Y')}.pdf",
+            mime="application/pdf"
+        )
+        st.markdown("---")
         
         if "Producto" in df_resurtido.columns:
             df_resurtido = df_resurtido.set_index("Producto")
