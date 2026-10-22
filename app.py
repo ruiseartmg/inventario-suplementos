@@ -205,13 +205,27 @@ with pestana1:
         stock_str_fmt = str(int(stock_en_selector)) if stock_en_selector.is_integer() else f"{stock_en_selector:g}"
         st.markdown(f'<div class="stock-badge">📦 Existencia Física Actual: <b>{stock_str_fmt} unidades</b></div>', unsafe_allow_html=True)
         
-        nombre_cliente = st.text_input("Nombre del Cliente (Opcional si es compra directa de proveedor):", "")
-        cantidad = st.number_input("Cantidad", min_value=0.1, step=0.25, value=1.0)
-        tipo = st.radio("Tipo de Transacción", ["Venta / Pedido de Cliente", "Compra (Entrada de Proveedor)"])
+        tipo_transaccion = st.radio("Tipo de Transacción", ["Venta / Pedido de Cliente", "Compra (Entrada de Proveedor)", "Salida Especial (Muestra / Merma / Consumo)"])
+        
+        nombre_cliente = ""
+        descuento_porcentaje = 0.0
+        
+        if tipo_transaccion == "Venta / Pedido de Cliente":
+            nombre_cliente = st.text_input("Nombre del Cliente (Si se deja vacío se registrará como 'Mostrador / General'):", "")
+            descuento_porcentaje = st.number_input("Descuento aplicable (%)", min_value=0.0, max_value=100.0, value=0.0, step=5.0)
+        elif tipo_transaccion == "Salida Especial (Muestra / Merma / Consumo)":
+            motivo_salida = st.selectbox("Motivo de la Salida:", ["Muestra Gratis", "Merma / Dañado", "Consumo Propio"])
+            nombre_cliente = f"[{motivo_salida}]"
+        
+        cantidad = st.number_input("Cantidad", min_value=1.0, step=1.0, value=1.0)
         
         if st.button("Registrar en el Sistema") and prod_seleccionado:
             ahora_mexico = datetime.utcnow() - timedelta(hours=6)
-            cli_final = nombre_cliente.strip().title() if nombre_cliente.strip() else "Mostrador / General"
+            
+            if tipo_transaccion == "Venta / Pedido de Cliente":
+                cli_final = nombre_cliente.strip().title() if nombre_cliente.strip() else "Mostrador / General"
+            else:
+                cli_final = nombre_cliente # Ya lleva el formato [Muestra Gratis], etc.
             
             row_idx = None
             producto_obj = None
@@ -253,42 +267,81 @@ with pestana1:
                             except:
                                 continue
 
-                col_stock_idx = 2  # Columna B por defecto (Cantidad en Stock)
+                col_stock_idx = 2  
                 for idx, h in enumerate(headers):
                     h_limpio = h.strip().lower()
                     if "stock" in h_limpio or "cantidad en stock" in h_limpio:
                         col_stock_idx = idx + 1
                         break
 
-                if tipo == "Venta / Pedido de Cliente":
-                    id_pedido = str(int(datetime.utcnow().timestamp()))
-                    hoja_pedidos.append_row([
-                        id_pedido, 
-                        ahora_mexico.strftime("%d-%m-%Y %H:%M:%S"), 
-                        cli_final, 
-                        prod_seleccionado, 
-                        cantidad, 
-                        "Venta", 
-                        "Por entregar"
-                    ])
+                if tipo_transaccion == "Venta / Pedido de Cliente":
+                    # Lógica inteligente de stock vs déficit parcial
+                    cant_a_entregar = min(cantidad, stock_actual)
+                    cant_en_espera = cantidad - cant_a_entregar
                     
-                    nuevo_stock = stock_actual - cantidad
-                    if nuevo_stock < 0:
-                        nuevo_stock = 0.0 
-                        st.warning(f"⚠️ Stock insuficiente. Se ajustó el stock a 0 y se registró el pedido 'Por entregar'.")
+                    precio_final_unitario = precio_venta * (1 - (descuento_porcentaje / 100.0))
+                    total_movimiento = cant_a_entregar * precio_final_unitario
+                    
+                    # 1. Si hay stock físico para entregar una parte o todo
+                    if cant_a_entregar > 0:
+                        nuevo_stock = stock_actual - cant_a_entregar
+                        hoja_inv.update_cell(row_idx, col_stock_idx, nuevo_stock)
+                        
+                        # Registrar entrega inmediata en el historial
+                        desc_txt = f" (Desc. {descuento_porcentaje}%)" if descuento_porcentaje > 0 else ""
+                        hoja_hist.append_row([
+                            ahora_mexico.strftime("%d-%m-%Y"), 
+                            ahora_mexico.strftime("%H:%M:%S"), 
+                            cli_final + desc_txt, 
+                            prod_seleccionado, 
+                            "Venta", 
+                            cant_a_entregar, 
+                            total_movimiento
+                        ])
+                    
+                    # 2. Si queda remanente en déficit, crear pedido pendiente por la diferencia exactas
+                    if cant_en_espera > 0:
+                        id_pedido = str(int(datetime.utcnow().timestamp()))
+                        hoja_pedidos.append_row([
+                            id_pedido, 
+                            ahora_mexico.strftime("%d-%m-%Y %H:%M:%S"), 
+                            cli_final, 
+                            prod_seleccionado, 
+                            cant_en_espera, 
+                            "Venta", 
+                            "Por entregar"
+                        ])
+                        st.warning(f"⚠️ Stock parcial: Se entregaron {cant_a_entregar} unidades de inmediato y se dejaron {cant_en_espera} unidades 'Por entregar' (en espera por déficit).")
                     else:
-                        st.success(f"🛒 ¡Pedido registrado y stock descontado para **{cli_final}** (Pendiente de entrega)!")
-                    
-                    hoja_inv.update_cell(row_idx, col_stock_idx, nuevo_stock)
-                    
+                        st.success(f"🛒 ¡Pedido registrado y entregado con éxito para **{cli_final}**!")
+
                     st.cache_data.clear()
                     st.rerun()
-                else:
+                    
+                elif tipo_transaccion == "Salida Especial (Muestra / Merma / Consumo)":
+                    cant_salida = min(cantidad, stock_actual)
+                    nuevo_stock = stock_actual - cant_salida
+                    hoja_inv.update_cell(row_idx, col_stock_idx, nuevo_stock)
+                    
+                    # Registrar en historial con total $0 para que no afecte ventas
+                    hoja_hist.append_row([
+                        ahora_mexico.strftime("%d-%m-%Y"), 
+                        ahora_mexico.strftime("%H:%M:%S"), 
+                        cli_final, 
+                        prod_seleccionado, 
+                        "Salida Especial", 
+                        cant_salida, 
+                        0.0
+                    ])
+                    st.success(f"🏷️ Salida especial registrada ({cli_final}). Se descontaron {cant_salida} unidades del inventario sin afectar ventas.")
+                    st.cache_data.clear()
+                    st.rerun()
+                    
+                else: # Compra de proveedor
                     nuevo_stock = stock_actual + cantidad
                     total_movimiento = 0.0
-                    
                     hoja_inv.update_cell(row_idx, col_stock_idx, nuevo_stock)
-                    hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), cli_final, prod_seleccionado, "Compra", cantidad, total_movimiento])
+                    hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), "Proveedor", prod_seleccionado, "Compra", cantidad, total_movimiento])
                     st.success(f"📦 ¡Entrada de proveedor registrada con éxito! +{cantidad} al stock de {prod_seleccionado}.")
                     
                     st.cache_data.clear()
@@ -373,18 +426,17 @@ with pestana2:
         pedidos_en_deficit = []
         for ped in pendientes_activos:
             p_nombre = ped.get("Producto")
-            stock_fisico_actual = stock_por_producto.get(p_nombre, 0.0)
-            if stock_fisico_actual <= 0:
-                pedidos_en_deficit.append(ped)
+            # Mostrar estrictamente el déficit pendiente real en la alerta superior
+            pedidos_en_deficit.append(ped)
 
         if pedidos_en_deficit:
             st.markdown("### 🚨 Pedidos en Espera por Déficit (Stock en 0 o Insuficiente)")
-            st.markdown("Los siguientes clientes están esperando producto porque el inventario actual está agotado:")
+            st.markdown("Los siguientes clientes están esperando producto porque el pedido supera el inventario actual:")
             for def_ped in pedidos_en_deficit:
                 st.markdown(f"""
                     <div class="deficit-alert-card">
                         <b>👤 Cliente:</b> {def_ped.get('Cliente')} <br>
-                        <b>🛍️ Producto sin Stock:</b> {def_ped.get('Producto')} (Cantidad pendiente: <b>{def_ped.get('Cantidad')}</b>) <br>
+                        <b>🛍️ Producto:</b> {def_ped.get('Producto')} (Cantidad en espera de surtido: <b>{def_ped.get('Cantidad')}</b>) <br>
                         <span style='color: gray; font-size: 11px;'>ID Pedido: {def_ped.get('ID')} | Fecha de registro: {def_ped.get('Fecha')}</span>
                     </div>
                 """, unsafe_allow_html=True)
@@ -401,32 +453,53 @@ with pestana2:
         for idx, ped in enumerate(pendientes_activos):
             col_info, col_btn1, col_btn2 = st.columns([4.5, 1.75, 1.75])
             with col_info:
-                st.markdown(f"**👤 {ped.get('Cliente')}**  \n🛍️ **{ped.get('Producto')}** — Cantidad: **{ped.get('Cantidad')}**  \n<span style='color: gray; font-size: 11px;'>ID: {ped.get('ID')} | Fecha: {ped.get('Fecha')}</span>", unsafe_allow_html=True)
+                st.markdown(f"**👤 {ped.get('Cliente')}**  \n🛍️ **{ped.get('Producto')}** — Cantidad en espera: **{ped.get('Cantidad')}**  \n<span style='color: gray; font-size: 11px;'>ID: {ped.get('ID')} | Fecha: {ped.get('Fecha')}</span>", unsafe_allow_html=True)
             with col_btn1:
                 if st.button("✅ Entregar", key=f"entregar_{ped.get('ID')}_{idx}"):
-                    todos_p = hoja_pedidos.get_all_records()
-                    fila_real = None
-                    for i, tp in enumerate(todos_p):
-                        if str(tp.get("ID")) == str(ped.get("ID")):
-                            fila_real = i + 2
+                    # Verificar si ya hay stock para entregarlo
+                    prod_entregado = ped.get("Producto")
+                    cant_entregada = float(str(ped.get("Cantidad", 0)).replace(",", ""))
+                    
+                    # Consultar stock actual en tiempo real de Google Sheets
+                    inv_actuales = hoja_inv.get_all_records()
+                    stock_fisc = 0.0
+                    row_inv_idx = None
+                    for i, inv_item in enumerate(inv_actuales):
+                        if str(inv_item.get("Nombre del Producto", "")).strip() == prod_entregado:
+                            row_inv_idx = i + 2
+                            for k, v in inv_item.items():
+                                if "stock" in k.lower() or "cantidad" in k.lower():
+                                    try:
+                                        stock_fisc = float(str(v).replace(",", ""))
+                                    except:
+                                        pass
                             break
-                    if fila_real:
-                        hoja_pedidos.update_cell(fila_real, 7, "Entregado")
+                    
+                    if stock_fisc >= cant_entregada and row_inv_idx:
+                        # Descontar del stock físico
+                        col_st_idx = 2
+                        for idx_h, h_name in enumerate(headers):
+                            if "stock" in h_name.lower():
+                                col_st_idx = idx_h + 1
+                                break
+                        hoja_inv.update_cell(row_inv_idx, col_st_idx, stock_fisc - cant_entregada)
                         
+                        # Marcar pedido como entregado
+                        todos_p = hoja_pedidos.get_all_records()
+                        for i, tp in enumerate(todos_p):
+                            if str(tp.get("ID")) == str(ped.get("ID")):
+                                hoja_pedidos.update_cell(i + 2, 7, "Entregado")
+                                break
+                        
+                        # Registrar en historial
                         ahora_mexico = datetime.utcnow() - timedelta(hours=6)
-                        cli_entregado = ped.get("Cliente")
-                        prod_entregado = ped.get("Producto")
-                        cant_entregada = float(str(ped.get("Cantidad", 0)).replace(",", ""))
-                        
                         precio_vta = 0.0
-                        inv_actuales = hoja_inv.get_all_records()
                         for inv_item in inv_actuales:
                             if str(inv_item.get("Nombre del Producto", "")).strip() == prod_entregado:
                                 for k, v in inv_item.items():
                                     if "precio de venta" in k.lower():
                                         try:
                                             precio_vta = float(str(v).replace("$", "").replace(",", "").strip())
-                                            break
                                         except:
                                             pass
                         total_vta = cant_entregada * precio_vta
@@ -434,16 +507,18 @@ with pestana2:
                         hoja_hist.append_row([
                             ahora_mexico.strftime("%d-%m-%Y"), 
                             ahora_mexico.strftime("%H:%M:%S"), 
-                            cli_entregado, 
+                            ped.get("Cliente"), 
                             prod_entregado, 
                             "Venta", 
                             cant_entregada, 
                             total_vta
                         ])
                         
-                        st.success(f"¡Pedido entregado a {cli_entregado} y registrado en el historial!")
+                        st.success(f"¡Pedido entregado con éxito a {ped.get('Cliente')}!")
                         st.cache_data.clear()
                         st.rerun()
+                    else:
+                        st.error(f"❌ Stock insuficiente ({stock_fisc} disponibles) para entregar este pedido de {cant_entregada} unidades. Surtir inventario primero.")
             with col_btn2:
                 cancelar_key = f"cancelar_{ped.get('ID')}_{idx}"
                 st.markdown("""
@@ -459,40 +534,13 @@ with pestana2:
                 
                 if st.button("❌ Cancelar", key=cancelar_key):
                     todos_p = hoja_pedidos.get_all_records()
-                    fila_real = None
                     for i, tp in enumerate(todos_p):
                         if str(tp.get("ID")) == str(ped.get("ID")):
-                            fila_real = i + 2
+                            hoja_pedidos.update_cell(i + 2, 7, "Cancelado")
                             break
-                    if fila_real:
-                        hoja_pedidos.update_cell(fila_real, 7, "Cancelado")
-                        
-                        prod_ped = ped.get("Producto")
-                        cant_ped = float(ped.get("Cantidad"))
-                        
-                        row_inv_idx = None
-                        prod_obj = None
-                        inv_actuales = hoja_inv.get_all_records()
-                        for i, inv_item in enumerate(inv_actuales):
-                            if str(inv_item.get("Nombre del Producto", "")).strip() == prod_ped:
-                                row_inv_idx = i + 2
-                                prod_obj = inv_item
-                                break
-                        
-                        if prod_obj and row_inv_idx:
-                            st_act = float(str(prod_obj.get("Cantidad en Stock", 0)).replace(",", ""))
-                            col_st_idx = 2
-                            for idx_h, h_name in enumerate(headers):
-                                if "stock" in h_name.lower():
-                                    col_st_idx = idx_h + 1
-                                    break
-                            
-                            nuevo_st = st_act + cant_ped
-                            hoja_inv.update_cell(row_inv_idx, col_st_idx, nuevo_st)
-                            
-                        st.warning(f"Pedido cancelado. Se devolvieron **{cant_ped} unidades** de {prod_ped} al inventario.")
-                        st.cache_data.clear()
-                        st.rerun()
+                    st.warning("Pedido cancelado.")
+                    st.cache_data.clear()
+                    st.rerun()
             st.divider()
     else:
         st.info("No hay productos 'Por entregar' a clientes en este momento.")
@@ -625,7 +673,7 @@ with pestana5:
         nuevo_nombre = st.text_input("Nombre del Producto con Presentación * (ej. Miel de Abeja 500g)")
         col1, col2 = st.columns(2)
         with col1:
-            stock_inicial = st.number_input("Cantidad Inicial en Stock", min_value=0.0, step=0.25, value=0.0)
+            stock_inicial = st.number_input("Cantidad Inicial en Stock", min_value=0.0, step=1.0, value=0.0)
             precio_dir = st.number_input("Precio Directo", min_value=0.0, step=1.0, value=0.0)
         with col2:
             precio_ven = st.number_input("Precio de Venta", min_value=0.0, step=1.0, value=0.0)
