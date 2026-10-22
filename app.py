@@ -139,17 +139,17 @@ except Exception as e:
     st.error(f"Error al conectar con Google Sheets: {e}")
     st.stop()
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=60)
 def cargar_inventario_cache():
     time.sleep(0.3)
     return hoja_inv.get_all_records()
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=60)
 def cargar_pedidos_cache():
     time.sleep(0.3)
     return hoja_pedidos.get_all_records()
 
-@st.cache_data(ttl=3600)
+@st.cache_data(ttl=60)
 def cargar_historial_cache():
     time.sleep(0.3)
     return hoja_hist.get_all_records()
