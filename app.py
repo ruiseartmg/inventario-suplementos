@@ -413,17 +413,25 @@ with pestana2:
     pendientes_activos = [p for p in pedidos_pendientes if p.get("Estado") in ["Por entregar", "Déficit"]]
     
     stock_por_producto = {}
+    precio_por_producto = {}
+    
     for inv_p in registros_inv:
         nombre_p = str(inv_p.get("Nombre del Producto", "")).strip()
         st_val = 0.0
+        p_vta = 0.0
         for k, v in inv_p.items():
             if "stock" in k.lower() or "cantidad" in k.lower():
                 try:
                     st_val = float(str(v).replace(",", ""))
-                    break
                 except:
-                    continue
+                    pass
+            if "precio de venta" in k.lower():
+                try:
+                    p_vta = float(str(v).replace("$", "").replace(",", "").strip())
+                except:
+                    pass
         stock_por_producto[nombre_p] = st_val
+        precio_por_producto[nombre_p] = p_vta
 
     if pendientes_activos:
         def generar_pdf_pedidos(pendientes):
@@ -440,25 +448,56 @@ with pestana2:
             elements.append(Paragraph("Nature’s Select - Reporte de Pedidos Pendientes", title_style))
             elements.append(Spacer(1, 10))
             
-            data = [[Paragraph("Cliente", header_style), Paragraph("Producto", header_style), Paragraph("Cantidad", header_style), Paragraph("Estado", header_style), Paragraph("Fecha", header_style)]]
+            # Nuevo encabezado
+            data = [[Paragraph("Fecha", header_style), Paragraph("Cliente", header_style), Paragraph("Producto", header_style), Paragraph("Cant.", header_style), Paragraph("Estado", header_style), Paragraph("Precio", header_style), Paragraph("Total", header_style)]]
+            
             for p in pendientes:
                 p_estado = str(p.get("Estado", ""))
                 p_prod = str(p.get("Producto", ""))
+                p_fecha_full = str(p.get("Fecha", ""))
+                
+                # Quitar la hora a la fecha
+                p_fecha = p_fecha_full.split(" ")[0] if " " in p_fecha_full else p_fecha_full
+                p_cliente = str(p.get("Cliente", ""))
+                
+                try:
+                    p_cant = float(str(p.get("Cantidad", 0)).replace(",", ""))
+                except:
+                    p_cant = 0.0
                 
                 if p_estado == "Déficit":
                     st_disp = stock_por_producto.get(p_prod, 0.0)
                     if st_disp > 0:
-                        p_estado = "Parcialmente Surtible / Listo"
+                        p_estado = "Parcial / Listo"
 
+                # Calcular precios y descuento si aplica
+                p_unitario = precio_por_producto.get(p_prod, 0.0)
+                desc_val = 0.0
+                if "(Desc." in p_cliente:
+                    try:
+                        desc_str = p_cliente.split("(Desc.")[1].split("%)")[0].strip()
+                        desc_val = float(desc_str)
+                    except:
+                        pass
+                
+                precio_final = p_unitario * (1.0 - (desc_val / 100.0))
+                p_total = p_cant * precio_final
+                
+                cant_fmt = str(int(p_cant)) if p_cant.is_integer() else f"{p_cant:g}"
+
+                # Orden: Fecha, Cliente, Producto, Cantidad, Estado, Precio, Total
                 data.append([
-                    Paragraph(str(p.get("Cliente", "")), cell_left),
+                    Paragraph(p_fecha, cell_style),
+                    Paragraph(p_cliente, cell_left),
                     Paragraph(p_prod, cell_left),
-                    Paragraph(str(p.get("Cantidad", "")), cell_style),
+                    Paragraph(cant_fmt, cell_style),
                     Paragraph(p_estado, cell_style),
-                    Paragraph(str(p.get("Fecha", "")), cell_style)
+                    Paragraph(f"${p_unitario:,.2f}", cell_style),
+                    Paragraph(f"${p_total:,.2f}", cell_style)
                 ])
                 
-            t = Table(data, colWidths=[130, 140, 55, 85, 90])
+            # Ajuste de anchos para 7 columnas sin salirnos del PDF
+            t = Table(data, colWidths=[65, 110, 115, 35, 75, 50, 55])
             t.setStyle(TableStyle([
                 ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#4A1525')),
                 ('ALIGN', (0,0), (-1,-1), 'CENTER'),
@@ -822,7 +861,6 @@ with pestana4:
         for p in registros_inv:
             nombre = str(p.get("Nombre del Producto", "")).strip()
             
-            # CORRECCIÓN: Búsqueda dinámica de la columna de stock
             stock = 0.0
             for k, v in p.items():
                 if "stock" in k.lower() or "cantidad" in k.lower():
