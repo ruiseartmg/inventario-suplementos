@@ -83,17 +83,6 @@ st.markdown("""
             margin-bottom: 12px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.04);
         }
-
-        /* AJUSTE MÓVIL PARA TABLAS: Títulos en múltiples líneas y ajuste automático al ancho */
-        [data-testid="stDataFrame"] th div {
-            white-space: normal !important;
-            word-break: break-word !important;
-            text-align: center !important;
-        }
-        [data-testid="stDataFrame"] td {
-            white-space: normal !important;
-            word-break: break-word !important;
-        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -366,15 +355,7 @@ with pestana1:
         if "Nombre del Producto" in df_inv.columns:
             df_inv = df_inv.set_index("Nombre del Producto")
             
-        cols_a_centrar = [c for c in df_inv.columns if c in ["Cantidad en Stock", "Por entregar", "Precio de Venta"]]
-        df_styled = df_inv.style.set_properties(
-            subset=cols_a_centrar, 
-            **{'text-align': 'center'}
-        ).set_table_styles([
-            {'selector': 'th', 'props': [('text-align', 'center')]}
-        ])
-            
-        st.dataframe(df_styled, use_container_width=True)
+        st.table(df_inv)
 
 with pestana2:
     st.subheader("📦 Control de Pedidos y Entregas")
