@@ -321,7 +321,6 @@ with pestana1:
 
         df_inv = pd.DataFrame(registros_inv)
         
-        # Eliminar las columnas no deseadas
         cols_a_quitar = [c for c in df_inv.columns if "precio directo" in c.lower() or "directo" in c.lower() or "por surtir" in c.lower() or "por_surtir" in c.lower() or "presentacion" in c.lower() or "presentación" in c.lower() or "alerta" in c.lower() or "categoria" in c.lower() or "categoría" in c.lower()]
         df_inv = df_inv.drop(columns=cols_a_quitar, errors="ignore")
 
@@ -356,7 +355,16 @@ with pestana1:
         if "Nombre del Producto" in df_inv.columns:
             df_inv = df_inv.set_index("Nombre del Producto")
             
-        st.dataframe(df_inv, use_container_width=True)
+        # Aplicar estilo para centrar las columnas de cantidades y precios
+        cols_a_centrar = [c for c in df_inv.columns if c in ["Cantidad en Stock", "Por entregar", "Precio de Venta"]]
+        df_styled = df_inv.style.set_properties(
+            subset=cols_a_centrar, 
+            **{'text-align': 'center'}
+        ).set_table_styles([
+            {'selector': 'th', 'props': [('text-align', 'center')]}
+        ])
+            
+        st.dataframe(df_styled, use_container_width=True)
 
 with pestana2:
     st.subheader("📦 Control de Pedidos y Entregas")
@@ -580,7 +588,7 @@ with pestana3:
         st.info("Aún no hay registros en el historial.")
 
 with pestana4:
-    st.subheader("📋 Sugerencia de Pedido (Por Surtir con Proveedor) y Costos")
+    st.subheader("📋 Sugerencia de Pedido (Por Surtirกับ Proveedor) y Costos")
     st.markdown("Consulta el pedido sugerido al proveedor, el costo estimado por artículo y el total a invertir.")
     
     reg_hist_actuales = cargar_historial_cache()
