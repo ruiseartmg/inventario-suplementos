@@ -474,7 +474,7 @@ with pestana2:
                 st_disp_s = stock_por_producto.get(p_nom_s, 0.0)
                 
                 if st_disp_s >= c_ped_s:
-                    aviso_txt = f"Cantidad lista para entregar: <b>{c_ped_s:g}</b> (Se cubre con el stock actual)."
+                    aviso_txt = f"Cantidad lista para entrega: <b>{c_ped_s:g}</b> (Se cubre con el stock actual)."
                 else:
                     aviso_txt = f"Cantidad en déficit: <b>{c_ped_s:g}</b>. (Tienes <b>{st_disp_s:g} en stock</b> para entregar parcialmente)."
 
@@ -491,7 +491,7 @@ with pestana2:
         filtro_cliente = st.selectbox("🔍 Filtrar por Cliente específico:", ["-- Todos los Clientes --"] + clientes_disponibles)
         
         if filtro_cliente != "-- Todos los Clientes --":
-            pendientes_activos = [p for p in pendientes_activos if p.get("Cliente"] == filtro_cliente]
+            pendientes_activos = [p for p in pendientes_activos if p.get("Cliente") == filtro_cliente]
         
         st.markdown("---")
         
@@ -580,21 +580,17 @@ with pestana2:
                                 cant_remanente = cant_ped - cant_a_entregar
                                 
                                 if cant_a_entregar > 0 and row_inv_idx:
-                                    # Descontamos el stock físico disponible
                                     hoja_inv.update_cell(row_inv_idx, col_st_idx, stock_fisc - cant_a_entregar)
                                     
                                     precio_final = precio_vta * (1.0 - (desc_val / 100.0))
                                     total_vta = cant_a_entregar * precio_final
                                     
-                                    # Registramos la venta parcial en el historial
                                     hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), cli_con_desc, prod_ped, "Venta", cant_a_entregar, total_vta])
                                     
                                     if cant_remanente > 0:
-                                        # Actualizamos el pedido actual con la cantidad que faltó por entregar (mantiene el ID y fecha original)
                                         hoja_pedidos.update_cell(fila_real, 5, cant_remanente)
                                         st.warning(f"⚠️ Se entregaron **{cant_a_entregar:g} unidades** con el stock disponible. Quedan **{cant_remanente:g} unidades** en déficit esperando proveedor.")
                                     else:
-                                        # Si se cubrió todo, lo marcamos como entregado
                                         hoja_pedidos.update_cell(fila_real, 7, "Entregado")
                                         st.success(f"¡Pedido surtido por completo y entregado a {cli_con_desc}!")
                                         
@@ -736,7 +732,7 @@ with pestana3:
         st.info("Aún no hay registros en el historial.")
 
 with pestana4:
-    st.subheader("📋 Sugerencia de Pedido (Por Surtirกับ Proveedor) y Costos")
+    st.subheader("📋 Sugerencia de Pedido (Por Surtir con Proveedor) y Costos")
     st.markdown("Consulta el pedido sugerido al proveedor, el costo estimado por artículo y el total a invertir.")
     
     reg_hist_actuales = cargar_historial_cache()
