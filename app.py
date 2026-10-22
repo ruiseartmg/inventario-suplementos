@@ -185,7 +185,6 @@ class NumberedCanvas(canvas.Canvas):
 
     def draw_page_decorations(self, page_count):
         self.saveState()
-        # Marca de agua central tenue
         if os.path.exists(LOGO_PATH):
             try:
                 self.setFillAlpha(0.08)
@@ -193,7 +192,6 @@ class NumberedCanvas(canvas.Canvas):
             except:
                 pass
         
-        # Fecha de emisión abajo a la derecha
         self.setFont("Helvetica", 8)
         self.setFillColor(colors.HexColor('#555555'))
         fecha_emision_str = f"Fecha de emisión: {datetime.utcnow().strftime('%d-%m-%Y %H:%M:%S')}"
@@ -431,15 +429,16 @@ with pestana2:
             cell_style = ParagraphStyle('CellStyle', parent=styles['Normal'], fontSize=8, leading=10, alignment=1)
             cell_left = ParagraphStyle('CellLeft', parent=styles['Normal'], fontSize=8, leading=10, alignment=0)
             
-            # Encabezado con Logo a la izquierda y Título centrado/a la derecha
+            # Encabezado con logo dentro del margen (ancho total útil de 552 puntos)
             if os.path.exists(LOGO_PATH):
                 try:
-                    logo_img = Image(LOGO_PATH, width=70, height=50)
+                    logo_img = Image(LOGO_PATH, width=55, height=40)
                     logo_img.hAlign = 'LEFT'
-                    title_table = Table([[logo_img, Paragraph("<b>Nature’s Select - Reporte de Pedidos Pendientes</b>", title_style)]], colWidths=[80, 472])
+                    title_table = Table([[logo_img, Paragraph("<b>Nature’s Select - Reporte de Pedidos Pendientes</b>", title_style)]], colWidths=[65, 487])
                     title_table.setStyle(TableStyle([
                         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
                         ('ALIGN', (1,0), (1,0), 'CENTER'),
+                        ('LEFTPADDING', (0,0), (-1,-1), 0),
                     ]))
                     elements.append(title_table)
                 except:
@@ -722,15 +721,16 @@ with pestana3:
             cell_style = ParagraphStyle('CellStyle', parent=styles['Normal'], fontSize=8, leading=10, alignment=1)
             cell_left = ParagraphStyle('CellLeft', parent=styles['Normal'], fontSize=8, leading=10, alignment=0)
             
-            # Encabezado con Logo a la izquierda y Título
+            # Encabezado con logo dentro del margen
             if os.path.exists(LOGO_PATH):
                 try:
-                    logo_img = Image(LOGO_PATH, width=70, height=50)
+                    logo_img = Image(LOGO_PATH, width=55, height=40)
                     logo_img.hAlign = 'LEFT'
-                    title_table = Table([[logo_img, Paragraph("<b>Nature’s Select - Historial de Transacciones</b>", title_style)]], colWidths=[80, 472])
+                    title_table = Table([[logo_img, Paragraph("<b>Nature’s Select - Historial de Transacciones</b>", title_style)]], colWidths=[65, 487])
                     title_table.setStyle(TableStyle([
                         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
                         ('ALIGN', (1,0), (1,0), 'CENTER'),
+                        ('LEFTPADDING', (0,0), (-1,-1), 0),
                     ]))
                     elements.append(title_table)
                 except:
@@ -907,15 +907,16 @@ with pestana4:
             cell_style = ParagraphStyle('CellStyle', parent=styles['Normal'], fontSize=8, leading=10, alignment=1)
             cell_left = ParagraphStyle('CellLeft', parent=styles['Normal'], fontSize=8, leading=10, alignment=0)
             
-            # Encabezado con Logo a la izquierda y Título
+            # Encabezado con logo dentro del margen
             if os.path.exists(LOGO_PATH):
                 try:
-                    logo_img = Image(LOGO_PATH, width=70, height=50)
+                    logo_img = Image(LOGO_PATH, width=55, height=40)
                     logo_img.hAlign = 'LEFT'
-                    title_table = Table([[logo_img, Paragraph("<b>Nature’s Select - Sugerencia de Pedido (Resurtido)</b>", title_style)]], colWidths=[80, 472])
+                    title_table = Table([[logo_img, Paragraph("<b>Nature’s Select - Sugerencia de Pedido (Resurtido)</b>", title_style)]], colWidths=[65, 487])
                     title_table.setStyle(TableStyle([
                         ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
                         ('ALIGN', (1,0), (1,0), 'CENTER'),
+                        ('LEFTPADDING', (0,0), (-1,-1), 0),
                     ]))
                     elements.append(title_table)
                 except:
