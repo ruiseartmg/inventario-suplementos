@@ -6,6 +6,11 @@ import os
 import base64
 import pandas as pd
 import time
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib import colors
+import io
 
 st.set_page_config(page_title="Nature’s Select - Inventario", page_icon="🌿", layout="wide")
 
@@ -175,8 +180,8 @@ except:
 st.markdown("---")
 
 pestana1, pestana2, pestana3, pestana4, pestana5 = st.tabs([
-    "🛒 Pedidos", 
-    "📦 Control de Pedidos", 
+    "🛒 Registrar Pedido", 
+    "📦 Pedidos", 
     "📜 Historial", 
     "📋 Resurtido",
     "➕ Nuevo Producto"
@@ -358,13 +363,69 @@ with pestana1:
         st.table(df_inv)
 
 with pestana2:
-    st.subheader("📦 Control de Pedidos y Entregas")
+    st.subheader("📦 Pedidos Pendientes y Entregas")
     st.markdown("Filtra por cliente para ver sus artículos pendientes y gestiona cada entrega de forma rápida.")
     
     pedidos_pendientes = cargar_pedidos_cache()
     pendientes_activos = [p for p in pedidos_pendientes if p.get("Estado") in ["Por entregar", "Déficit"]]
     
     if pendientes_activos:
+        # Botón para generar PDF de reportes de pedidos
+        def generar_pdf_pedidos(pendientes):
+            buffer = io.BytesIO()
+            doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
+            elements = []
+            
+            styles = getSampleStyleSheet()
+            title_style = ParagraphStyle(
+                'TitleStyle',
+                parent=styles['Heading1'],
+                fontSize=18,
+                textColor=colors.HexColor('#2E7D32'),
+                spaceAfter=15,
+                alignment=1
+            )
+            
+            elements.append(Paragraph("Nature’s Select - Reporte de Pedidos Pendientes", title_style))
+            elements.append(Paragraph(f"Fecha de emisión: {datetime.utcnow().strftime('%d-%m-%Y %H:%M:%S')}", styles['Normal']))
+            elements.append(Spacer(1, 15))
+            
+            data = [["Cliente", "Producto", "Cantidad", "Estado", "Fecha"]]
+            for p in pendientes:
+                data.append([
+                    str(p.get("Cliente", "")),
+                    str(p.get("Producto", "")),
+                    str(p.get("Cantidad", "")),
+                    str(p.get("Estado", "")),
+                    str(p.get("Fecha", ""))
+                ])
+                
+            t = Table(data, colWidths=[120, 150, 60, 90, 110])
+            t.setStyle(TableStyle([
+                ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#2E7D32')),
+                ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
+                ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+                ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+                ('BOTTOMPADDING', (0,0), (-1,0), 8),
+                ('BACKGROUND', (0,1), (-1,-1), colors.HexColor('#F5F5F5')),
+                ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
+                ('FONTNAME', (0,1), (-1,-1), 'Helvetica'),
+                ('FONTSIZE', (0,1), (-1,-1), 9),
+            ]))
+            elements.append(t)
+            doc.build(elements)
+            buffer.seek(0)
+            return buffer.getvalue()
+
+        pdf_bytes = generar_pdf_pedidos(pendientes_activos)
+        st.download_button(
+            label="📄 Descargar Reporte de Pedidos en PDF",
+            data=pdf_bytes,
+            file_name=f"reporte_pedidos_{datetime.now().strftime('%d-%m-%Y')}.pdf",
+            mime="application/pdf"
+        )
+        st.markdown("---")
+
         stock_por_producto = {}
         for inv_p in registros_inv:
             nombre_p = str(inv_p.get("Nombre del Producto", "")).strip()
