@@ -272,7 +272,7 @@ with pestana1:
                             time.sleep(1) 
                         
                         if cant_en_deficit > 0:
-                            id_ped_2 = str(int(datetime.utcnow().timestamp()))
+                            id_ped_2 = str(int(datetime.utcnow().timestamp()) + 1)
                             hoja_pedidos.append_row([
                                 id_ped_2, ahora_mexico.strftime("%d-%m-%Y %H:%M:%S"), cli_con_desc, prod_seleccionado, cant_en_deficit, "Venta", "Déficit"
                             ])
@@ -606,8 +606,24 @@ with pestana2:
                                             col_st_idx = idx_h + 1
                                             break
                                     hoja_inv.update_cell(i + 2, col_st_idx, st_act + cant_ped)
+                                    
+                                    # Al cancelar, buscamos los déficits pendientes ordenados por antigüedad (FIFO)
+                                    stock_liberado = st_act + cant_ped
+                                    deficits_producto = [
+                                        (idx_tp, tp_item) for idx_tp, tp_item in enumerate(todos_p)
+                                        if str(tp_item.get("Estado")) == "Déficit" and str(tp_item.get("Producto")) == prod_ped
+                                    ]
+                                    # Ordenamos por la fecha de registro para dar prioridad al más antiguo
+                                    deficits_producto.sort(key=lambda x: str(x[1].get("Fecha", "")))
+                                    
+                                    for idx_otro, tp_otro in deficits_producto:
+                                        cant_def = float(str(tp_otro.get("Cantidad", 0)).replace(",", ""))
+                                        if stock_liberado >= cant_def:
+                                            hoja_pedidos.update_cell(idx_otro + 2, 7, "Por entregar")
+                                            stock_liberado -= cant_def
+                                            hoja_inv.update_cell(i + 2, col_st_idx, stock_liberado)
                                     break
-                            st.warning(f"Pedido cancelado. Se devolvieron **{cant_ped:g} unidades** de {prod_ped} al inventario.")
+                            st.warning(f"Pedido cancelado. Se devolvieron **{cant_ped:g} unidades** de {prod_ped} al inventario y se reasignaron por antigüedad (FIFO) a los déficits pendientes.")
                         else:
                             st.warning("El pedido en déficit fue cancelado (No hubo movimiento de inventario).")
                             
@@ -726,7 +742,7 @@ with pestana4:
 
         for p in registros_inv:
             nombre = str(p.get("Nombre del Producto", "")).strip()
-            stock = float(str(p.get("Cantidad en Stock", 0) or 0).replace(",", ""))
+            stock = float(str(p.get("Cantidad in Stock", 0) or 0).replace(",", ""))
             
             todos_los_pedidos_res = cargar_pedidos_cache()
             por_entregar_val = 0.0
