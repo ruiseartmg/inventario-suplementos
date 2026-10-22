@@ -380,7 +380,7 @@ with pestana2:
                 'TitleStyle',
                 parent=styles['Heading1'],
                 fontSize=16,
-                textColor=colors.HexColor('#2E7D32'),
+                textColor=colors.HexColor('#4A1525'), # Color tinto institucional
                 spaceAfter=10,
                 alignment=1
             )
@@ -433,13 +433,13 @@ with pestana2:
                 
             t = Table(data, colWidths=[130, 140, 55, 85, 90])
             t.setStyle(TableStyle([
-                ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#2E7D32')),
+                ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#4A1525')), # Fondo tinto institucional
                 ('ALIGN', (0,0), (-1,-1), 'CENTER'),
                 ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
                 ('BOTTOMPADDING', (0,0), (-1,0), 6),
                 ('TOPPADDING', (0,0), (-1,0), 6),
-                ('BACKGROUND', (0,1), (-1,-1), colors.HexColor('#F5F5F5')),
-                ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
+                ('BACKGROUND', (0,1), (-1,-1), colors.HexColor('#FDFBFB')), # Fondo muy suave
+                ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#D1C4E9')), # Bordes en tono cálido/oro rosa sutil
             ]))
             elements.append(t)
             doc.build(elements)
