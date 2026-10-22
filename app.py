@@ -138,19 +138,19 @@ except Exception as e:
     st.error(f"Error al conectar con Google Sheets: {e}")
     st.stop()
 
-@st.cache_data(ttl=900)
+@st.cache_data(ttl=3600)
 def cargar_inventario_cache():
-    time.sleep(0.5)
+    time.sleep(0.3)
     return hoja_inv.get_all_records()
 
-@st.cache_data(ttl=900)
+@st.cache_data(ttl=3600)
 def cargar_pedidos_cache():
-    time.sleep(0.5)
+    time.sleep(0.3)
     return hoja_pedidos.get_all_records()
 
-@st.cache_data(ttl=900)
+@st.cache_data(ttl=3600)
 def cargar_historial_cache():
-    time.sleep(0.5)
+    time.sleep(0.3)
     return hoja_hist.get_all_records()
 
 try:
@@ -678,7 +678,6 @@ with pestana3:
             
             data = [[Paragraph("Fecha", header_style), Paragraph("Hora", header_style), Paragraph("Cliente", header_style), Paragraph("Producto", header_style), Paragraph("Tipo", header_style), Paragraph("Cant.", header_style), Paragraph("Total", header_style)]]
             for h in historial:
-                # Formateamos el total en PDF como moneda
                 raw_tot = str(h.get("Total", "0")).replace("$", "").replace(",", "").strip()
                 try:
                     val_tot = float(raw_tot)
@@ -686,7 +685,6 @@ with pestana3:
                 except:
                     tot_fmt = f"${0.0:,.2f}"
 
-                # Formateamos la cantidad limpia sin símbolo de pesos
                 raw_cant = str(h.get("Cantidad", "0")).replace("$", "").replace(",", "").strip()
                 try:
                     val_cant = float(raw_cant)
@@ -933,7 +931,7 @@ with pestana5:
                     }
                     for idx, header in enumerate(headers):
                         h_limpio = header.strip()
-                        if h_limpio in datos_ingresados:
+                        if h_limpio in datos_ngresados if 'datos_ingresados' in locals() else h_limpio in datos_ingresados:
                             nueva_fila[idx] = datos_ingresados[h_limpio]
                     hoja_inv.append_row(nueva_fila)
                     st.success(f"¡El producto '{n_nom_final}' se ha dado de alta correctamente!")
