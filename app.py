@@ -370,7 +370,6 @@ with pestana2:
     pendientes_activos = [p for p in pedidos_pendientes if p.get("Estado") in ["Por entregar", "Déficit"]]
     
     if pendientes_activos:
-        # Botón para generar PDF de reportes de pedidos
         def generar_pdf_pedidos(pendientes):
             buffer = io.BytesIO()
             doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=30, bottomMargin=30)
@@ -380,37 +379,67 @@ with pestana2:
             title_style = ParagraphStyle(
                 'TitleStyle',
                 parent=styles['Heading1'],
-                fontSize=18,
+                fontSize=16,
                 textColor=colors.HexColor('#2E7D32'),
-                spaceAfter=15,
+                spaceAfter=10,
                 alignment=1
+            )
+            
+            header_style = ParagraphStyle(
+                'HeaderStyle',
+                parent=styles['Normal'],
+                fontSize=9,
+                textColor=colors.whitesmoke,
+                fontName='Helvetica-Bold',
+                alignment=1
+            )
+            
+            cell_style = ParagraphStyle(
+                'CellStyle',
+                parent=styles['Normal'],
+                fontSize=8,
+                leading=10,
+                alignment=1
+            )
+            
+            cell_left = ParagraphStyle(
+                'CellLeft',
+                parent=styles['Normal'],
+                fontSize=8,
+                leading=10,
+                alignment=0
             )
             
             elements.append(Paragraph("Nature’s Select - Reporte de Pedidos Pendientes", title_style))
             elements.append(Paragraph(f"Fecha de emisión: {datetime.utcnow().strftime('%d-%m-%Y %H:%M:%S')}", styles['Normal']))
             elements.append(Spacer(1, 15))
             
-            data = [["Cliente", "Producto", "Cantidad", "Estado", "Fecha"]]
+            data = [[
+                Paragraph("Cliente", header_style),
+                Paragraph("Producto", header_style),
+                Paragraph("Cantidad", header_style),
+                Paragraph("Estado", header_style),
+                Paragraph("Fecha", header_style)
+            ]]
+            
             for p in pendientes:
                 data.append([
-                    str(p.get("Cliente", "")),
-                    str(p.get("Producto", "")),
-                    str(p.get("Cantidad", "")),
-                    str(p.get("Estado", "")),
-                    str(p.get("Fecha", ""))
+                    Paragraph(str(p.get("Cliente", "")), cell_left),
+                    Paragraph(str(p.get("Producto", "")), cell_left),
+                    Paragraph(str(p.get("Cantidad", "")), cell_style),
+                    Paragraph(str(p.get("Estado", "")), cell_style),
+                    Paragraph(str(p.get("Fecha", "")), cell_style)
                 ])
                 
-            t = Table(data, colWidths=[120, 150, 60, 90, 110])
+            t = Table(data, colWidths=[130, 140, 55, 85, 90])
             t.setStyle(TableStyle([
                 ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#2E7D32')),
-                ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
                 ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-                ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
-                ('BOTTOMPADDING', (0,0), (-1,0), 8),
+                ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+                ('BOTTOMPADDING', (0,0), (-1,0), 6),
+                ('TOPPADDING', (0,0), (-1,0), 6),
                 ('BACKGROUND', (0,1), (-1,-1), colors.HexColor('#F5F5F5')),
                 ('GRID', (0,0), (-1,-1), 0.5, colors.grey),
-                ('FONTNAME', (0,1), (-1,-1), 'Helvetica'),
-                ('FONTSIZE', (0,1), (-1,-1), 9),
             ]))
             elements.append(t)
             doc.build(elements)
