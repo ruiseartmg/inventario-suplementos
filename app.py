@@ -356,7 +356,7 @@ with pestana1:
         if "Nombre del Producto" in df_inv.columns:
             df_inv = df_inv.set_index("Nombre del Producto")
             
-        st.table(df_inv)
+        st.dataframe(df_inv, use_container_width=True)
 
 with pestana2:
     st.subheader("📦 Control de Pedidos y Entregas")
