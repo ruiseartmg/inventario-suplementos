@@ -448,17 +448,29 @@ with pestana2:
             elements.append(Paragraph("Nature’s Select - Reporte de Pedidos Pendientes", title_style))
             elements.append(Spacer(1, 10))
             
-            # Nuevo encabezado
-            data = [[Paragraph("Fecha", header_style), Paragraph("Cliente", header_style), Paragraph("Producto", header_style), Paragraph("Cant.", header_style), Paragraph("Estado", header_style), Paragraph("Precio", header_style), Paragraph("Total", header_style)]]
+            # Nueva estructura con 8 columnas
+            data = [[Paragraph("Fecha", header_style), Paragraph("Cliente", header_style), Paragraph("Producto", header_style), Paragraph("Cant.", header_style), Paragraph("Estado", header_style), Paragraph("Precio", header_style), Paragraph("Desc.", header_style), Paragraph("Total", header_style)]]
             
             for p in pendientes:
                 p_estado = str(p.get("Estado", ""))
                 p_prod = str(p.get("Producto", ""))
                 p_fecha_full = str(p.get("Fecha", ""))
-                
-                # Quitar la hora a la fecha
                 p_fecha = p_fecha_full.split(" ")[0] if " " in p_fecha_full else p_fecha_full
-                p_cliente = str(p.get("Cliente", ""))
+                
+                # Limpieza de nombre de cliente y extracción de descuento
+                p_cliente_raw = str(p.get("Cliente", ""))
+                if "(Desc." in p_cliente_raw:
+                    p_cliente_limpio = p_cliente_raw.split("(Desc.")[0].strip()
+                    try:
+                        desc_str = p_cliente_raw.split("(Desc.")[1].split("%)")[0].strip()
+                        desc_val = float(desc_str)
+                    except:
+                        desc_val = 0.0
+                else:
+                    p_cliente_limpio = p_cliente_raw.strip()
+                    desc_val = 0.0
+                
+                desc_txt = f"{desc_val:g}%" if desc_val > 0 else "-"
                 
                 try:
                     p_cant = float(str(p.get("Cantidad", 0)).replace(",", ""))
@@ -470,34 +482,24 @@ with pestana2:
                     if st_disp > 0:
                         p_estado = "Parcial / Listo"
 
-                # Calcular precios y descuento si aplica
                 p_unitario = precio_por_producto.get(p_prod, 0.0)
-                desc_val = 0.0
-                if "(Desc." in p_cliente:
-                    try:
-                        desc_str = p_cliente.split("(Desc.")[1].split("%)")[0].strip()
-                        desc_val = float(desc_str)
-                    except:
-                        pass
-                
                 precio_final = p_unitario * (1.0 - (desc_val / 100.0))
                 p_total = p_cant * precio_final
                 
                 cant_fmt = str(int(p_cant)) if p_cant.is_integer() else f"{p_cant:g}"
 
-                # Orden: Fecha, Cliente, Producto, Cantidad, Estado, Precio, Total
                 data.append([
                     Paragraph(p_fecha, cell_style),
-                    Paragraph(p_cliente, cell_left),
+                    Paragraph(p_cliente_limpio, cell_left),
                     Paragraph(p_prod, cell_left),
                     Paragraph(cant_fmt, cell_style),
                     Paragraph(p_estado, cell_style),
                     Paragraph(f"${p_unitario:,.2f}", cell_style),
+                    Paragraph(desc_txt, cell_style),
                     Paragraph(f"${p_total:,.2f}", cell_style)
                 ])
                 
-            # Ajuste de anchos para 7 columnas sin salirnos del PDF
-            t = Table(data, colWidths=[65, 110, 115, 35, 75, 50, 55])
+            t = Table(data, colWidths=[55, 95, 110, 35, 75, 45, 35, 55])
             t.setStyle(TableStyle([
                 ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#4A1525')),
                 ('ALIGN', (0,0), (-1,-1), 'CENTER'),
@@ -537,9 +539,11 @@ with pestana2:
         if pedidos_deficit_real:
             st.markdown("### 🚨 Pedidos en Espera por Déficit (Falta Stock)")
             for def_ped in pedidos_deficit_real:
+                c_raw = str(def_ped.get('Cliente', ''))
+                c_clean = c_raw.split("(Desc.")[0].strip() if "(Desc." in c_raw else c_raw.strip()
                 st.markdown(f"""
                     <div class="deficit-alert-card">
-                        <b>👤 Cliente:</b> {def_ped.get('Cliente')} <br>
+                        <b>👤 Cliente:</b> {c_clean} <br>
                         <b>🛍️ Producto:</b> {def_ped.get('Producto')} (Cantidad en espera de proveedor: <b>{def_ped.get('Cantidad')}</b>) <br>
                         <span style='color: gray; font-size: 11px;'>ID Pedido: {def_ped.get('ID')} | Fecha de registro: {def_ped.get('Fecha')}</span>
                     </div>
@@ -549,6 +553,8 @@ with pestana2:
         if pedidos_deficit_surtible:
             st.markdown("### 🟢 Déficits con Stock Parcial o Total Disponible")
             for sur_ped in pedidos_deficit_surtible:
+                c_raw = str(sur_ped.get('Cliente', ''))
+                c_clean = c_raw.split("(Desc.")[0].strip() if "(Desc." in c_raw else c_raw.strip()
                 p_nom_s = sur_ped.get('Producto')
                 c_ped_s = float(str(sur_ped.get('Cantidad', 0)).replace(",", ""))
                 st_disp_s = stock_por_producto.get(p_nom_s, 0.0)
@@ -560,18 +566,28 @@ with pestana2:
 
                 st.markdown(f"""
                     <div class="surtible-alert-card">
-                        <b>👤 Cliente:</b> {sur_ped.get('Cliente')} <br>
+                        <b>👤 Cliente:</b> {c_clean} <br>
                         <b>🛍️ Producto:</b> {p_nom_s} — {aviso_txt} <br>
                         <span style='color: gray; font-size: 11px;'><i>Puedes entregar lo disponible y el resto se mantendrá pendiente.</i></span>
                     </div>
                 """, unsafe_allow_html=True)
             st.markdown("---")
 
-        clientes_disponibles = sorted(list(set(p.get("Cliente") for p in pendientes_activos)))
+        # Limpiar lista de clientes para el filtro
+        clientes_limpios_set = set()
+        for p in pendientes_activos:
+            c_raw = p.get("Cliente", "")
+            c_clean = c_raw.split("(Desc.")[0].strip() if "(Desc." in c_raw else c_raw.strip()
+            clientes_limpios_set.add(c_clean)
+            
+        clientes_disponibles = sorted(list(clientes_limpios_set))
         filtro_cliente = st.selectbox("🔍 Filtrar por Cliente específico:", ["-- Todos los Clientes --"] + clientes_disponibles)
         
         if filtro_cliente != "-- Todos los Clientes --":
-            pendientes_activos = [p for p in pendientes_activos if p.get("Cliente") == filtro_cliente]
+            pendientes_activos = [
+                p for p in pendientes_activos 
+                if (p.get("Cliente", "").split("(Desc.")[0].strip() if "(Desc." in p.get("Cliente", "") else p.get("Cliente", "").strip()) == filtro_cliente
+            ]
         
         st.markdown("---")
         
@@ -582,6 +598,16 @@ with pestana2:
             prod_ped = str(ped.get("Producto", ""))
             cant_ped = float(str(ped.get("Cantidad", 0)).replace(",", ""))
             stock_disponible = stock_por_producto.get(prod_ped, 0.0)
+            
+            # Limpiar nombre para mostrar en pantalla
+            cli_raw = str(ped.get('Cliente', ''))
+            if "(Desc." in cli_raw:
+                cli_clean = cli_raw.split("(Desc.")[0].strip()
+                desc_val_str = cli_raw.split("(Desc.")[1].split("%)")[0].strip()
+                desc_badge = f"<span style='background-color:#E3F2FD; color:#1565C0; padding:2px 6px; border-radius:4px; font-size:12px; margin-left:8px;'>Desc. {desc_val_str}%</span>"
+            else:
+                cli_clean = cli_raw.strip()
+                desc_badge = ""
             
             if estado_ped == "Por entregar":
                 estado_lbl = "📦 Reservado (Listo)"
@@ -594,7 +620,7 @@ with pestana2:
                     estado_lbl = "🚨 Déficit (Falta Stock)"
             
             with col_info:
-                st.markdown(f"**👤 {ped.get('Cliente')}**  \n🛍️ **{prod_ped}** — Cantidad: **{cant_ped:g}** [{estado_lbl}] \n<span style='color: gray; font-size: 11px;'>ID: {ped.get('ID')} | Fecha: {ped.get('Fecha')}</span>", unsafe_allow_html=True)
+                st.markdown(f"**👤 {cli_clean}** {desc_badge} \n🛍️ **{prod_ped}** — Cantidad: **{cant_ped:g}** [{estado_lbl}] \n<span style='color: gray; font-size: 11px;'>ID: {ped.get('ID')} | Fecha: {ped.get('Fecha')}</span>", unsafe_allow_html=True)
             
             with col_btn1:
                 if estado_ped == "Déficit" and stock_disponible <= 0:
@@ -651,7 +677,7 @@ with pestana2:
                                 total_vta = cant_ped * precio_final
                                 hoja_pedidos.update_cell(fila_real, 7, "Entregado")
                                 hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), cli_con_desc, prod_ped, "Venta", cant_ped, total_vta])
-                                st.success(f"¡Pedido entregado con éxito a {cli_con_desc}!")
+                                st.success(f"¡Pedido entregado con éxito a {cli_clean}!")
                                 st.cache_data.clear()
                                 st.rerun()
                                 
@@ -672,7 +698,7 @@ with pestana2:
                                         st.warning(f"⚠️ Se entregaron **{cant_a_entregar:g} unidades** con el stock disponible. Quedan **{cant_remanente:g} unidades** en déficit esperando proveedor.")
                                     else:
                                         hoja_pedidos.update_cell(fila_real, 7, "Entregado")
-                                        st.success(f"¡Pedido surtido por completo y entregado a {cli_con_desc}!")
+                                        st.success(f"¡Pedido surtido por completo y entregado a {cli_clean}!")
                                         
                                     st.cache_data.clear()
                                     st.rerun()
@@ -772,11 +798,15 @@ with pestana3:
                     cant_fmt = str(int(val_cant)) if val_cant.is_integer() else f"{val_cant:g}"
                 except:
                     cant_fmt = raw_cant
+                    
+                # Limpiar cliente en historial pdf
+                c_raw = str(h.get("Cliente", ""))
+                c_clean = c_raw.split("(Desc.")[0].strip() if "(Desc." in c_raw else c_raw.strip()
 
                 data.append([
                     Paragraph(str(h.get("Fecha", "")), cell_style),
                     Paragraph(str(h.get("Producto", "")), cell_left),
-                    Paragraph(str(h.get("Cliente", "")), cell_left),
+                    Paragraph(c_clean, cell_left),
                     Paragraph(str(h.get("Compra/Venta", "")), cell_style),
                     Paragraph(cant_fmt, cell_style),
                     Paragraph(tot_fmt, cell_style)
@@ -814,6 +844,10 @@ with pestana3:
             if "Cantidad" in df_hist.columns:
                 df_hist["Cantidad"] = pd.to_numeric(df_hist["Cantidad"].astype(str).str.replace("$", "").str.replace(",", "").str.strip(), errors="coerce").fillna(0)
                 df_hist["Cantidad"] = df_hist["Cantidad"].apply(lambda x: str(int(x)) if x.is_integer() else f"{x:g}")
+            
+            # Limpiar nombre para la tabla visual
+            if "Cliente" in df_hist.columns:
+                df_hist["Cliente"] = df_hist["Cliente"].apply(lambda x: str(x).split("(Desc.")[0].strip() if "(Desc." in str(x) else str(x).strip())
 
             cols_ordenadas = ["Fecha", "Producto", "Cliente", "Compra/Venta", "Cantidad", "Total"]
             df_hist = df_hist[[c for c in cols_ordenadas if c in df_hist.columns]]
