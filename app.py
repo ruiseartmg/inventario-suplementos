@@ -229,7 +229,7 @@ pestana1, pestana2, pestana3, pestana4, pestana5 = st.tabs([
 ])
 
 with pestana1:
-    st.subheader("Registrar Pedido o Entrada")
+    st.subheader("Registrar Pedido o Movimiento")
     
     nombres_productos = [str(p.get("Nombre del Producto", "")).strip() for p in registros_inv if p.get("Nombre del Producto")]
     
@@ -237,20 +237,27 @@ with pestana1:
         prod_seleccionado = st.selectbox("Selecciona Producto", nombres_productos)
         
         stock_en_selector = 0.0
+        precio_vta_selector = 0.0
         for p_item in registros_inv:
             if str(p_item.get("Nombre del Producto", "")).strip() == prod_seleccionado:
                 for k, v in p_item.items():
                     if "stock" in k.lower() or "cantidad" in k.lower():
-                        try:
-                            stock_en_selector = float(str(v).replace(",", ""))
-                            break
-                        except:
-                            continue
+                        try: stock_en_selector = float(str(v).replace(",", ""))
+                        except: pass
+                    if "precio de venta" in k.lower():
+                        try: precio_vta_selector = float(str(v).replace("$", "").replace(",", "").strip())
+                        except: pass
+                break
         
         stock_str_fmt = str(int(stock_en_selector)) if stock_en_selector.is_integer() else f"{stock_en_selector:g}"
         st.markdown(f'<div class="stock-badge">📦 Existencia Física Actual: <b>{stock_str_fmt} unidades</b></div>', unsafe_allow_html=True)
         
-        tipo_transaccion = st.radio("Tipo de Transacción", ["Venta / Pedido de Cliente", "Salida Especial (Muestra / Merma / Consumo Propio)", "Compra (Entrada de Proveedor)"])
+        tipo_transaccion = st.radio("Tipo de Transacción", [
+            "Venta / Pedido de Cliente", 
+            "🔄 Devolución de Cliente (Reingreso)",
+            "Salida Especial (Muestra / Merma / Consumo Propio)", 
+            "Compra (Entrada de Proveedor)"
+        ])
         
         nombre_cliente = ""
         descuento_porcentaje = 0.0
@@ -258,6 +265,8 @@ with pestana1:
         if tipo_transaccion == "Venta / Pedido de Cliente":
             nombre_cliente = st.text_input("Nombre del Cliente * (Obligatorio):", "")
             descuento_porcentaje = st.number_input("Descuento aplicable (%)", min_value=0.0, max_value=100.0, value=0.0, step=5.0)
+        elif tipo_transaccion == "🔄 Devolución de Cliente (Reingreso)":
+            nombre_cliente = st.text_input("Nombre del Cliente que devuelve * (Obligatorio):", "")
         elif tipo_transaccion == "Salida Especial (Muestra / Merma / Consumo Propio)":
             motivo_salida = st.selectbox("Motivo de la Salida:", ["Muestra Gratis", "Merma / Dañado", "Consumo Propio"])
             nombre_cliente = motivo_salida
@@ -265,8 +274,8 @@ with pestana1:
         cantidad = st.number_input("Cantidad", min_value=1.0, step=1.0, value=1.0)
         
         if st.button("Registrar en el Sistema") and prod_seleccionado:
-            if tipo_transaccion == "Venta / Pedido de Cliente" and not nombre_cliente.strip():
-                st.error("❌ El nombre del cliente es obligatorio para registrar una venta o pedido. Por favor, ingrésalo antes de continuar.")
+            if tipo_transaccion in ["Venta / Pedido de Cliente", "🔄 Devolución de Cliente (Reingreso)"] and not nombre_cliente.strip():
+                st.error("❌ El nombre del cliente es obligatorio. Por favor, ingrésalo antes de continuar.")
             else:
                 ahora_mexico = datetime.utcnow() - timedelta(hours=6)
                 
@@ -283,11 +292,8 @@ with pestana1:
                     stock_actual = 0.0
                     for k, v in producto_obj.items():
                         if "stock" in k.lower() or "cantidad" in k.lower():
-                            try:
-                                stock_actual = float(str(v).replace(",", ""))
-                                break
-                            except:
-                                continue
+                            try: stock_actual = float(str(v).replace(",", ""))
+                            except: pass
                     
                     col_stock_idx = 2  
                     for idx, h in enumerate(headers):
@@ -318,12 +324,32 @@ with pestana1:
                             ])
                         
                         if cant_en_deficit > 0 and cant_a_reservar > 0:
-                            st.warning(f"⚠️ Pedido Mixto: Se apartaron {cant_a_reservar} unidades (listas) y quedaron {cant_en_deficit} en Déficit (esperando proveedor).")
+                            st.warning(f"⚠️ Pedido Mixto: Se apartaron {cant_a_reservar} unidades (listas) y quedaron {cant_en_deficit} en Déficit.")
                         elif cant_en_deficit > 0 and cant_a_reservar == 0:
-                            st.warning(f"⚠️ Sin stock físico: El pedido de {cant_en_deficit} unidades se registró completamente como Déficit.")
+                            st.warning(f"⚠️ Sin stock físico: El pedido de {cant_en_deficit} unidades se registró como Déficit.")
                         else:
-                            st.success(f"🛒 ¡Pedido apartado con éxito para **{cli_con_desc}** (Listo para entrega)!")
+                            st.success(f"🛒 ¡Pedido apartado con éxito para **{cli_con_desc}**!")
                             
+                        st.cache_data.clear()
+                        st.rerun()
+
+                    elif tipo_transaccion == "🔄 Devolución de Cliente (Reingreso)":
+                        cli_final = nombre_cliente.strip().title()
+                        nuevo_stock = stock_actual + cantidad
+                        total_devolucion = -(cantidad * precio_vta_selector)
+                        
+                        hoja_inv.update_cell(row_idx, col_stock_idx, nuevo_stock)
+                        hoja_hist.append_row([
+                            ahora_mexico.strftime("%d-%m-%Y"), 
+                            ahora_mexico.strftime("%H:%M:%S"), 
+                            cli_final, 
+                            prod_seleccionado, 
+                            "Devolución", 
+                            cantidad, 
+                            total_devolucion
+                        ])
+                        
+                        st.success(f"🔄 Devolución registrada con éxito. Se reingresaron **{cantidad:g} unidades** al inventario para **{cli_final}**.")
                         st.cache_data.clear()
                         st.rerun()
                         
@@ -332,7 +358,7 @@ with pestana1:
                         if cant_salida > 0:
                             hoja_inv.update_cell(row_idx, col_stock_idx, stock_actual - cant_salida)
                             hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), nombre_cliente, prod_seleccionado, "Salida Especial", cant_salida, 0.0])
-                            st.success(f"🏷️ Salida registrada por {motivo_salida}. Se descontaron {cant_salida} unidades sin afectar las ventas financieras.")
+                            st.success(f"🏷️ Salida registrada por {motivo_salida}. Se descontaron {cant_salida} unidades.")
                         else:
                             st.error("❌ No hay stock físico disponible para registrar esta salida especial.")
                         st.cache_data.clear()
@@ -340,9 +366,8 @@ with pestana1:
                         
                     else: 
                         nuevo_stock = stock_actual + cantidad
-                        total_movimiento = 0.0
                         hoja_inv.update_cell(row_idx, col_stock_idx, nuevo_stock)
-                        hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), "Proveedor", prod_seleccionado, "Compra", cantidad, total_movimiento])
+                        hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), "Proveedor", prod_seleccionado, "Compra", cantidad, 0.0])
                         st.success(f"📦 ¡Entrada de proveedor registrada con éxito! +{cantidad} al stock de {prod_seleccionado}.")
                         st.cache_data.clear()
                         st.rerun()
@@ -417,15 +442,11 @@ with pestana2:
         p_vta = 0.0
         for k, v in inv_p.items():
             if "stock" in k.lower() or "cantidad" in k.lower():
-                try:
-                    st_val = float(str(v).replace(",", ""))
-                except:
-                    pass
+                try: st_val = float(str(v).replace(",", ""))
+                except: pass
             if "precio de venta" in k.lower():
-                try:
-                    p_vta = float(str(v).replace("$", "").replace(",", "").strip())
-                except:
-                    pass
+                try: p_vta = float(str(v).replace("$", "").replace(",", "").strip())
+                except: pass
         stock_por_producto[nombre_p] = st_val
         precio_por_producto[nombre_p] = p_vta
 
@@ -672,7 +693,7 @@ with pestana2:
                                 st.success(f"¡Pedido entregado y pagado por {cli_clean}!")
                             else:
                                 hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), cli_con_desc, prod_ped, "Venta (Por Pagar)", cant_ped, f"Pendiente (${total_vta:,.2f})"])
-                                st.warning(f"¡Pedido entregado a {cli_clean}! Quedó registrado en el Historial como pendiente y en Cuentas por Cobrar.")
+                                st.warning(f"¡Pedido entregado a {cli_clean}! Quedó registrado en Cuentas por Cobrar.")
                         
                         elif estado_ped == "Déficit":
                             cant_a_entregar = min(cant_ped, stock_fisc)
@@ -1043,9 +1064,9 @@ with pestana4:
         promedios_dict = {}
         
         if not df_h.empty and "Producto" in df_h.columns and "Cantidad" in df_h.columns and "Fecha" in df_h.columns:
-            # TOMA TODAS LAS ENTREGAS A CLIENTES (tanto Venta como Venta (Por Pagar)) para reflejar la demanda real del inventario
+            # TOMA TODAS LAS ENTREGAS A CLIENTES (tanto Venta como Venta (Por Pagar)) y RESTA las Devoluciones
             if "Compra/Venta" in df_h.columns:
-                df_ventas = df_h[df_h["Compra/Venta"].astype(str).str.contains("Venta", case=False, na=False)].copy()
+                df_ventas = df_h[df_h["Compra/Venta"].astype(str).str.contains("Venta|Devolución", case=False, na=False)].copy()
             else:
                 df_ventas = df_h.copy()
                 
@@ -1053,12 +1074,20 @@ with pestana4:
                 try:
                     df_ventas["Fecha_str"] = df_ventas["Fecha"].astype(str).str.strip()
                     df_ventas["Mes"] = df_ventas["Fecha_str"].str.slice(3, 10)
-                    df_ventas["Cantidad_num"] = pd.to_numeric(df_ventas["Cantidad"].astype(str).str.replace("$", "").str.replace(",", "").str.strip(), errors="coerce").fillna(0)
+                    
+                    def procesar_cant_neto(row):
+                        tipo = str(row.get("Compra/Venta", ""))
+                        cant = float(str(row.get("Cantidad", 0)).replace("$", "").replace(",", "").strip())
+                        if "Devolución" in tipo:
+                            return -cant
+                        return cant
+
+                    df_ventas["Cantidad_num"] = df_ventas.apply(procesar_cant_neto, axis=1)
                     
                     totales_prod_mes = df_ventas.groupby(["Producto", "Mes"])["Cantidad_num"].sum().reset_index()
                     promedios = totales_prod_mes.groupby("Producto")["Cantidad_num"].mean().reset_index()
                     for _, row in promedios.iterrows():
-                        promedios_dict[row["Producto"]] = float(row["Cantidad_num"])
+                        promedios_dict[row["Producto"]] = max(0.0, float(row["Cantidad_num"]))
                 except:
                     pass
 
