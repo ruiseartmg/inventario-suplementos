@@ -89,6 +89,15 @@ st.markdown("""
             margin-bottom: 12px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.04);
         }
+
+        .por-pagar-card {
+            background-color: #FFF8E1;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 6px solid #F57F17;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -407,11 +416,10 @@ with pestana1:
 
 with pestana2:
     st.subheader("📦 Pedidos Pendientes y Entregas")
-    st.markdown("Filtra por cliente para ver sus artículos pendientes y gestiona cada entrega de forma rápida.")
     
-    pedidos_pendientes = cargar_pedidos_cache()
-    pendientes_activos = [p for p in pedidos_pendientes if p.get("Estado") in ["Por entregar", "Déficit"]]
+    subtab1, subtab2 = st.tabs(["📦 Por Entregar", "💳 Cuentas por Cobrar (Por Pagar)"])
     
+    pedidos_totales = cargar_pedidos_cache()
     stock_por_producto = {}
     precio_por_producto = {}
     
@@ -433,372 +441,496 @@ with pestana2:
         stock_por_producto[nombre_p] = st_val
         precio_por_producto[nombre_p] = p_vta
 
-    if pendientes_activos:
-        def generar_pdf_pedidos(pendientes):
-            buffer = io.BytesIO()
-            doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=75, bottomMargin=40)
-            elements = []
-            
-            styles = getSampleStyleSheet()
-            title_style = ParagraphStyle('TitleStyle', parent=styles['Heading1'], fontSize=15, textColor=colors.HexColor('#4A1525'), spaceAfter=15, alignment=1)
-            header_style = ParagraphStyle('HeaderStyle', parent=styles['Normal'], fontSize=9, textColor=colors.whitesmoke, fontName='Helvetica-Bold', alignment=1)
-            cell_style = ParagraphStyle('CellStyle', parent=styles['Normal'], fontSize=8, leading=10, alignment=1)
-            cell_left = ParagraphStyle('CellLeft', parent=styles['Normal'], fontSize=8, leading=10, alignment=0)
-            
-            elements.append(Paragraph("Nature’s Select - Reporte de Pedidos Pendientes", title_style))
-            elements.append(Spacer(1, 10))
-            
-            data = [[Paragraph("Fecha", header_style), Paragraph("Cliente", header_style), Paragraph("Producto", header_style), Paragraph("Cant.", header_style), Paragraph("Estado", header_style), Paragraph("Precio", header_style), Paragraph("Desc.", header_style), Paragraph("Total", header_style)]]
-            
-            gran_total_pedidos = 0.0
-            
-            for p in pendientes:
-                p_estado = str(p.get("Estado", ""))
-                p_prod = str(p.get("Producto", ""))
-                p_fecha_full = str(p.get("Fecha", ""))
-                p_fecha = p_fecha_full.split(" ")[0] if " " in p_fecha_full else p_fecha_full
+    # SUBTAB 1: POR ENTREGAR
+    with subtab1:
+        st.markdown("Gestiona las entregas pendientes de tus clientes.")
+        pendientes_activos = [p for p in pedidos_totales if p.get("Estado") in ["Por entregar", "Déficit"]]
+        
+        if pendientes_activos:
+            def generar_pdf_pedidos(pendientes):
+                buffer = io.BytesIO()
+                doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=75, bottomMargin=40)
+                elements = []
                 
-                p_cliente_raw = str(p.get("Cliente", ""))
-                if "(Desc." in p_cliente_raw:
-                    p_cliente_limpio = p_cliente_raw.split("(Desc.")[0].strip()
-                    try:
-                        desc_str = p_cliente_raw.split("(Desc.")[1].split("%)")[0].strip()
-                        desc_val = float(desc_str)
-                    except:
+                styles = getSampleStyleSheet()
+                title_style = ParagraphStyle('TitleStyle', parent=styles['Heading1'], fontSize=15, textColor=colors.HexColor('#4A1525'), spaceAfter=15, alignment=1)
+                header_style = ParagraphStyle('HeaderStyle', parent=styles['Normal'], fontSize=9, textColor=colors.whitesmoke, fontName='Helvetica-Bold', alignment=1)
+                cell_style = ParagraphStyle('CellStyle', parent=styles['Normal'], fontSize=8, leading=10, alignment=1)
+                cell_left = ParagraphStyle('CellLeft', parent=styles['Normal'], fontSize=8, leading=10, alignment=0)
+                
+                elements.append(Paragraph("Nature’s Select - Reporte de Pedidos Pendientes por Entregar", title_style))
+                elements.append(Spacer(1, 10))
+                
+                data = [[Paragraph("Fecha", header_style), Paragraph("Cliente", header_style), Paragraph("Producto", header_style), Paragraph("Cant.", header_style), Paragraph("Estado", header_style), Paragraph("Precio", header_style), Paragraph("Desc.", header_style), Paragraph("Total", header_style)]]
+                gran_total_pedidos = 0.0
+                
+                for p in pendientes:
+                    p_estado = str(p.get("Estado", ""))
+                    p_prod = str(p.get("Producto", ""))
+                    p_fecha_full = str(p.get("Fecha", ""))
+                    p_fecha = p_fecha_full.split(" ")[0] if " " in p_fecha_full else p_fecha_full
+                    
+                    p_cliente_raw = str(p.get("Cliente", ""))
+                    if "(Desc." in p_cliente_raw:
+                        p_cliente_limpio = p_cliente_raw.split("(Desc.")[0].strip()
+                        try:
+                            desc_val = float(p_cliente_raw.split("(Desc.")[1].split("%)")[0].strip())
+                        except:
+                            desc_val = 0.0
+                    else:
+                        p_cliente_limpio = p_cliente_raw.strip()
                         desc_val = 0.0
-                else:
-                    p_cliente_limpio = p_cliente_raw.strip()
-                    desc_val = 0.0
+                    
+                    desc_txt = f"{desc_val:g}%" if desc_val > 0 else "-"
+                    try:
+                        p_cant = float(str(p.get("Cantidad", 0)).replace(",", ""))
+                    except:
+                        p_cant = 0.0
+                    
+                    if p_estado == "Déficit":
+                        st_disp = stock_por_producto.get(p_prod, 0.0)
+                        if st_disp > 0:
+                            p_estado = "Parcial / Listo"
+
+                    p_unitario = precio_por_producto.get(p_prod, 0.0)
+                    precio_final = p_unitario * (1.0 - (desc_val / 100.0))
+                    p_total = p_cant * precio_final
+                    gran_total_pedidos += p_total
+                    cant_fmt = str(int(p_cant)) if p_cant.is_integer() else f"{p_cant:g}"
+
+                    data.append([
+                        Paragraph(p_fecha, cell_style),
+                        Paragraph(p_cliente_limpio, cell_left),
+                        Paragraph(p_prod, cell_left),
+                        Paragraph(cant_fmt, cell_style),
+                        Paragraph(p_estado, cell_style),
+                        Paragraph(f"${p_unitario:,.2f}", cell_style),
+                        Paragraph(desc_txt, cell_style),
+                        Paragraph(f"${p_total:,.2f}", cell_style)
+                    ])
+                    
+                total_row_style = ParagraphStyle('TotalRow', parent=styles['Normal'], fontSize=8, leading=10, alignment=2)
+                total_val_style = ParagraphStyle('TotalVal', parent=styles['Normal'], fontSize=8, leading=10, alignment=1)
                 
-                desc_txt = f"{desc_val:g}%" if desc_val > 0 else "-"
+                data.append([
+                    Paragraph("Total Pendiente:", total_row_style),
+                    "", "", "", "", "", "",
+                    Paragraph(f"${gran_total_pedidos:,.2f}", total_val_style)
+                ])
                 
+                t = Table(data, colWidths=[55, 95, 110, 35, 75, 45, 35, 55])
+                t.setStyle(TableStyle([
+                    ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#4A1525')),
+                    ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+                    ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+                    ('BOTTOMPADDING', (0,0), (-1,0), 6),
+                    ('TOPPADDING', (0,0), (-1,0), 6),
+                    ('BACKGROUND', (0,1), (-1,-2), colors.HexColor('#FDFBFB')),
+                    ('GRID', (0,0), (-1,-2), 0.5, colors.HexColor('#D1C4E9')),
+                    ('SPAN', (0, -1), (6, -1)),
+                    ('BACKGROUND', (0,-1), (-1,-1), colors.HexColor('#F4ECF7')),
+                    ('GRID', (0,-1), (-1,-1), 0.5, colors.HexColor('#D1C4E9')),
+                ]))
+                elements.append(t)
+                doc.build(elements, canvasmaker=NumberedCanvas)
+                buffer.seek(0)
+                return buffer.getvalue()
+
+            pdf_bytes = generar_pdf_pedidos(pendientes_activos)
+            
+            gran_total_interfaz = 0.0
+            for p in pendientes_activos:
+                p_prod = str(p.get("Producto", ""))
                 try:
                     p_cant = float(str(p.get("Cantidad", 0)).replace(",", ""))
                 except:
                     p_cant = 0.0
-                
-                if p_estado == "Déficit":
-                    st_disp = stock_por_producto.get(p_prod, 0.0)
-                    if st_disp > 0:
-                        p_estado = "Parcial / Listo"
-
+                c_raw = str(p.get("Cliente", ""))
+                desc_val = float(c_raw.split("(Desc.")[1].split("%)")[0].strip()) if "(Desc." in c_raw else 0.0
                 p_unitario = precio_por_producto.get(p_prod, 0.0)
-                precio_final = p_unitario * (1.0 - (desc_val / 100.0))
-                p_total = p_cant * precio_final
+                gran_total_interfaz += p_cant * (p_unitario * (1.0 - (desc_val / 100.0)))
+
+            col_descarga, col_total = st.columns([1, 1])
+            with col_descarga:
+                st.download_button(
+                    label="📄 Descargar Reporte de Pendientes PDF",
+                    data=pdf_bytes,
+                    file_name=f"reporte_pedidos_{datetime.now().strftime('%d-%m-%Y')}.pdf",
+                    mime="application/pdf"
+                )
+            with col_total:
+                st.markdown(f"<h3 style='text-align: right; margin-top: 0; color: #2E7D32;'>Valor Total Pendiente: ${gran_total_interfaz:,.2f}</h3>", unsafe_allow_html=True)
                 
-                gran_total_pedidos += p_total
-                cant_fmt = str(int(p_cant)) if p_cant.is_integer() else f"{p_cant:g}"
-
-                data.append([
-                    Paragraph(p_fecha, cell_style),
-                    Paragraph(p_cliente_limpio, cell_left),
-                    Paragraph(p_prod, cell_left),
-                    Paragraph(cant_fmt, cell_style),
-                    Paragraph(p_estado, cell_style),
-                    Paragraph(f"${p_unitario:,.2f}", cell_style),
-                    Paragraph(desc_txt, cell_style),
-                    Paragraph(f"${p_total:,.2f}", cell_style)
-                ])
-                
-            total_row_style = ParagraphStyle('TotalRow', parent=styles['Normal'], fontSize=8, leading=10, alignment=2)
-            total_val_style = ParagraphStyle('TotalVal', parent=styles['Normal'], fontSize=8, leading=10, alignment=1)
-            
-            data.append([
-                Paragraph("Total Pendiente por Cobrar:", total_row_style),
-                "", "", "", "", "", "",
-                Paragraph(f"${gran_total_pedidos:,.2f}", total_val_style)
-            ])
-            
-            t = Table(data, colWidths=[55, 95, 110, 35, 75, 45, 35, 55])
-            t.setStyle(TableStyle([
-                ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#4A1525')),
-                ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-                ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-                ('BOTTOMPADDING', (0,0), (-1,0), 6),
-                ('TOPPADDING', (0,0), (-1,0), 6),
-                ('BACKGROUND', (0,1), (-1,-2), colors.HexColor('#FDFBFB')),
-                ('GRID', (0,0), (-1,-2), 0.5, colors.HexColor('#D1C4E9')),
-                ('SPAN', (0, -1), (6, -1)),
-                ('BACKGROUND', (0,-1), (-1,-1), colors.HexColor('#F4ECF7')),
-                ('GRID', (0,-1), (-1,-1), 0.5, colors.HexColor('#D1C4E9')),
-            ]))
-            elements.append(t)
-            
-            doc.build(elements, canvasmaker=NumberedCanvas)
-            buffer.seek(0)
-            return buffer.getvalue()
-
-        pdf_bytes = generar_pdf_pedidos(pendientes_activos)
-        
-        gran_total_interfaz = 0.0
-        for p in pendientes_activos:
-            p_prod = str(p.get("Producto", ""))
-            try:
-                p_cant = float(str(p.get("Cantidad", 0)).replace(",", ""))
-            except:
-                p_cant = 0.0
-            
-            c_raw = str(p.get("Cliente", ""))
-            if "(Desc." in c_raw:
-                try:
-                    desc_val = float(c_raw.split("(Desc.")[1].split("%)")[0].strip())
-                except:
-                    desc_val = 0.0
-            else:
-                desc_val = 0.0
-                
-            p_unitario = precio_por_producto.get(p_prod, 0.0)
-            gran_total_interfaz += p_cant * (p_unitario * (1.0 - (desc_val / 100.0)))
-
-        col_descarga, col_total = st.columns([1, 1])
-        with col_descarga:
-            st.download_button(
-                label="📄 Descargar Reporte de Pedidos en PDF",
-                data=pdf_bytes,
-                file_name=f"reporte_pedidos_{datetime.now().strftime('%d-%m-%Y')}.pdf",
-                mime="application/pdf"
-            )
-        with col_total:
-            st.markdown(f"<h3 style='text-align: right; margin-top: 0; color: #2E7D32;'>Total por Cobrar: ${gran_total_interfaz:,.2f}</h3>", unsafe_allow_html=True)
-            
-        st.markdown("---")
-
-        pedidos_deficit_real = []
-        pedidos_deficit_surtible = []
-        
-        for ped in pendientes_activos:
-            if ped.get("Estado") == "Déficit":
-                p_nom = ped.get("Producto")
-                c_ped = float(str(ped.get("Cantidad", 0)).replace(",", ""))
-                st_disp = stock_por_producto.get(p_nom, 0.0)
-                if st_disp > 0:
-                    pedidos_deficit_surtible.append(ped)
-                else:
-                    pedidos_deficit_real.append(ped)
-
-        if pedidos_deficit_real:
-            st.markdown("### 🚨 Pedidos en Espera por Déficit (Falta Stock)")
-            for def_ped in pedidos_deficit_real:
-                c_raw = str(def_ped.get('Cliente', ''))
-                c_clean = c_raw.split("(Desc.")[0].strip() if "(Desc." in c_raw else c_raw.strip()
-                st.markdown(f"""
-                    <div class="deficit-alert-card">
-                        <b>👤 Cliente:</b> {c_clean} <br>
-                        <b>🛍️ Producto:</b> {def_ped.get('Producto')} (Cantidad en espera de proveedor: <b>{def_ped.get('Cantidad')}</b>) <br>
-                        <span style='color: gray; font-size: 11px;'>ID Pedido: {def_ped.get('ID')} | Fecha de registro: {def_ped.get('Fecha')}</span>
-                    </div>
-                """, unsafe_allow_html=True)
             st.markdown("---")
 
-        if pedidos_deficit_surtible:
-            st.markdown("### 🟢 Déficits con Stock Parcial o Total Disponible")
-            for sur_ped in pedidos_deficit_surtible:
-                c_raw = str(sur_ped.get('Cliente', ''))
+            pedidos_deficit_real = []
+            pedidos_deficit_surtible = []
+            for ped in pendientes_activos:
+                if ped.get("Estado") == "Déficit":
+                    p_nom = ped.get("Producto")
+                    c_ped = float(str(ped.get("Cantidad", 0)).replace(",", ""))
+                    st_disp = stock_por_producto.get(p_nom, 0.0)
+                    if st_disp > 0:
+                        pedidos_deficit_surtible.append(ped)
+                    else:
+                        pedidos_deficit_real.append(ped)
+
+            if pedidos_deficit_real:
+                st.markdown("### 🚨 Pedidos en Espera por Déficit (Falta Stock)")
+                for def_ped in pedidos_deficit_real:
+                    c_raw = str(def_ped.get('Cliente', ''))
+                    c_clean = c_raw.split("(Desc.")[0].strip() if "(Desc." in c_raw else c_raw.strip()
+                    st.markdown(f"""
+                        <div class="deficit-alert-card">
+                            <b>👤 Cliente:</b> {c_clean} <br>
+                            <b>🛍️ Producto:</b> {def_ped.get('Producto')} (Cantidad en espera: <b>{def_ped.get('Cantidad')}</b>) <br>
+                            <span style='color: gray; font-size: 11px;'>ID Pedido: {def_ped.get('ID')} | Fecha: {def_ped.get('Fecha')}</span>
+                        </div>
+                    """, unsafe_allow_html=True)
+                st.markdown("---")
+
+            if pedidos_deficit_surtible:
+                st.markdown("### 🟢 Déficits con Stock Parcial o Total Disponible")
+                for sur_ped in pedidos_deficit_surtible:
+                    c_raw = str(sur_ped.get('Cliente', ''))
+                    c_clean = c_raw.split("(Desc.")[0].strip() if "(Desc." in c_raw else c_raw.strip()
+                    p_nom_s = sur_ped.get('Producto')
+                    c_ped_s = float(str(sur_ped.get('Cantidad', 0)).replace(",", ""))
+                    st_disp_s = stock_por_producto.get(p_nom_s, 0.0)
+                    aviso_txt = f"Cantidad lista: <b>{c_ped_s:g}</b>" if st_disp_s >= c_ped_s else f"Déficit: <b>{c_ped_s:g}</b> (Stock: <b>{st_disp_s:g}</b>)"
+
+                    st.markdown(f"""
+                        <div class="surtible-alert-card">
+                            <b>👤 Cliente:</b> {c_clean} <br>
+                            <b>🛍️ Producto:</b> {p_nom_s} — {aviso_txt} <br>
+                        </div>
+                    """, unsafe_allow_html=True)
+                st.markdown("---")
+
+            clientes_limpios_set = set()
+            for p in pendientes_activos:
+                c_raw = p.get("Cliente", "")
                 c_clean = c_raw.split("(Desc.")[0].strip() if "(Desc." in c_raw else c_raw.strip()
-                p_nom_s = sur_ped.get('Producto')
-                c_ped_s = float(str(sur_ped.get('Cantidad', 0)).replace(",", ""))
-                st_disp_s = stock_por_producto.get(p_nom_s, 0.0)
+                clientes_limpios_set.add(c_clean)
                 
-                if st_disp_s >= c_ped_s:
-                    aviso_txt = f"Cantidad lista para entrega: <b>{c_ped_s:g}</b> (Se cubre con el stock actual)."
-                else:
-                    aviso_txt = f"Cantidad en déficit: <b>{c_ped_s:g}</b>. (Tienes <b>{st_disp_s:g} en stock</b> para entregar parcialmente)."
-
-                st.markdown(f"""
-                    <div class="surtible-alert-card">
-                        <b>👤 Cliente:</b> {c_clean} <br>
-                        <b>🛍️ Producto:</b> {p_nom_s} — {aviso_txt} <br>
-                        <span style='color: gray; font-size: 11px;'><i>Puedes entregar lo disponible y el resto se mantendrá pendiente.</i></span>
-                    </div>
-                """, unsafe_allow_html=True)
+            clientes_disponibles = sorted(list(clientes_limpios_set))
+            filtro_cliente = st.selectbox("🔍 Filtrar por Cliente específico:", ["-- Todos los Clientes --"] + clientes_disponibles)
+            
+            if filtro_cliente != "-- Todos los Clientes --":
+                pendientes_activos = [
+                    p for p in pendientes_activos 
+                    if (p.get("Cliente", "").split("(Desc.")[0].strip() if "(Desc." in p.get("Cliente", "") else p.get("Cliente", "").strip()) == filtro_cliente
+                ]
+            
             st.markdown("---")
-
-        clientes_limpios_set = set()
-        for p in pendientes_activos:
-            c_raw = p.get("Cliente", "")
-            c_clean = c_raw.split("(Desc.")[0].strip() if "(Desc." in c_raw else c_raw.strip()
-            clientes_limpios_set.add(c_clean)
             
-        clientes_disponibles = sorted(list(clientes_limpios_set))
-        filtro_cliente = st.selectbox("🔍 Filtrar por Cliente específico:", ["-- Todos los Clientes --"] + clientes_disponibles)
-        
-        if filtro_cliente != "-- Todos los Clientes --":
-            pendientes_activos = [
-                p for p in pendientes_activos 
-                if (p.get("Cliente", "").split("(Desc.")[0].strip() if "(Desc." in p.get("Cliente", "") else p.get("Cliente", "").strip()) == filtro_cliente
-            ]
-        
-        st.markdown("---")
-        
-        for idx, ped in enumerate(pendientes_activos):
-            col_info, col_btn1, col_btn2 = st.columns([4.5, 1.75, 1.75])
-            
-            estado_ped = ped.get('Estado')
-            prod_ped = str(ped.get("Producto", ""))
-            cant_ped = float(str(ped.get("Cantidad", 0)).replace(",", ""))
-            stock_disponible = stock_por_producto.get(prod_ped, 0.0)
-            
-            cli_raw = str(ped.get('Cliente', ''))
-            if "(Desc." in cli_raw:
-                cli_clean = cli_raw.split("(Desc.")[0].strip()
-                desc_val_str = cli_raw.split("(Desc.")[1].split("%)")[0].strip()
-                desc_badge = f"<span style='background-color:#E3F2FD; color:#1565C0; padding:2px 6px; border-radius:4px; font-size:12px; margin-left:8px;'>Desc. {desc_val_str}%</span>"
-            else:
-                cli_clean = cli_raw.strip()
-                desc_badge = ""
-            
-            if estado_ped == "Por entregar":
-                estado_lbl = "📦 Reservado (Listo)"
-            elif estado_ped == "Déficit":
-                if stock_disponible >= cant_ped:
-                    estado_lbl = "🟢 Listo para Entregar (Ya hay stock)"
-                elif stock_disponible > 0:
-                    estado_lbl = f"🟡 Parcial: Tienes {stock_disponible:g} en stock"
+            for idx, ped in enumerate(pendientes_activos):
+                col_info, col_btn_pagado, col_btn_fiado, col_btn_cancel = st.columns([3.5, 1.5, 1.5, 1.2])
+                
+                estado_ped = ped.get('Estado')
+                prod_ped = str(ped.get("Producto", ""))
+                cant_ped = float(str(ped.get("Cantidad", 0)).replace(",", ""))
+                stock_disponible = stock_por_producto.get(prod_ped, 0.0)
+                
+                cli_raw = str(ped.get('Cliente', ''))
+                if "(Desc." in cli_raw:
+                    cli_clean = cli_raw.split("(Desc.")[0].strip()
+                    desc_val_str = cli_raw.split("(Desc.")[1].split("%)")[0].strip()
+                    desc_badge = f"<span style='background-color:#E3F2FD; color:#1565C0; padding:2px 6px; border-radius:4px; font-size:12px; margin-left:8px;'>Desc. {desc_val_str}%</span>"
                 else:
-                    estado_lbl = "🚨 Déficit (Falta Stock)"
-            
-            with col_info:
-                st.markdown(f"**👤 {cli_clean}** {desc_badge} \n🛍️ **{prod_ped}** — Cantidad: **{cant_ped:g}** [{estado_lbl}] \n<span style='color: gray; font-size: 11px;'>ID: {ped.get('ID')} | Fecha: {ped.get('Fecha')}</span>", unsafe_allow_html=True)
-            
-            with col_btn1:
-                if estado_ped == "Déficit" and stock_disponible <= 0:
-                    st.button("⏳ Sin Stock", key=f"entregar_dis_{ped.get('ID')}_{idx}", disabled=True)
-                else:
-                    btn_label = "✅ Entregar Parcial" if stock_disponible < cant_ped else "✅ Entregar"
-                    if st.button(btn_label, key=f"entregar_{ped.get('ID')}_{idx}"):
-                        todos_p = hoja_pedidos.get_all_records()
-                        fila_real = None
-                        for i, tp in enumerate(todos_p):
-                            if str(tp.get("ID")) == str(ped.get("ID")):
-                                fila_real = i + 2
+                    cli_clean = cli_raw.strip()
+                    desc_badge = ""
+                
+                if estado_ped == "Por entregar":
+                    estado_lbl = "📦 Reservado (Listo)"
+                elif estado_ped == "Déficit":
+                    estado_lbl = "🟢 Listo" if stock_disponible >= cant_ped else "🚨 Déficit"
+                
+                with col_info:
+                    st.markdown(f"**👤 {cli_clean}** {desc_badge} \n🛍️ **{prod_ped}** — Cantidad: **{cant_ped:g}** [{estado_lbl}] \n<span style='color: gray; font-size: 11px;'>ID: {ped.get('ID')} | Fecha: {ped.get('Fecha')}</span>", unsafe_allow_html=True)
+                
+                # Función auxiliar para entregar
+                def procesar_entrega(nuevo_estado):
+                    todos_p = hoja_pedidos.get_all_records()
+                    fila_real = next((i + 2 for i, tp in enumerate(todos_p) if str(tp.get("ID")) == str(ped.get("ID"))), None)
+                    
+                    if fila_real:
+                        cli_con_desc = str(ped.get("Cliente", ""))
+                        precio_vta = 0.0
+                        inv_actuales = hoja_inv.get_all_records()
+                        row_inv_idx = None
+                        stock_fisc = 0.0
+                        for i, inv_item in enumerate(inv_actuales):
+                            if str(inv_item.get("Nombre del Producto", "")).strip() == prod_ped:
+                                row_inv_idx = i + 2
+                                for k, v in inv_item.items():
+                                    if "stock" in k.lower() or "cantidad" in k.lower():
+                                        try: stock_fisc = float(str(v).replace(",", ""))
+                                        except: pass
+                                    if "precio de venta" in k.lower():
+                                        try: precio_vta = float(str(v).replace("$", "").replace(",", "").strip())
+                                        except: pass
                                 break
-                        if fila_real:
-                            cli_con_desc = str(ped.get("Cliente", ""))
-                            
-                            precio_vta = 0.0
-                            inv_actuales = hoja_inv.get_all_records()
-                            row_inv_idx = None
-                            stock_fisc = 0.0
-                            for i, inv_item in enumerate(inv_actuales):
-                                if str(inv_item.get("Nombre del Producto", "")).strip() == prod_ped:
-                                    row_inv_idx = i + 2
-                                    for k, v in inv_item.items():
-                                        if "stock" in k.lower() or "cantidad" in k.lower():
-                                            try:
-                                                stock_fisc = float(str(v).replace(",", ""))
-                                            except:
-                                                pass
-                                        if "precio de venta" in k.lower():
-                                            try:
-                                                precio_vta = float(str(v).replace("$", "").replace(",", "").strip())
-                                            except:
-                                                pass
-                                    break
-                            
-                            desc_val = 0.0
-                            if "(Desc." in cli_con_desc:
-                                try:
-                                    desc_str = cli_con_desc.split("(Desc.")[1].split("%)")[0].strip()
-                                    desc_val = float(desc_str)
-                                except:
-                                    pass
-                            
-                            ahora_mexico = datetime.utcnow() - timedelta(hours=6)
-                            col_st_idx = 2
-                            for idx_h, h_name in enumerate(headers):
-                                if "stock" in h_name.lower():
-                                    col_st_idx = idx_h + 1
-                                    break
-                            
-                            if estado_ped == "Por entregar":
+                        
+                        desc_val = float(cli_con_desc.split("(Desc.")[1].split("%)")[0].strip()) if "(Desc." in cli_con_desc else 0.0
+                        ahora_mexico = datetime.utcnow() - timedelta(hours=6)
+                        
+                        col_st_idx = 2
+                        for idx_h, h_name in enumerate(headers):
+                            if "stock" in h_name.lower():
+                                col_st_idx = idx_h + 1
+                                break
+
+                        if estado_ped == "Por entregar":
+                            hoja_pedidos.update_cell(fila_real, 7, nuevo_estado)
+                            if nuevo_estado == "Entregado":
                                 precio_final = precio_vta * (1.0 - (desc_val / 100.0))
                                 total_vta = cant_ped * precio_final
-                                hoja_pedidos.update_cell(fila_real, 7, "Entregado")
                                 hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), cli_con_desc, prod_ped, "Venta", cant_ped, total_vta])
-                                st.success(f"¡Pedido entregado con éxito a {cli_clean}!")
-                                st.cache_data.clear()
-                                st.rerun()
-                                
-                            elif estado_ped == "Déficit":
-                                cant_a_entregar = min(cant_ped, stock_fisc)
-                                cant_remanente = cant_ped - cant_a_entregar
-                                
-                                if cant_a_entregar > 0 and row_inv_idx:
-                                    hoja_inv.update_cell(row_inv_idx, col_st_idx, stock_fisc - cant_a_entregar)
-                                    
-                                    precio_final = precio_vta * (1.0 - (desc_val / 100.0))
-                                    total_vta = cant_a_entregar * precio_final
-                                    
-                                    hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), cli_con_desc, prod_ped, "Venta", cant_a_entregar, total_vta])
-                                    
-                                    if cant_remanente > 0:
-                                        hoja_pedidos.update_cell(fila_real, 5, cant_remanente)
-                                        st.warning(f"⚠️ Se entregaron **{cant_a_entregar:g} unidades** con el stock disponible. Quedan **{cant_remanente:g} unidades** en déficit esperando proveedor.")
-                                    else:
-                                        hoja_pedidos.update_cell(fila_real, 7, "Entregado")
-                                        st.success(f"¡Pedido surtido por completo y entregado a {cli_clean}!")
-                                        
-                                    st.cache_data.clear()
-                                    st.rerun()
-
-            with col_btn2:
-                cancelar_key = f"cancelar_{ped.get('ID')}_{idx}"
-                st.markdown("""
-                    <style>
-                        div[data-testid="column"]:nth-child(3) button {
-                            background-color: #C62828 !important;
-                        }
-                        div[data-testid="column"]:nth-child(3) button:hover {
-                            background-color: #B71C1C !important;
-                        }
-                    </style>
-                """, unsafe_allow_html=True)
-                
-                if st.button("❌ Cancelar", key=cancelar_key):
-                    todos_p = hoja_pedidos.get_all_records()
-                    fila_real = None
-                    for i, tp in enumerate(todos_p):
-                        if str(tp.get("ID")) == str(ped.get("ID")):
-                            fila_real = i + 2
-                            break
-                    if fila_real:
-                        hoja_pedidos.update_cell(fila_real, 7, "Cancelado")
+                                st.success(f"¡Pedido entregado y pagado por {cli_clean}!")
+                            else:
+                                st.warning(f"¡Pedido entregado a {cli_clean}! Quedó registrado en Cuentas por Cobrar.")
                         
-                        if estado_ped == "Por entregar":
-                            inv_actuales = hoja_inv.get_all_records()
-                            for i, inv_item in enumerate(inv_actuales):
-                                if str(inv_item.get("Nombre del Producto", "")).strip() == prod_ped:
-                                    st_act = float(str(inv_item.get("Cantidad en Stock", 0)).replace(",", ""))
-                                    col_st_idx = 2
-                                    for idx_h, h_name in enumerate(headers):
-                                        if "stock" in h_name.lower():
-                                            col_st_idx = idx_h + 1
-                                            break
-                                    hoja_inv.update_cell(i + 2, col_st_idx, st_act + cant_ped)
-                                    
-                                    stock_liberado = st_act + cant_ped
-                                    deficits_producto = [
-                                        (idx_tp, tp_item) for idx_tp, tp_item in enumerate(todos_p)
-                                        if str(tp_item.get("Estado")) == "Déficit" and str(tp_item.get("Producto")) == prod_ped
-                                    ]
-                                    deficits_producto.sort(key=lambda x: str(x[1].get("Fecha", "")))
-                                    
-                                    for idx_otro, tp_otro in deficits_producto:
-                                        cant_def = float(str(tp_otro.get("Cantidad", 0)).replace(",", ""))
-                                        if stock_liberado >= cant_def:
-                                            hoja_pedidos.update_cell(idx_otro + 2, 7, "Por entregar")
-                                            stock_liberado -= cant_def
-                                            hoja_inv.update_cell(i + 2, col_st_idx, stock_liberado)
-                                    break
-                            st.warning(f"Pedido cancelado. Se devolvieron **{cant_ped:g} unidades** al inventario.")
-                        else:
-                            st.warning("El pedido en déficit fue cancelado (No hubo movimiento de inventario).")
+                        elif estado_ped == "Déficit":
+                            cant_a_entregar = min(cant_ped, stock_fisc)
+                            cant_remanente = cant_ped - cant_a_entregar
                             
+                            if cant_a_entregar > 0 and row_inv_idx:
+                                hoja_inv.update_cell(row_inv_idx, col_st_idx, stock_fisc - cant_a_entregar)
+                                precio_final = precio_vta * (1.0 - (desc_val / 100.0))
+                                total_vta = cant_a_entregar * precio_final
+                                
+                                if nuevo_estado == "Entregado":
+                                    hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), cli_con_desc, prod_ped, "Venta", cant_a_entregar, total_vta])
+                                
+                                if cant_remanente > 0:
+                                    hoja_pedidos.update_cell(fila_real, 5, cant_remanente)
+                                    st.warning(f"⚠️ Se entregaron **{cant_a_entregar:g} unidades**. Quedan **{cant_remanente:g}** en déficit.")
+                                else:
+                                    hoja_pedidos.update_cell(fila_real, 7, nuevo_estado)
+                                    st.success(f"¡Pedido surtido y marcado como {nuevo_estado} para {cli_clean}!")
+
                         st.cache_data.clear()
                         st.rerun()
-            st.divider()
-    else:
-        st.info("No hay productos 'Por entregar' a clientes en este momento.")
+
+                with col_btn_pagado:
+                    if estado_ped == "Déficit" and stock_disponible <= 0:
+                        st.button("⏳ Sin Stock", key=f"entregar_pag_{ped.get('ID')}_{idx}", disabled=True)
+                    else:
+                        if st.button("💵 Pagado", key=f"entregar_pag_{ped.get('ID')}_{idx}"):
+                            procesar_entrega("Entregado")
+
+                with col_btn_fiado:
+                    if estado_ped == "Déficit" and stock_disponible <= 0:
+                        st.button("⏳ Sin Stock", key=f"entregar_fia_{ped.get('ID')}_{idx}", disabled=True)
+                    else:
+                        if st.button("💳 Por Pagar", key=f"entregar_fia_{ped.get('ID')}_{idx}"):
+                            procesar_entrega("Por pagar")
+
+                with col_btn_cancel:
+                    st.markdown("""
+                        <style>
+                            div[data-testid="column"]:nth-child(4) button {
+                                background-color: #C62828 !important;
+                            }
+                            div[data-testid="column"]:nth-child(4) button:hover {
+                                background-color: #B71C1C !important;
+                            }
+                        </style>
+                    """, unsafe_allow_html=True)
+                    
+                    if st.button("❌ Cancelar", key=f"cancelar_{ped.get('ID')}_{idx}"):
+                        todos_p = hoja_pedidos.get_all_records()
+                        fila_real = next((i + 2 for i, tp in enumerate(todos_p) if str(tp.get("ID")) == str(ped.get("ID"))), None)
+                        if fila_real:
+                            hoja_pedidos.update_cell(fila_real, 7, "Cancelado")
+                            if estado_ped == "Por entregar":
+                                inv_actuales = hoja_inv.get_all_records()
+                                for i, inv_item in enumerate(inv_actuales):
+                                    if str(inv_item.get("Nombre del Producto", "")).strip() == prod_ped:
+                                        st_act = float(str(inv_item.get("Cantidad en Stock", 0)).replace(",", ""))
+                                        col_st_idx = 2
+                                        for idx_h, h_name in enumerate(headers):
+                                            if "stock" in h_name.lower():
+                                                col_st_idx = idx_h + 1
+                                                break
+                                        hoja_inv.update_cell(i + 2, col_st_idx, st_act + cant_ped)
+                                        break
+                                st.warning(f"Pedido cancelado. Se devolvieron **{cant_ped:g} unidades** al inventario.")
+                            else:
+                                st.warning("El pedido en déficit fue cancelado.")
+                            st.cache_data.clear()
+                            st.rerun()
+                st.divider()
+        else:
+            st.info("No hay pedidos pendientes por entregar en este momento.")
+
+    # SUBTAB 2: CUENTAS POR COBRAR (POR PAGAR)
+    with subtab2:
+        st.markdown("Lista de artículos que ya fueron entregados al cliente pero están **pendientes de cobro**.")
+        pedidos_por_pagar = [p for p in pedidos_totales if p.get("Estado") == "Por pagar"]
+        
+        if pedidos_por_pagar:
+            # Reporte PDF de Cuentas por Cobrar
+            def generar_pdf_cuentas_por_cobrar(lista_por_pagar):
+                buffer = io.BytesIO()
+                doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=75, bottomMargin=40)
+                elements = []
+                
+                styles = getSampleStyleSheet()
+                title_style = ParagraphStyle('TitleStyle', parent=styles['Heading1'], fontSize=15, textColor=colors.HexColor('#4A1525'), spaceAfter=15, alignment=1)
+                header_style = ParagraphStyle('HeaderStyle', parent=styles['Normal'], fontSize=9, textColor=colors.whitesmoke, fontName='Helvetica-Bold', alignment=1)
+                cell_style = ParagraphStyle('CellStyle', parent=styles['Normal'], fontSize=8, leading=10, alignment=1)
+                cell_left = ParagraphStyle('CellLeft', parent=styles['Normal'], fontSize=8, leading=10, alignment=0)
+                
+                elements.append(Paragraph("Nature’s Select - Cuentas por Cobrar (Entregados sin Pago)", title_style))
+                elements.append(Spacer(1, 10))
+                
+                data = [[Paragraph("Fecha", header_style), Paragraph("Cliente", header_style), Paragraph("Producto", header_style), Paragraph("Cant.", header_style), Paragraph("Precio Unit.", header_style), Paragraph("Desc.", header_style), Paragraph("Total a Cobrar", header_style)]]
+                gran_total_cobrar = 0.0
+                
+                for p in lista_por_pagar:
+                    p_prod = str(p.get("Producto", ""))
+                    p_fecha_full = str(p.get("Fecha", ""))
+                    p_fecha = p_fecha_full.split(" ")[0] if " " in p_fecha_full else p_fecha_full
+                    p_cliente_raw = str(p.get("Cliente", ""))
+                    
+                    if "(Desc." in p_cliente_raw:
+                        p_cliente_limpio = p_cliente_raw.split("(Desc.")[0].strip()
+                        try: desc_val = float(p_cliente_raw.split("(Desc.")[1].split("%)")[0].strip())
+                        except: desc_val = 0.0
+                    else:
+                        p_cliente_limpio = p_cliente_raw.strip()
+                        desc_val = 0.0
+                    
+                    desc_txt = f"{desc_val:g}%" if desc_val > 0 else "-"
+                    try: p_cant = float(str(p.get("Cantidad", 0)).replace(",", ""))
+                    except: p_cant = 0.0
+
+                    p_unitario = precio_por_producto.get(p_prod, 0.0)
+                    precio_final = p_unitario * (1.0 - (desc_val / 100.0))
+                    p_total = p_cant * precio_final
+                    gran_total_cobrar += p_total
+                    cant_fmt = str(int(p_cant)) if p_cant.is_integer() else f"{p_cant:g}"
+
+                    data.append([
+                        Paragraph(p_fecha, cell_style),
+                        Paragraph(p_cliente_limpio, cell_left),
+                        Paragraph(p_prod, cell_left),
+                        Paragraph(cant_fmt, cell_style),
+                        Paragraph(f"${p_unitario:,.2f}", cell_style),
+                        Paragraph(desc_txt, cell_style),
+                        Paragraph(f"${p_total:,.2f}", cell_style)
+                    ])
+                    
+                total_row_style = ParagraphStyle('TotalRow', parent=styles['Normal'], fontSize=8, leading=10, alignment=2)
+                total_val_style = ParagraphStyle('TotalVal', parent=styles['Normal'], fontSize=8, leading=10, alignment=1)
+                
+                data.append([
+                    Paragraph("Total Pendiente por Cobrar:", total_row_style),
+                    "", "", "", "", "",
+                    Paragraph(f"${gran_total_cobrar:,.2f}", total_val_style)
+                ])
+                
+                t = Table(data, colWidths=[65, 115, 130, 40, 55, 40, 60])
+                t.setStyle(TableStyle([
+                    ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#4A1525')),
+                    ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+                    ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+                    ('BOTTOMPADDING', (0,0), (-1,0), 6),
+                    ('TOPPADDING', (0,0), (-1,0), 6),
+                    ('BACKGROUND', (0,1), (-1,-2), colors.HexColor('#FDFBFB')),
+                    ('GRID', (0,0), (-1,-2), 0.5, colors.HexColor('#D1C4E9')),
+                    ('SPAN', (0, -1), (5, -1)),
+                    ('BACKGROUND', (0,-1), (-1,-1), colors.HexColor('#F4ECF7')),
+                    ('GRID', (0,-1), (-1,-1), 0.5, colors.HexColor('#D1C4E9')),
+                ]))
+                elements.append(t)
+                doc.build(elements, canvasmaker=NumberedCanvas)
+                buffer.seek(0)
+                return buffer.getvalue()
+
+            pdf_bytes_cobrar = generar_pdf_cuentas_por_cobrar(pedidos_por_pagar)
+            
+            gran_total_por_cobrar = 0.0
+            for p in pedidos_por_pagar:
+                p_prod = str(p.get("Producto", ""))
+                try: p_cant = float(str(p.get("Cantidad", 0)).replace(",", ""))
+                except: p_cant = 0.0
+                c_raw = str(p.get("Cliente", ""))
+                desc_val = float(c_raw.split("(Desc.")[1].split("%)")[0].strip()) if "(Desc." in c_raw else 0.0
+                p_unitario = precio_por_producto.get(p_prod, 0.0)
+                gran_total_por_cobrar += p_cant * (p_unitario * (1.0 - (desc_val / 100.0)))
+
+            col_pdf_c, col_tot_c = st.columns([1, 1])
+            with col_pdf_c:
+                st.download_button(
+                    label="📄 Descargar Cuentas por Cobrar en PDF",
+                    data=pdf_bytes_cobrar,
+                    file_name=f"cuentas_por_cobrar_{datetime.now().strftime('%d-%m-%Y')}.pdf",
+                    mime="application/pdf"
+                )
+            with col_tot_c:
+                st.markdown(f"<h3 style='text-align: right; margin-top: 0; color: #F57F17;'>Total Fiado por Cobrar: ${gran_total_por_cobrar:,.2f}</h3>", unsafe_allow_html=True)
+
+            st.markdown("---")
+
+            for idx, ped in enumerate(pedidos_por_pagar):
+                col_info_c, col_btn_cobrar = st.columns([5, 2])
+                
+                prod_ped = str(ped.get("Producto", ""))
+                cant_ped = float(str(ped.get("Cantidad", 0)).replace(",", ""))
+                
+                cli_raw = str(ped.get('Cliente', ''))
+                if "(Desc." in cli_raw:
+                    cli_clean = cli_raw.split("(Desc.")[0].strip()
+                    desc_val = float(cli_raw.split("(Desc.")[1].split("%)")[0].strip())
+                    desc_badge = f"<span style='background-color:#E3F2FD; color:#1565C0; padding:2px 6px; border-radius:4px; font-size:12px; margin-left:8px;'>Desc. {desc_val:g}%</span>"
+                else:
+                    cli_clean = cli_raw.strip()
+                    desc_val = 0.0
+                    desc_badge = ""
+                
+                p_unitario = precio_por_producto.get(prod_ped, 0.0)
+                precio_final = p_unitario * (1.0 - (desc_val / 100.0))
+                total_deuda = cant_ped * precio_final
+                
+                with col_info_c:
+                    st.markdown(f"""
+                        <div class="por-pagar-card">
+                            <b>👤 Cliente:</b> {cli_clean} {desc_badge} <br>
+                            <b>🛍️ Producto:</b> {prod_ped} — Cantidad: <b>{cant_ped:g}</b> <br>
+                            <b>💰 Monto Pendiente:</b> <span style="color:#C62828; font-weight:bold;">${total_deuda:,.2f}</span> <br>
+                            <span style='color: gray; font-size: 11px;'>ID: {ped.get('ID')} | Fecha de entrega: {ped.get('Fecha')}</span>
+                        </div>
+                    """, unsafe_allow_html=True)
+                
+                with col_btn_cobrar:
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    if st.button("💰 Marcar como Pagado", key=f"cobrar_{ped.get('ID')}_{idx}"):
+                        todos_p = hoja_pedidos.get_all_records()
+                        fila_real = next((i + 2 for i, tp in enumerate(todos_p) if str(tp.get("ID")) == str(ped.get("ID"))), None)
+                        
+                        if fila_real:
+                            ahora_mexico = datetime.utcnow() - timedelta(hours=6)
+                            hoja_pedidos.update_cell(fila_real, 7, "Entregado")
+                            
+                            hoja_hist.append_row([
+                                ahora_mexico.strftime("%d-%m-%Y"), 
+                                ahora_mexico.strftime("%H:%M:%S"), 
+                                cli_raw, 
+                                prod_ped, 
+                                "Venta", 
+                                cant_ped, 
+                                total_deuda
+                            ])
+                            
+                            st.success(f"¡Pago de **${total_deuda:,.2f}** recibido con éxito de **{cli_clean}**!")
+                            st.cache_data.clear()
+                            st.rerun()
+                st.divider()
+        else:
+            st.info("🎉 ¡Excelente! No hay cuentas pendientes por cobrar en este momento.")
 
 with pestana3:
     st.subheader("Historial de Transacciones")
@@ -824,18 +956,15 @@ with pestana3:
             data = [[Paragraph("Fecha", header_style), Paragraph("Producto", header_style), Paragraph("Cliente", header_style), Paragraph("Tipo", header_style), Paragraph("Cant.", header_style), Paragraph("Total", header_style)]]
             for h in historial_ordenado:
                 raw_tot = str(h.get("Total", "0")).replace("$", "").replace(",", "").strip()
-                try:
-                    val_tot = float(raw_tot)
-                    tot_fmt = f"${val_tot:,.2f}"
-                except:
-                    tot_fmt = f"${0.0:,.2f}"
+                try: val_tot = float(raw_tot)
+                except: val_tot = 0.0
+                tot_fmt = f"${val_tot:,.2f}"
 
                 raw_cant = str(h.get("Cantidad", "0")).replace("$", "").replace(",", "").strip()
                 try:
                     val_cant = float(raw_cant)
                     cant_fmt = str(int(val_cant)) if val_cant.is_integer() else f"{val_cant:g}"
-                except:
-                    cant_fmt = raw_cant
+                except: cant_fmt = raw_cant
                     
                 c_raw = str(h.get("Cliente", ""))
                 c_clean = c_raw.split("(Desc.")[0].strip() if "(Desc." in c_raw else c_raw.strip()
