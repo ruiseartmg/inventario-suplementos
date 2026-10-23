@@ -487,7 +487,6 @@ with pestana2:
                 p_total = p_cant * precio_final
                 
                 gran_total_pedidos += p_total
-                
                 cant_fmt = str(int(p_cant)) if p_cant.is_integer() else f"{p_cant:g}"
 
                 data.append([
@@ -501,6 +500,15 @@ with pestana2:
                     Paragraph(f"${p_total:,.2f}", cell_style)
                 ])
                 
+            total_row_style = ParagraphStyle('TotalRow', parent=styles['Normal'], fontSize=10, textColor=colors.HexColor('#4A1525'), fontName='Helvetica-Bold', alignment=2)
+            total_val_style = ParagraphStyle('TotalVal', parent=styles['Normal'], fontSize=9, textColor=colors.HexColor('#4A1525'), fontName='Helvetica-Bold', alignment=1)
+            
+            data.append([
+                Paragraph("Total Pendiente por Cobrar:", total_row_style),
+                "", "", "", "", "", "",
+                Paragraph(f"${gran_total_pedidos:,.2f}", total_val_style)
+            ])
+            
             t = Table(data, colWidths=[55, 95, 110, 35, 75, 45, 35, 55])
             t.setStyle(TableStyle([
                 ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#4A1525')),
@@ -508,14 +516,15 @@ with pestana2:
                 ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
                 ('BOTTOMPADDING', (0,0), (-1,0), 6),
                 ('TOPPADDING', (0,0), (-1,0), 6),
-                ('BACKGROUND', (0,1), (-1,-1), colors.HexColor('#FDFBFB')),
-                ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#D1C4E9')),
+                ('BACKGROUND', (0,1), (-1,-2), colors.HexColor('#FDFBFB')),
+                ('GRID', (0,0), (-1,-2), 0.5, colors.HexColor('#D1C4E9')),
+                ('SPAN', (0, -1), (6, -1)),
+                ('BACKGROUND', (0,-1), (-1,-1), colors.HexColor('#F4ECF7')),
+                ('GRID', (0,-1), (-1,-1), 0.5, colors.HexColor('#D1C4E9')),
+                ('BOTTOMPADDING', (0,-1), (-1,-1), 8),
+                ('TOPPADDING', (0,-1), (-1,-1), 8),
             ]))
             elements.append(t)
-            
-            elements.append(Spacer(1, 15))
-            total_style = ParagraphStyle('TotalStyle', parent=styles['Normal'], fontSize=12, textColor=colors.HexColor('#4A1525'), fontName='Helvetica-Bold', alignment=2)
-            elements.append(Paragraph(f"Total Pendiente por Cobrar: ${gran_total_pedidos:,.2f}", total_style))
             
             doc.build(elements, canvasmaker=NumberedCanvas)
             buffer.seek(0)
@@ -523,7 +532,6 @@ with pestana2:
 
         pdf_bytes = generar_pdf_pedidos(pendientes_activos)
         
-        # Calcular suma total para mostrarla directo en la pantalla
         gran_total_interfaz = 0.0
         for p in pendientes_activos:
             p_prod = str(p.get("Producto", ""))
@@ -1009,6 +1017,15 @@ with pestana4:
                     Paragraph(str(r.get("Inversión Est.", "")), cell_style)
                 ])
                 
+            total_row_style = ParagraphStyle('TotalRow', parent=styles['Normal'], fontSize=10, textColor=colors.HexColor('#4A1525'), fontName='Helvetica-Bold', alignment=2)
+            total_val_style = ParagraphStyle('TotalVal', parent=styles['Normal'], fontSize=9, textColor=colors.HexColor('#4A1525'), fontName='Helvetica-Bold', alignment=1)
+            
+            data.append([
+                Paragraph("Inversión Total Estimada:", total_row_style),
+                "", "", "", "", "",
+                Paragraph(f"${total_inv:,.2f}", total_val_style)
+            ])
+            
             t = Table(data, colWidths=[140, 50, 70, 60, 60, 65, 95])
             t.setStyle(TableStyle([
                 ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#4A1525')),
@@ -1016,14 +1033,15 @@ with pestana4:
                 ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
                 ('BOTTOMPADDING', (0,0), (-1,0), 6),
                 ('TOPPADDING', (0,0), (-1,0), 6),
-                ('BACKGROUND', (0,1), (-1,-1), colors.HexColor('#FDFBFB')),
-                ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#D1C4E9')),
+                ('BACKGROUND', (0,1), (-1,-2), colors.HexColor('#FDFBFB')),
+                ('GRID', (0,0), (-1,-2), 0.5, colors.HexColor('#D1C4E9')),
+                ('SPAN', (0, -1), (5, -1)),
+                ('BACKGROUND', (0,-1), (-1,-1), colors.HexColor('#F4ECF7')),
+                ('GRID', (0,-1), (-1,-1), 0.5, colors.HexColor('#D1C4E9')),
+                ('BOTTOMPADDING', (0,-1), (-1,-1), 8),
+                ('TOPPADDING', (0,-1), (-1,-1), 8),
             ]))
             elements.append(t)
-            elements.append(Spacer(1, 15))
-            
-            total_style = ParagraphStyle('TotalStyle', parent=styles['Normal'], fontSize=12, textColor=colors.HexColor('#4A1525'), fontName='Helvetica-Bold', alignment=2)
-            elements.append(Paragraph(f"Inversión Total Estimada: ${total_inv:,.2f}", total_style))
             
             doc.build(elements, canvasmaker=NumberedCanvas)
             buffer.seek(0)
