@@ -881,7 +881,7 @@ with pestana2:
             st.markdown("---")
 
             for idx, ped in enumerate(pedidos_por_pagar):
-                col_info_c, col_btn_cobrar = st.columns([5, 2])
+                col_info_c, col_btn_cobrar, col_btn_cancel_c = st.columns([4.2, 1.8, 1.5])
                 
                 prod_ped = str(ped.get("Producto", ""))
                 cant_ped = float(str(ped.get("Cantidad", 0)).replace(",", ""))
@@ -944,6 +944,49 @@ with pestana2:
                             st.success(f"¡Pago de **${total_deuda:,.2f}** recibido con éxito de **{cli_clean}**!")
                             st.cache_data.clear()
                             st.rerun()
+
+                with col_btn_cancel_c:
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    st.markdown("""
+                        <style>
+                            div[data-testid="column"]:nth-child(3) button {
+                                background-color: #C62828 !important;
+                            }
+                            div[data-testid="column"]:nth-child(3) button:hover {
+                                background-color: #B71C1C !important;
+                            }
+                        </style>
+                    """, unsafe_allow_html=True)
+                    if st.button("❌ Cancelar", key=f"cancelar_cobro_{ped.get('ID')}_{idx}"):
+                        todos_p = cargar_pedidos_cache()
+                        fila_real = next((i + 2 for i, tp in enumerate(todos_p) if str(tp.get("ID")) == str(ped.get("ID"))), None)
+                        
+                        if fila_real:
+                            hoja_pedidos.update_cell(fila_real, 7, "Cancelado")
+                            
+                            inv_actuales = cargar_inventario_cache()
+                            for i, inv_item in enumerate(inv_actuales):
+                                if str(inv_item.get("Nombre del Producto", "")).strip() == prod_ped:
+                                    st_act = float(str(inv_item.get("Cantidad en Stock", 0)).replace(",", ""))
+                                    col_st_idx = 2
+                                    for idx_h, h_name in enumerate(headers):
+                                        if "stock" in h_name.lower():
+                                            col_st_idx = idx_h + 1
+                                            break
+                                    hoja_inv.update_cell(i + 2, col_st_idx, st_act + cant_ped)
+                                    break
+                                    
+                            hist_actuales = cargar_historial_cache()
+                            for idx_h_item, h_item in enumerate(hist_actuales):
+                                if str(h_item.get("Cliente", "")).strip() == cli_raw and str(h_item.get("Producto", "")).strip() == prod_ped and "Por Pagar" in str(h_item.get("Compra/Venta", "")):
+                                    hoja_hist.update_cell(idx_h_item + 2, 5, "Cancelado")
+                                    hoja_hist.update_cell(idx_h_item + 2, 7, 0.0)
+                                    break
+                            
+                            st.warning(f"Pedido cancelado. Se devolvieron **{cant_ped:g} unidades** de **{prod_ped}** al inventario.")
+                            st.cache_data.clear()
+                            st.rerun()
+
                 st.divider()
         else:
             st.info("🎉 ¡Excelente! No hay cuentas pendientes por cobrar en este momento.")
@@ -1064,7 +1107,6 @@ with pestana4:
         promedios_dict = {}
         
         if not df_h.empty and "Producto" in df_h.columns and "Cantidad" in df_h.columns and "Fecha" in df_h.columns:
-            # TOMA TODAS LAS ENTREGAS A CLIENTES (tanto Venta como Venta (Por Pagar)) y RESTA las Devoluciones
             if "Compra/Venta" in df_h.columns:
                 df_ventas = df_h[df_h["Compra/Venta"].astype(str).str.contains("Venta|Devolución", case=False, na=False)].copy()
             else:
@@ -1078,7 +1120,7 @@ with pestana4:
                     def procesar_cant_neto(row):
                         tipo = str(row.get("Compra/Venta", ""))
                         cant = float(str(row.get("Cantidad", 0)).replace("$", "").replace(",", "").strip())
-                        if "Devolución" in tipo:
+                        if "Devolución" in tipo or "Cancelado" in tipo:
                             return -cant
                         return cant
 
