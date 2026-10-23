@@ -500,8 +500,8 @@ with pestana2:
                     Paragraph(f"${p_total:,.2f}", cell_style)
                 ])
                 
-            total_row_style = ParagraphStyle('TotalRow', parent=styles['Normal'], fontSize=10, textColor=colors.HexColor('#4A1525'), fontName='Helvetica-Bold', alignment=2)
-            total_val_style = ParagraphStyle('TotalVal', parent=styles['Normal'], fontSize=9, textColor=colors.HexColor('#4A1525'), fontName='Helvetica-Bold', alignment=1)
+            total_row_style = ParagraphStyle('TotalRow', parent=styles['Normal'], fontSize=8, leading=10, alignment=2)
+            total_val_style = ParagraphStyle('TotalVal', parent=styles['Normal'], fontSize=8, leading=10, alignment=1)
             
             data.append([
                 Paragraph("Total Pendiente por Cobrar:", total_row_style),
@@ -521,8 +521,6 @@ with pestana2:
                 ('SPAN', (0, -1), (6, -1)),
                 ('BACKGROUND', (0,-1), (-1,-1), colors.HexColor('#F4ECF7')),
                 ('GRID', (0,-1), (-1,-1), 0.5, colors.HexColor('#D1C4E9')),
-                ('BOTTOMPADDING', (0,-1), (-1,-1), 8),
-                ('TOPPADDING', (0,-1), (-1,-1), 8),
             ]))
             elements.append(t)
             
@@ -1017,8 +1015,8 @@ with pestana4:
                     Paragraph(str(r.get("Inversión Est.", "")), cell_style)
                 ])
                 
-            total_row_style = ParagraphStyle('TotalRow', parent=styles['Normal'], fontSize=10, textColor=colors.HexColor('#4A1525'), fontName='Helvetica-Bold', alignment=2)
-            total_val_style = ParagraphStyle('TotalVal', parent=styles['Normal'], fontSize=9, textColor=colors.HexColor('#4A1525'), fontName='Helvetica-Bold', alignment=1)
+            total_row_style = ParagraphStyle('TotalRow', parent=styles['Normal'], fontSize=8, leading=10, alignment=2)
+            total_val_style = ParagraphStyle('TotalVal', parent=styles['Normal'], fontSize=8, leading=10, alignment=1)
             
             data.append([
                 Paragraph("Inversión Total Estimada:", total_row_style),
@@ -1038,8 +1036,6 @@ with pestana4:
                 ('SPAN', (0, -1), (5, -1)),
                 ('BACKGROUND', (0,-1), (-1,-1), colors.HexColor('#F4ECF7')),
                 ('GRID', (0,-1), (-1,-1), 0.5, colors.HexColor('#D1C4E9')),
-                ('BOTTOMPADDING', (0,-1), (-1,-1), 8),
-                ('TOPPADDING', (0,-1), (-1,-1), 8),
             ]))
             elements.append(t)
             
