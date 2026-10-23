@@ -664,13 +664,15 @@ with pestana2:
 
                         if estado_ped == "Por entregar":
                             hoja_pedidos.update_cell(fila_real, 7, nuevo_estado)
+                            precio_final = precio_vta * (1.0 - (desc_val / 100.0))
+                            total_vta = cant_ped * precio_final
+                            
                             if nuevo_estado == "Entregado":
-                                precio_final = precio_vta * (1.0 - (desc_val / 100.0))
-                                total_vta = cant_ped * precio_final
                                 hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), cli_con_desc, prod_ped, "Venta", cant_ped, total_vta])
                                 st.success(f"¡Pedido entregado y pagado por {cli_clean}!")
                             else:
-                                st.warning(f"¡Pedido entregado a {cli_clean}! Quedó registrado en Cuentas por Cobrar.")
+                                hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), cli_con_desc, prod_ped, "Venta (Por Pagar)", cant_ped, f"Pendiente (${total_vta:,.2f})"])
+                                st.warning(f"¡Pedido entregado a {cli_clean}! Quedó registrado en el Historial como pendiente y en Cuentas por Cobrar.")
                         
                         elif estado_ped == "Déficit":
                             cant_a_entregar = min(cant_ped, stock_fisc)
@@ -683,6 +685,8 @@ with pestana2:
                                 
                                 if nuevo_estado == "Entregado":
                                     hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), cli_con_desc, prod_ped, "Venta", cant_a_entregar, total_vta])
+                                else:
+                                    hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), cli_con_desc, prod_ped, "Venta (Por Pagar)", cant_a_entregar, f"Pendiente (${total_vta:,.2f})"])
                                 
                                 if cant_remanente > 0:
                                     hoja_pedidos.update_cell(fila_real, 5, cant_remanente)
@@ -892,18 +896,29 @@ with pestana2:
                         fila_real = next((i + 2 for i, tp in enumerate(todos_p) if str(tp.get("ID")) == str(ped.get("ID"))), None)
                         
                         if fila_real:
-                            ahora_mexico = datetime.utcnow() - timedelta(hours=6)
                             hoja_pedidos.update_cell(fila_real, 7, "Entregado")
                             
-                            hoja_hist.append_row([
-                                ahora_mexico.strftime("%d-%m-%Y"), 
-                                ahora_mexico.strftime("%H:%M:%S"), 
-                                cli_raw, 
-                                prod_ped, 
-                                "Venta", 
-                                cant_ped, 
-                                total_deuda
-                            ])
+                            hist_actuales = cargar_historial_cache()
+                            fila_hist_encontrada = None
+                            for idx_h_item, h_item in enumerate(hist_actuales):
+                                if str(h_item.get("Cliente", "")).strip() == cli_raw and str(h_item.get("Producto", "")).strip() == prod_ped and "Por Pagar" in str(h_item.get("Compra/Venta", "")):
+                                    fila_hist_encontrada = idx_h_item + 2
+                                    break
+                            
+                            if fila_hist_encontrada:
+                                hoja_hist.update_cell(fila_hist_encontrada, 5, "Venta")
+                                hoja_hist.update_cell(fila_hist_encontrada, 7, total_deuda)
+                            else:
+                                ahora_mexico = datetime.utcnow() - timedelta(hours=6)
+                                hoja_hist.append_row([
+                                    ahora_mexico.strftime("%d-%m-%Y"), 
+                                    ahora_mexico.strftime("%H:%M:%S"), 
+                                    cli_raw, 
+                                    prod_ped, 
+                                    "Venta", 
+                                    cant_ped, 
+                                    total_deuda
+                                ])
                             
                             st.success(f"¡Pago de **${total_deuda:,.2f}** recibido con éxito de **{cli_clean}**!")
                             st.cache_data.clear()
@@ -936,9 +951,12 @@ with pestana3:
             data = [[Paragraph("Fecha", header_style), Paragraph("Producto", header_style), Paragraph("Cliente", header_style), Paragraph("Tipo", header_style), Paragraph("Cant.", header_style), Paragraph("Total", header_style)]]
             for h in historial_ordenado:
                 raw_tot = str(h.get("Total", "0")).replace("$", "").replace(",", "").strip()
-                try: val_tot = float(raw_tot)
-                except: val_tot = 0.0
-                tot_fmt = f"${val_tot:,.2f}"
+                if "pendiente" in raw_tot.lower():
+                    tot_fmt = raw_tot
+                else:
+                    try: val_tot = float(raw_tot)
+                    except: val_tot = 0.0
+                    tot_fmt = f"${val_tot:,.2f}"
 
                 raw_cant = str(h.get("Cantidad", "0")).replace("$", "").replace(",", "").strip()
                 try:
@@ -985,8 +1003,17 @@ with pestana3:
         df_hist = pd.DataFrame(registros_h)
         if not df_hist.empty:
             if "Total" in df_hist.columns:
-                df_hist["Total"] = pd.to_numeric(df_hist["Total"].astype(str).str.replace("$", "").str.replace(",", "").str.strip(), errors="coerce").fillna(0)
-                df_hist["Total"] = df_hist["Total"].apply(lambda x: f"${x:,.2f}")
+                def formatear_total(val):
+                    val_str = str(val)
+                    if "pendiente" in val_str.lower():
+                        return val_str
+                    try:
+                        num = float(val_str.replace("$", "").replace(",", "").strip())
+                        return f"${num:,.2f}"
+                    except:
+                        return val_str
+                df_hist["Total"] = df_hist["Total"].apply(formatear_total)
+
             if "Cantidad" in df_hist.columns:
                 df_hist["Cantidad"] = pd.to_numeric(df_hist["Cantidad"].astype(str).str.replace("$", "").str.replace(",", "").str.strip(), errors="coerce").fillna(0)
                 df_hist["Cantidad"] = df_hist["Cantidad"].apply(lambda x: str(int(x)) if x.is_integer() else f"{x:g}")
@@ -1016,8 +1043,9 @@ with pestana4:
         promedios_dict = {}
         
         if not df_h.empty and "Producto" in df_h.columns and "Cantidad" in df_h.columns and "Fecha" in df_h.columns:
+            # TOMA TODAS LAS ENTREGAS A CLIENTES (tanto Venta como Venta (Por Pagar)) para reflejar la demanda real del inventario
             if "Compra/Venta" in df_h.columns:
-                df_ventas = df_h[df_h["Compra/Venta"] == "Venta"].copy()
+                df_ventas = df_h[df_h["Compra/Venta"].astype(str).str.contains("Venta", case=False, na=False)].copy()
             else:
                 df_ventas = df_h.copy()
                 
