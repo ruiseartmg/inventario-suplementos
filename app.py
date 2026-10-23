@@ -553,4 +553,361 @@ with pestana2:
                 mime="application/pdf"
             )
         with col_total:
-            st.markdown(f"<h3 style='text-align: right; margin-top: 0; color: #2E7D32;'>Total por
+            st.markdown(f"<h3 style='text-align: right; margin-top: 0; color: #2E7D32;'>Total por Cobrar: ${gran_total_interfaz:,.2f}</h3>", unsafe_allow_html=True)
+            
+        st.markdown("---")
+
+        pedidos_deficit_real = []
+        pedidos_deficit_surtible = []
+        
+        for ped in pendientes_activos:
+            if ped.get("Estado") == "Déficit":
+                p_nom = ped.get("Producto")
+                c_ped = float(str(ped.get("Cantidad", 0)).replace(",", ""))
+                st_disp = stock_por_producto.get(p_nom, 0.0)
+                if st_disp > 0:
+                    pedidos_deficit_surtible.append(ped)
+                else:
+                    pedidos_deficit_real.append(ped)
+
+        if pedidos_deficit_real:
+            st.markdown("### 🚨 Pedidos en Espera por Déficit (Falta Stock)")
+            for def_ped in pedidos_deficit_real:
+                c_raw = str(def_ped.get('Cliente', ''))
+                c_clean = c_raw.split("(Desc.")[0].strip() if "(Desc." in c_raw else c_raw.strip()
+                st.markdown(f"""
+                    <div class="deficit-alert-card">
+                        <b>👤 Cliente:</b> {c_clean} <br>
+                        <b>🛍️ Producto:</b> {def_ped.get('Producto')} (Cantidad en espera de proveedor: <b>{def_ped.get('Cantidad')}</b>) <br>
+                        <span style='color: gray; font-size: 11px;'>ID Pedido: {def_ped.get('ID')} | Fecha de registro: {def_ped.get('Fecha')}</span>
+                    </div>
+                """, unsafe_allow_html=True)
+            st.markdown("---")
+
+        if pedidos_deficit_surtible:
+            st.markdown("### 🟢 Déficits con Stock Parcial o Total Disponible")
+            for sur_ped in pedidos_deficit_surtible:
+                c_raw = str(sur_ped.get('Cliente', ''))
+                c_clean = c_raw.split("(Desc.")[0].strip() if "(Desc." in c_raw else c_raw.strip()
+                p_nom_s = sur_ped.get('Producto')
+                c_ped_s = float(str(sur_ped.get('Cantidad', 0)).replace(",", ""))
+                st_disp_s = stock_por_producto.get(p_nom_s, 0.0)
+                
+                if st_disp_s >= c_ped_s:
+                    aviso_txt = f"Cantidad lista para entrega: <b>{c_ped_s:g}</b> (Se cubre con el stock actual)."
+                else:
+                    aviso_txt = f"Cantidad en déficit: <b>{c_ped_s:g}</b>. (Tienes <b>{st_disp_s:g} en stock</b> para entregar parcialmente)."
+
+                st.markdown(f"""
+                    <div class="surtible-alert-card">
+                        <b>👤 Cliente:</b> {c_clean} <br>
+                        <b>🛍️ Producto:</b> {p_nom_s} — {aviso_txt} <br>
+                        <span style='color: gray; font-size: 11px;'><i>Puedes entregar lo disponible y el resto se mantendrá pendiente.</i></span>
+                    </div>
+                """, unsafe_allow_html=True)
+            st.markdown("---")
+
+        clientes_limpios_set = set()
+        for p in pendientes_activos:
+            c_raw = p.get("Cliente", "")
+            c_clean = c_raw.split("(Desc.")[0].strip() if "(Desc." in c_raw else c_raw.strip()
+            clientes_limpios_set.add(c_clean)
+            
+        clientes_disponibles = sorted(list(clientes_limpios_set))
+        filtro_cliente = st.selectbox("🔍 Filtrar por Cliente específico:", ["-- Todos los Clientes --"] + clientes_disponibles)
+        
+        if filtro_cliente != "-- Todos los Clientes --":
+            pendientes_activos = [
+                p for p in pendientes_activos 
+                if (p.get("Cliente", "").split("(Desc.")[0].strip() if "(Desc." in p.get("Cliente", "") else p.get("Cliente", "").strip()) == filtro_cliente
+            ]
+        
+        st.markdown("---")
+        
+        for idx, ped in enumerate(pendientes_activos):
+            col_info, col_btn1, col_btn2 = st.columns([4.5, 1.75, 1.75])
+            
+            estado_ped = ped.get('Estado')
+            prod_ped = str(ped.get("Producto", ""))
+            cant_ped = float(str(ped.get("Cantidad", 0)).replace(",", ""))
+            stock_disponible = stock_por_producto.get(prod_ped, 0.0)
+            
+            cli_raw = str(ped.get('Cliente', ''))
+            if "(Desc." in cli_raw:
+                cli_clean = cli_raw.split("(Desc.")[0].strip()
+                desc_val_str = cli_raw.split("(Desc.")[1].split("%)")[0].strip()
+                desc_badge = f"<span style='background-color:#E3F2FD; color:#1565C0; padding:2px 6px; border-radius:4px; font-size:12px; margin-left:8px;'>Desc. {desc_val_str}%</span>"
+            else:
+                cli_clean = cli_raw.strip()
+                desc_badge = ""
+            
+            if estado_ped == "Por entregar":
+                estado_lbl = "📦 Reservado (Listo)"
+            elif estado_ped == "Déficit":
+                if stock_disponible >= cant_ped:
+                    estado_lbl = "🟢 Listo para Entregar (Ya hay stock)"
+                elif stock_disponible > 0:
+                    estado_lbl = f"🟡 Parcial: Tienes {stock_disponible:g} en stock"
+                else:
+                    estado_lbl = "🚨 Déficit (Falta Stock)"
+            
+            with col_info:
+                st.markdown(f"**👤 {cli_clean}** {desc_badge} \n🛍️ **{prod_ped}** — Cantidad: **{cant_ped:g}** [{estado_lbl}] \n<span style='color: gray; font-size: 11px;'>ID: {ped.get('ID')} | Fecha: {ped.get('Fecha')}</span>", unsafe_allow_html=True)
+            
+            with col_btn1:
+                if estado_ped == "Déficit" and stock_disponible <= 0:
+                    st.button("⏳ Sin Stock", key=f"entregar_dis_{ped.get('ID')}_{idx}", disabled=True)
+                else:
+                    btn_label = "✅ Entregar Parcial" if stock_disponible < cant_ped else "✅ Entregar"
+                    if st.button(btn_label, key=f"entregar_{ped.get('ID')}_{idx}"):
+                        todos_p = hoja_pedidos.get_all_records()
+                        fila_real = None
+                        for i, tp in enumerate(todos_p):
+                            if str(tp.get("ID")) == str(ped.get("ID")):
+                                fila_real = i + 2
+                                break
+                        if fila_real:
+                            cli_con_desc = str(ped.get("Cliente", ""))
+                            
+                            precio_vta = 0.0
+                            inv_actuales = hoja_inv.get_all_records()
+                            row_inv_idx = None
+                            stock_fisc = 0.0
+                            for i, inv_item in enumerate(inv_actuales):
+                                if str(inv_item.get("Nombre del Producto", "")).strip() == prod_ped:
+                                    row_inv_idx = i + 2
+                                    for k, v in inv_item.items():
+                                        if "stock" in k.lower() or "cantidad" in k.lower():
+                                            try:
+                                                stock_fisc = float(str(v).replace(",", ""))
+                                            except:
+                                                pass
+                                        if "precio de venta" in k.lower():
+                                            try:
+                                                precio_vta = float(str(v).replace("$", "").replace(",", "").strip())
+                                            except:
+                                                pass
+                                    break
+                            
+                            desc_val = 0.0
+                            if "(Desc." in cli_con_desc:
+                                try:
+                                    desc_str = cli_con_desc.split("(Desc.")[1].split("%)")[0].strip()
+                                    desc_val = float(desc_str)
+                                except:
+                                    pass
+                            
+                            ahora_mexico = datetime.utcnow() - timedelta(hours=6)
+                            col_st_idx = 2
+                            for idx_h, h_name in enumerate(headers):
+                                if "stock" in h_name.lower():
+                                    col_st_idx = idx_h + 1
+                                    break
+                            
+                            if estado_ped == "Por entregar":
+                                precio_final = precio_vta * (1.0 - (desc_val / 100.0))
+                                total_vta = cant_ped * precio_final
+                                hoja_pedidos.update_cell(fila_real, 7, "Entregado")
+                                hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), cli_con_desc, prod_ped, "Venta", cant_ped, total_vta])
+                                st.success(f"¡Pedido entregado con éxito a {cli_clean}!")
+                                st.cache_data.clear()
+                                st.rerun()
+                                
+                            elif estado_ped == "Déficit":
+                                cant_a_entregar = min(cant_ped, stock_fisc)
+                                cant_remanente = cant_ped - cant_a_entregar
+                                
+                                if cant_a_entregar > 0 and row_inv_idx:
+                                    hoja_inv.update_cell(row_inv_idx, col_st_idx, stock_fisc - cant_a_entregar)
+                                    
+                                    precio_final = precio_vta * (1.0 - (desc_val / 100.0))
+                                    total_vta = cant_a_entregar * precio_final
+                                    
+                                    hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), cli_con_desc, prod_ped, "Venta", cant_a_entregar, total_vta])
+                                    
+                                    if cant_remanente > 0:
+                                        hoja_pedidos.update_cell(fila_real, 5, cant_remanente)
+                                        st.warning(f"⚠️ Se entregaron **{cant_a_entregar:g} unidades** con el stock disponible. Quedan **{cant_remanente:g} unidades** en déficit esperando proveedor.")
+                                    else:
+                                        hoja_pedidos.update_cell(fila_real, 7, "Entregado")
+                                        st.success(f"¡Pedido surtido por completo y entregado a {cli_clean}!")
+                                        
+                                    st.cache_data.clear()
+                                    st.rerun()
+
+            with col_btn2:
+                cancelar_key = f"cancelar_{ped.get('ID')}_{idx}"
+                st.markdown("""
+                    <style>
+                        div[data-testid="column"]:nth-child(3) button {
+                            background-color: #C62828 !important;
+                        }
+                        div[data-testid="column"]:nth-child(3) button:hover {
+                            background-color: #B71C1C !important;
+                        }
+                    </style>
+                """, unsafe_allow_html=True)
+                
+                if st.button("❌ Cancelar", key=cancelar_key):
+                    todos_p = hoja_pedidos.get_all_records()
+                    fila_real = None
+                    for i, tp in enumerate(todos_p):
+                        if str(tp.get("ID")) == str(ped.get("ID")):
+                            fila_real = i + 2
+                            break
+                    if fila_real:
+                        hoja_pedidos.update_cell(fila_real, 7, "Cancelado")
+                        
+                        if estado_ped == "Por entregar":
+                            inv_actuales = hoja_inv.get_all_records()
+                            for i, inv_item in enumerate(inv_actuales):
+                                if str(inv_item.get("Nombre del Producto", "")).strip() == prod_ped:
+                                    st_act = float(str(inv_item.get("Cantidad en Stock", 0)).replace(",", ""))
+                                    col_st_idx = 2
+                                    for idx_h, h_name in enumerate(headers):
+                                        if "stock" in h_name.lower():
+                                            col_st_idx = idx_h + 1
+                                            break
+                                    hoja_inv.update_cell(i + 2, col_st_idx, st_act + cant_ped)
+                                    
+                                    stock_liberado = st_act + cant_ped
+                                    deficits_producto = [
+                                        (idx_tp, tp_item) for idx_tp, tp_item in enumerate(todos_p)
+                                        if str(tp_item.get("Estado")) == "Déficit" and str(tp_item.get("Producto")) == prod_ped
+                                    ]
+                                    deficits_producto.sort(key=lambda x: str(x[1].get("Fecha", "")))
+                                    
+                                    for idx_otro, tp_otro in deficits_producto:
+                                        cant_def = float(str(tp_otro.get("Cantidad", 0)).replace(",", ""))
+                                        if stock_liberado >= cant_def:
+                                            hoja_pedidos.update_cell(idx_otro + 2, 7, "Por entregar")
+                                            stock_liberado -= cant_def
+                                            hoja_inv.update_cell(i + 2, col_st_idx, stock_liberado)
+                                    break
+                            st.warning(f"Pedido cancelado. Se devolvieron **{cant_ped:g} unidades** al inventario.")
+                        else:
+                            st.warning("El pedido en déficit fue cancelado (No hubo movimiento de inventario).")
+                            
+                        st.cache_data.clear()
+                        st.rerun()
+            st.divider()
+    else:
+        st.info("No hay productos 'Por entregar' a clientes en este momento.")
+
+with pestana3:
+    st.subheader("Historial de Transacciones")
+    
+    registros_h = cargar_historial_cache()
+    if registros_h:
+        def generar_pdf_historial(historial):
+            buffer = io.BytesIO()
+            doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=75, bottomMargin=40)
+            elements = []
+            
+            styles = getSampleStyleSheet()
+            title_style = ParagraphStyle('TitleStyle', parent=styles['Heading1'], fontSize=15, textColor=colors.HexColor('#4A1525'), spaceAfter=15, alignment=1)
+            header_style = ParagraphStyle('HeaderStyle', parent=styles['Normal'], fontSize=9, textColor=colors.whitesmoke, fontName='Helvetica-Bold', alignment=1)
+            cell_style = ParagraphStyle('CellStyle', parent=styles['Normal'], fontSize=8, leading=10, alignment=1)
+            cell_left = ParagraphStyle('CellLeft', parent=styles['Normal'], fontSize=8, leading=10, alignment=0)
+            
+            elements.append(Paragraph("Nature’s Select - Historial de Transacciones", title_style))
+            elements.append(Spacer(1, 10))
+            
+            historial_ordenado = sorted(historial, key=lambda x: str(x.get("Cliente", "")).lower())
+
+            data = [[Paragraph("Fecha", header_style), Paragraph("Producto", header_style), Paragraph("Cliente", header_style), Paragraph("Tipo", header_style), Paragraph("Cant.", header_style), Paragraph("Total", header_style)]]
+            for h in historial_ordenado:
+                raw_tot = str(h.get("Total", "0")).replace("$", "").replace(",", "").strip()
+                try:
+                    val_tot = float(raw_tot)
+                    tot_fmt = f"${val_tot:,.2f}"
+                except:
+                    tot_fmt = f"${0.0:,.2f}"
+
+                raw_cant = str(h.get("Cantidad", "0")).replace("$", "").replace(",", "").strip()
+                try:
+                    val_cant = float(raw_cant)
+                    cant_fmt = str(int(val_cant)) if val_cant.is_integer() else f"{val_cant:g}"
+                except:
+                    cant_fmt = raw_cant
+                    
+                c_raw = str(h.get("Cliente", ""))
+                c_clean = c_raw.split("(Desc.")[0].strip() if "(Desc." in c_raw else c_raw.strip()
+
+                data.append([
+                    Paragraph(str(h.get("Fecha", "")), cell_style),
+                    Paragraph(str(h.get("Producto", "")), cell_left),
+                    Paragraph(c_clean, cell_left),
+                    Paragraph(str(h.get("Compra/Venta", "")), cell_style),
+                    Paragraph(cant_fmt, cell_style),
+                    Paragraph(tot_fmt, cell_style)
+                ])
+                
+            t = Table(data, colWidths=[70, 140, 120, 75, 45, 64])
+            t.setStyle(TableStyle([
+                ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#4A1525')),
+                ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+                ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+                ('BOTTOMPADDING', (0,0), (-1,0), 6),
+                ('TOPPADDING', (0,0), (-1,0), 6),
+                ('BACKGROUND', (0,1), (-1,-1), colors.HexColor('#FDFBFB')),
+                ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#D1C4E9')),
+            ]))
+            elements.append(t)
+            doc.build(elements, canvasmaker=NumberedCanvas)
+            buffer.seek(0)
+            return buffer.getvalue()
+
+        pdf_bytes_hist = generar_pdf_historial(registros_h)
+        st.download_button(
+            label="📄 Descargar Historial en PDF",
+            data=pdf_bytes_hist,
+            file_name=f"reporte_historial_{datetime.now().strftime('%d-%m-%Y')}.pdf",
+            mime="application/pdf"
+        )
+        st.markdown("---")
+
+        df_hist = pd.DataFrame(registros_h)
+        if not df_hist.empty:
+            if "Total" in df_hist.columns:
+                df_hist["Total"] = pd.to_numeric(df_hist["Total"].astype(str).str.replace("$", "").str.replace(",", "").str.strip(), errors="coerce").fillna(0)
+                df_hist["Total"] = df_hist["Total"].apply(lambda x: f"${x:,.2f}")
+            if "Cantidad" in df_hist.columns:
+                df_hist["Cantidad"] = pd.to_numeric(df_hist["Cantidad"].astype(str).str.replace("$", "").str.replace(",", "").str.strip(), errors="coerce").fillna(0)
+                df_hist["Cantidad"] = df_hist["Cantidad"].apply(lambda x: str(int(x)) if x.is_integer() else f"{x:g}")
+            
+            if "Cliente" in df_hist.columns:
+                df_hist["Cliente"] = df_hist["Cliente"].apply(lambda x: str(x).split("(Desc.")[0].strip() if "(Desc." in str(x) else str(x).strip())
+
+            cols_ordenadas = ["Fecha", "Producto", "Cliente", "Compra/Venta", "Cantidad", "Total"]
+            df_hist = df_hist[[c for c in cols_ordenadas if c in df_hist.columns]]
+
+            if "Producto" in df_hist.columns:
+                df_hist = df_hist.set_index("Producto")
+            st.dataframe(df_hist, use_container_width=True)
+        else:
+            st.info("Aún no hay registros en el historial.")
+    else:
+        st.info("Aún no hay registros en el historial.")
+
+with pestana4:
+    st.subheader("📋 Sugerencia de Pedido (Por Surtir con Proveedor) y Costos")
+    st.markdown("Consulta el pedido sugerido al proveedor, el costo estimado por artículo y el total a invertir.")
+    
+    reg_hist_actuales = cargar_historial_cache()
+    
+    if registros_inv:
+        df_h = pd.DataFrame(reg_hist_actuales) if reg_hist_actuales else pd.DataFrame()
+        promedios_dict = {}
+        
+        if not df_h.empty and "Producto" in df_h.columns and "Cantidad" in df_h.columns and "Fecha" in df_h.columns:
+            if "Compra/Venta" in df_h.columns:
+                df_ventas = df_h[df_h["Compra/Venta"] == "Venta"].copy()
+            else:
+                df_ventas = df_h.copy()
+                
+            if not df_ventas.empty:
+                try:
+                    df_ventas["Fecha_str"] = df_ventas["Fecha"].astype(str).str.strip()
+                    df_ventas["Mes"] = df_ventas["Fecha_str"].str.slice(3, 10)
+                    df_ventas["Cantidad_num"] = pd.to_numeric(df_ventas["Cantidad"].astype(str).str.
