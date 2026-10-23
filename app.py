@@ -132,14 +132,6 @@ try:
     hoja_hist = spreadsheet.worksheet("Historial")
     
     try:
-        headers_hist = hoja_hist.row_values(1)
-        if not headers_hist or "Cliente" not in [h.strip() for h in headers_hist]:
-            hoja_hist.clear()
-            hoja_hist.append_row(["Fecha", "Hora", "Cliente", "Producto", "Compra/Venta", "Cantidad", "Total"])
-    except:
-        pass
-    
-    try:
         hoja_pedidos = spreadsheet.worksheet("Pedidos")
     except:
         hoja_pedidos = spreadsheet.add_worksheet(title="Pedidos", rows=100, cols=10)
@@ -148,30 +140,27 @@ except Exception as e:
     st.error(f"Error al conectar con Google Sheets: {e}")
     st.stop()
 
-@st.cache_data(ttl=60)
+@st.cache_data(ttl=120)
 def cargar_inventario_cache():
-    time.sleep(0.3)
     return hoja_inv.get_all_records()
 
-@st.cache_data(ttl=60)
+@st.cache_data(ttl=120)
 def cargar_pedidos_cache():
-    time.sleep(0.3)
     return hoja_pedidos.get_all_records()
 
-@st.cache_data(ttl=60)
+@st.cache_data(ttl=120)
 def cargar_historial_cache():
-    time.sleep(0.3)
     return hoja_hist.get_all_records()
 
 try:
     registros_inv = cargar_inventario_cache()
-    headers = hoja_inv.row_values(1)
+    headers = list(registros_inv[0].keys()) if registros_inv else ["Nombre del Producto", "Cantidad en Stock", "Precio de Venta", "Nivel Mínimo de Alerta", "Precio Directo", "Categoría."]
     if registros_inv:
         registros_inv = sorted(registros_inv, key=lambda x: str(x.get("Nombre del Producto", "")).lower())
 except Exception as e:
     st.error(f"Error al leer el inventario: {e}")
     registros_inv = []
-    headers = []
+    headers = ["Nombre del Producto", "Cantidad en Stock", "Precio de Venta", "Nivel Mínimo de Alerta", "Precio Directo", "Categoría."]
 
 LOGO_PATH = "watermarked_img_3973813175880226978.jpg"
 
@@ -283,7 +272,7 @@ with pestana1:
                 
                 row_idx = None
                 producto_obj = None
-                inv_actuales = hoja_inv.get_all_records()
+                inv_actuales = cargar_inventario_cache()
                 for i, p in enumerate(inv_actuales):
                     if str(p.get("Nombre del Producto", "")).strip() == prod_seleccionado:
                         row_idx = i + 2 
@@ -321,7 +310,6 @@ with pestana1:
                             hoja_pedidos.append_row([
                                 id_ped_1, ahora_mexico.strftime("%d-%m-%Y %H:%M:%S"), cli_con_desc, prod_seleccionado, cant_a_reservar, "Venta", "Por entregar"
                             ])
-                            time.sleep(1) 
                         
                         if cant_en_deficit > 0:
                             id_ped_2 = str(int(datetime.utcnow().timestamp()) + 1)
@@ -473,19 +461,15 @@ with pestana2:
                     p_cliente_raw = str(p.get("Cliente", ""))
                     if "(Desc." in p_cliente_raw:
                         p_cliente_limpio = p_cliente_raw.split("(Desc.")[0].strip()
-                        try:
-                            desc_val = float(p_cliente_raw.split("(Desc.")[1].split("%)")[0].strip())
-                        except:
-                            desc_val = 0.0
+                        try: desc_val = float(p_cliente_raw.split("(Desc.")[1].split("%)")[0].strip())
+                        except: desc_val = 0.0
                     else:
                         p_cliente_limpio = p_cliente_raw.strip()
                         desc_val = 0.0
                     
                     desc_txt = f"{desc_val:g}%" if desc_val > 0 else "-"
-                    try:
-                        p_cant = float(str(p.get("Cantidad", 0)).replace(",", ""))
-                    except:
-                        p_cant = 0.0
+                    try: p_cant = float(str(p.get("Cantidad", 0)).replace(",", ""))
+                    except: p_cant = 0.0
                     
                     if p_estado == "Déficit":
                         st_disp = stock_por_producto.get(p_prod, 0.0)
@@ -541,10 +525,8 @@ with pestana2:
             gran_total_interfaz = 0.0
             for p in pendientes_activos:
                 p_prod = str(p.get("Producto", ""))
-                try:
-                    p_cant = float(str(p.get("Cantidad", 0)).replace(",", ""))
-                except:
-                    p_cant = 0.0
+                try: p_cant = float(str(p.get("Cantidad", 0)).replace(",", ""))
+                except: p_cant = 0.0
                 c_raw = str(p.get("Cliente", ""))
                 desc_val = float(c_raw.split("(Desc.")[1].split("%)")[0].strip()) if "(Desc." in c_raw else 0.0
                 p_unitario = precio_por_producto.get(p_prod, 0.0)
@@ -649,15 +631,14 @@ with pestana2:
                 with col_info:
                     st.markdown(f"**👤 {cli_clean}** {desc_badge} \n🛍️ **{prod_ped}** — Cantidad: **{cant_ped:g}** [{estado_lbl}] \n<span style='color: gray; font-size: 11px;'>ID: {ped.get('ID')} | Fecha: {ped.get('Fecha')}</span>", unsafe_allow_html=True)
                 
-                # Función auxiliar para entregar
                 def procesar_entrega(nuevo_estado):
-                    todos_p = hoja_pedidos.get_all_records()
+                    todos_p = cargar_pedidos_cache()
                     fila_real = next((i + 2 for i, tp in enumerate(todos_p) if str(tp.get("ID")) == str(ped.get("ID"))), None)
                     
                     if fila_real:
                         cli_con_desc = str(ped.get("Cliente", ""))
                         precio_vta = 0.0
-                        inv_actuales = hoja_inv.get_all_records()
+                        inv_actuales = cargar_inventario_cache()
                         row_inv_idx = None
                         stock_fisc = 0.0
                         for i, inv_item in enumerate(inv_actuales):
@@ -740,12 +721,12 @@ with pestana2:
                     """, unsafe_allow_html=True)
                     
                     if st.button("❌ Cancelar", key=f"cancelar_{ped.get('ID')}_{idx}"):
-                        todos_p = hoja_pedidos.get_all_records()
+                        todos_p = cargar_pedidos_cache()
                         fila_real = next((i + 2 for i, tp in enumerate(todos_p) if str(tp.get("ID")) == str(ped.get("ID"))), None)
                         if fila_real:
                             hoja_pedidos.update_cell(fila_real, 7, "Cancelado")
                             if estado_ped == "Por entregar":
-                                inv_actuales = hoja_inv.get_all_records()
+                                inv_actuales = cargar_inventario_cache()
                                 for i, inv_item in enumerate(inv_actuales):
                                     if str(inv_item.get("Nombre del Producto", "")).strip() == prod_ped:
                                         st_act = float(str(inv_item.get("Cantidad en Stock", 0)).replace(",", ""))
@@ -771,7 +752,6 @@ with pestana2:
         pedidos_por_pagar = [p for p in pedidos_totales if p.get("Estado") == "Por pagar"]
         
         if pedidos_por_pagar:
-            # Reporte PDF de Cuentas por Cobrar
             def generar_pdf_cuentas_por_cobrar(lista_por_pagar):
                 buffer = io.BytesIO()
                 doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=75, bottomMargin=40)
@@ -908,7 +888,7 @@ with pestana2:
                 with col_btn_cobrar:
                     st.markdown("<br>", unsafe_allow_html=True)
                     if st.button("💰 Marcar como Pagado", key=f"cobrar_{ped.get('ID')}_{idx}"):
-                        todos_p = hoja_pedidos.get_all_records()
+                        todos_p = cargar_pedidos_cache()
                         fila_real = next((i + 2 for i, tp in enumerate(todos_p) if str(tp.get("ID")) == str(ped.get("ID"))), None)
                         
                         if fila_real:
