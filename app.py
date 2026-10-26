@@ -31,21 +31,27 @@ st.markdown("""
             font-weight: 600;
         }
 
-        div.stButton > button, div.stButton > button * {
+        div.stButton > button {
             background-color: #2E7D32 !important;
             color: #FFFFFF !important;
             font-family: 'Montserrat', sans-serif !important;
             font-weight: 600;
             border: none !important;
-        }
-        div.stButton > button {
             border-radius: 8px !important;
             box-shadow: 0 4px 10px rgba(46, 125, 50, 0.3) !important;
             transition: 0.3s !important;
         }
-        div.stButton > button:hover, div.stButton > button:hover * {
+        div.stButton > button:hover {
             background-color: #1B5E20 !important;
             color: #FFFFFF !important;
+        }
+
+        div[class*="st-key-cancelar"] > button {
+            background-color: #C62828 !important;
+            box-shadow: 0 4px 10px rgba(198, 40, 40, 0.3) !important;
+        }
+        div[class*="st-key-cancelar"] > button:hover {
+            background-color: #B71C1C !important;
         }
 
         .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p {
@@ -105,6 +111,11 @@ SCOPE = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive"
 ]
+
+def normalizar_id(val):
+    if val is None:
+        return ""
+    return str(val).split('.')[0].strip()
 
 @st.cache_resource
 def obtener_conexion():
@@ -654,7 +665,13 @@ with pestana2:
                 
                 def procesar_entrega(nuevo_estado):
                     todos_p = cargar_pedidos_cache()
-                    fila_real = next((i + 2 for i, tp in enumerate(todos_p) if str(tp.get("ID")) == str(ped.get("ID"))), None)
+                    ped_id = normalizar_id(ped.get("ID"))
+                    fila_real = next((i + 2 for i, tp in enumerate(todos_p) if normalizar_id(tp.get("ID")) == ped_id), None)
+                    if not fila_real:
+                        for i, tp in enumerate(todos_p):
+                            if str(tp.get("Cliente")).strip() == str(ped.get("Cliente")).strip() and str(tp.get("Producto")).strip() == str(ped.get("Producto")).strip() and tp.get("Estado") in ["Por entregar", "Déficit"]:
+                                fila_real = i + 2
+                                break
                     
                     if fila_real:
                         cli_con_desc = str(ped.get("Cliente", ""))
@@ -676,12 +693,6 @@ with pestana2:
                         
                         desc_val = float(cli_con_desc.split("(Desc.")[1].split("%)")[0].strip()) if "(Desc." in cli_con_desc else 0.0
                         ahora_mexico = datetime.utcnow() - timedelta(hours=6)
-                        
-                        col_st_idx = 2
-                        for idx_h, h_name in enumerate(headers):
-                            if "stock" in h_name.lower():
-                                col_st_idx = idx_h + 1
-                                break
 
                         if estado_ped == "Por entregar":
                             hoja_pedidos.update_cell(fila_real, 7, nuevo_estado)
@@ -700,6 +711,11 @@ with pestana2:
                             cant_remanente = cant_ped - cant_a_entregar
                             
                             if cant_a_entregar > 0 and row_inv_idx:
+                                col_st_idx = 2
+                                for idx_h, h_name in enumerate(headers):
+                                    if "stock" in h_name.lower():
+                                        col_st_idx = idx_h + 1
+                                        break
                                 hoja_inv.update_cell(row_inv_idx, col_st_idx, stock_fisc - cant_a_entregar)
                                 precio_final = precio_vta * (1.0 - (desc_val / 100.0))
                                 total_vta = cant_a_entregar * precio_final
@@ -734,20 +750,17 @@ with pestana2:
                             procesar_entrega("Por pagar")
 
                 with col_btn_cancel:
-                    st.markdown("""
-                        <style>
-                            div[data-testid="column"]:nth-child(4) button {
-                                background-color: #C62828 !important;
-                            }
-                            div[data-testid="column"]:nth-child(4) button:hover {
-                                background-color: #B71C1C !important;
-                            }
-                        </style>
-                    """, unsafe_allow_html=True)
-                    
-                    if st.button("❌ Cancelar", key=f"cancelar_{ped.get('ID')}_{idx}"):
+                    if st.button("❌ Cancelar", key=f"cancelar_ped_{ped.get('ID')}_{idx}"):
                         todos_p = cargar_pedidos_cache()
-                        fila_real = next((i + 2 for i, tp in enumerate(todos_p) if str(tp.get("ID")) == str(ped.get("ID"))), None)
+                        ped_id = normalizar_id(ped.get("ID"))
+                        fila_real = next((i + 2 for i, tp in enumerate(todos_p) if normalizar_id(tp.get("ID")) == ped_id), None)
+                        
+                        if not fila_real:
+                            for i, tp in enumerate(todos_p):
+                                if str(tp.get("Cliente")).strip() == str(ped.get("Cliente")).strip() and str(tp.get("Producto")).strip() == str(ped.get("Producto")).strip() and tp.get("Estado") in ["Por entregar", "Déficit"]:
+                                    fila_real = i + 2
+                                    break
+
                         if fila_real:
                             hoja_pedidos.update_cell(fila_real, 7, "Cancelado")
                             if estado_ped == "Por entregar":
@@ -914,8 +927,15 @@ with pestana2:
                     st.markdown("<br>", unsafe_allow_html=True)
                     if st.button("💰 Marcar como Pagado", key=f"cobrar_{ped.get('ID')}_{idx}"):
                         todos_p = cargar_pedidos_cache()
-                        fila_real = next((i + 2 for i, tp in enumerate(todos_p) if str(tp.get("ID")) == str(ped.get("ID"))), None)
+                        ped_id = normalizar_id(ped.get("ID"))
+                        fila_real = next((i + 2 for i, tp in enumerate(todos_p) if normalizar_id(tp.get("ID")) == ped_id), None)
                         
+                        if not fila_real:
+                            for i, tp in enumerate(todos_p):
+                                if str(tp.get("Cliente")).strip() == str(ped.get("Cliente")).strip() and str(tp.get("Producto")).strip() == str(ped.get("Producto")).strip() and tp.get("Estado") == "Por pagar":
+                                    fila_real = i + 2
+                                    break
+
                         if fila_real:
                             hoja_pedidos.update_cell(fila_real, 7, "Entregado")
                             
@@ -927,390 +947,4 @@ with pestana2:
                                     break
                             
                             if fila_hist_encontrada:
-                                hoja_hist.update_cell(fila_hist_encontrada, 5, "Venta")
-                                hoja_hist.update_cell(fila_hist_encontrada, 7, total_deuda)
-                            else:
-                                ahora_mexico = datetime.utcnow() - timedelta(hours=6)
-                                hoja_hist.append_row([
-                                    ahora_mexico.strftime("%d-%m-%Y"), 
-                                    ahora_mexico.strftime("%H:%M:%S"), 
-                                    cli_raw, 
-                                    prod_ped, 
-                                    "Venta", 
-                                    cant_ped, 
-                                    total_deuda
-                                ])
-                            
-                            st.success(f"¡Pago de **${total_deuda:,.2f}** recibido con éxito de **{cli_clean}**!")
-                            st.cache_data.clear()
-                            st.rerun()
-
-                with col_btn_cancel_c:
-                    st.markdown("<br>", unsafe_allow_html=True)
-                    st.markdown("""
-                        <style>
-                            div[data-testid="column"]:nth-child(3) button {
-                                background-color: #C62828 !important;
-                            }
-                            div[data-testid="column"]:nth-child(3) button:hover {
-                                background-color: #B71C1C !important;
-                            }
-                        </style>
-                    """, unsafe_allow_html=True)
-                    if st.button("❌ Cancelar", key=f"cancelar_cobro_{ped.get('ID')}_{idx}"):
-                        todos_p = cargar_pedidos_cache()
-                        fila_real = next((i + 2 for i, tp in enumerate(todos_p) if str(tp.get("ID")) == str(ped.get("ID"))), None)
-                        
-                        if fila_real:
-                            hoja_pedidos.update_cell(fila_real, 7, "Cancelado")
-                            
-                            inv_actuales = cargar_inventario_cache()
-                            for i, inv_item in enumerate(inv_actuales):
-                                if str(inv_item.get("Nombre del Producto", "")).strip() == prod_ped:
-                                    st_act = float(str(inv_item.get("Cantidad en Stock", 0)).replace(",", ""))
-                                    col_st_idx = 2
-                                    for idx_h, h_name in enumerate(headers):
-                                        if "stock" in h_name.lower():
-                                            col_st_idx = idx_h + 1
-                                            break
-                                    hoja_inv.update_cell(i + 2, col_st_idx, st_act + cant_ped)
-                                    break
-                                    
-                            hist_actuales = cargar_historial_cache()
-                            for idx_h_item, h_item in enumerate(hist_actuales):
-                                if str(h_item.get("Cliente", "")).strip() == cli_raw and str(h_item.get("Producto", "")).strip() == prod_ped and "Por Pagar" in str(h_item.get("Compra/Venta", "")):
-                                    hoja_hist.update_cell(idx_h_item + 2, 5, "Cancelado")
-                                    hoja_hist.update_cell(idx_h_item + 2, 7, 0.0)
-                                    break
-                            
-                            st.warning(f"Pedido cancelado. Se devolvieron **{cant_ped:g} unidades** de **{prod_ped}** al inventario.")
-                            st.cache_data.clear()
-                            st.rerun()
-
-                st.divider()
-        else:
-            st.info("🎉 ¡Excelente! No hay cuentas pendientes por cobrar en este momento.")
-
-with pestana3:
-    st.subheader("Historial de Transacciones")
-    
-    registros_h = cargar_historial_cache()
-    if registros_h:
-        def generar_pdf_historial(historial):
-            buffer = io.BytesIO()
-            doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=75, bottomMargin=40)
-            elements = []
-            
-            styles = getSampleStyleSheet()
-            title_style = ParagraphStyle('TitleStyle', parent=styles['Heading1'], fontSize=15, textColor=colors.HexColor('#4A1525'), spaceAfter=15, alignment=1)
-            header_style = ParagraphStyle('HeaderStyle', parent=styles['Normal'], fontSize=9, textColor=colors.whitesmoke, fontName='Helvetica-Bold', alignment=1)
-            cell_style = ParagraphStyle('CellStyle', parent=styles['Normal'], fontSize=8, leading=10, alignment=1)
-            cell_left = ParagraphStyle('CellLeft', parent=styles['Normal'], fontSize=8, leading=10, alignment=0)
-            
-            elements.append(Paragraph("Nature’s Select - Historial de Transacciones", title_style))
-            elements.append(Spacer(1, 10))
-            
-            historial_ordenado = sorted(historial, key=lambda x: str(x.get("Cliente", "")).lower())
-
-            data = [[Paragraph("Fecha", header_style), Paragraph("Producto", header_style), Paragraph("Cliente", header_style), Paragraph("Tipo", header_style), Paragraph("Cant.", header_style), Paragraph("Total", header_style)]]
-            for h in historial_ordenado:
-                raw_tot = str(h.get("Total", "0")).replace("$", "").replace(",", "").strip()
-                if "pendiente" in raw_tot.lower():
-                    tot_fmt = raw_tot
-                else:
-                    try: val_tot = float(raw_tot)
-                    except: val_tot = 0.0
-                    tot_fmt = f"${val_tot:,.2f}"
-
-                raw_cant = str(h.get("Cantidad", "0")).replace("$", "").replace(",", "").strip()
-                try:
-                    val_cant = float(raw_cant)
-                    cant_fmt = str(int(val_cant)) if val_cant.is_integer() else f"{val_cant:g}"
-                except: cant_fmt = raw_cant
-                    
-                c_raw = str(h.get("Cliente", ""))
-                c_clean = c_raw.split("(Desc.")[0].strip() if "(Desc." in c_raw else c_raw.strip()
-
-                data.append([
-                    Paragraph(str(h.get("Fecha", "")), cell_style),
-                    Paragraph(str(h.get("Producto", "")), cell_left),
-                    Paragraph(c_clean, cell_left),
-                    Paragraph(str(h.get("Compra/Venta", "")), cell_style),
-                    Paragraph(cant_fmt, cell_style),
-                    Paragraph(tot_fmt, cell_style)
-                ])
-                
-            t = Table(data, colWidths=[70, 140, 120, 75, 45, 64])
-            t.setStyle(TableStyle([
-                ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#4A1525')),
-                ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-                ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-                ('BOTTOMPADDING', (0,0), (-1,0), 6),
-                ('TOPPADDING', (0,0), (-1,0), 6),
-                ('BACKGROUND', (0,1), (-1,-1), colors.HexColor('#FDFBFB')),
-                ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#D1C4E9')),
-            ]))
-            elements.append(t)
-            doc.build(elements, canvasmaker=NumberedCanvas)
-            buffer.seek(0)
-            return buffer.getvalue()
-
-        pdf_bytes_hist = generar_pdf_historial(registros_h)
-        st.download_button(
-            label="📄 Descargar Historial en PDF",
-            data=pdf_bytes_hist,
-            file_name=f"reporte_historial_{datetime.now().strftime('%d-%m-%Y')}.pdf",
-            mime="application/pdf"
-        )
-        st.markdown("---")
-
-        df_hist = pd.DataFrame(registros_h)
-        if not df_hist.empty:
-            if "Total" in df_hist.columns:
-                def formatear_total(val):
-                    val_str = str(val)
-                    if "pendiente" in val_str.lower():
-                        return val_str
-                    try:
-                        num = float(val_str.replace("$", "").replace(",", "").strip())
-                        return f"${num:,.2f}"
-                    except:
-                        return val_str
-                df_hist["Total"] = df_hist["Total"].apply(formatear_total)
-
-            if "Cantidad" in df_hist.columns:
-                df_hist["Cantidad"] = pd.to_numeric(df_hist["Cantidad"].astype(str).str.replace("$", "").str.replace(",", "").str.strip(), errors="coerce").fillna(0)
-                df_hist["Cantidad"] = df_hist["Cantidad"].apply(lambda x: str(int(x)) if x.is_integer() else f"{x:g}")
-            
-            if "Cliente" in df_hist.columns:
-                df_hist["Cliente"] = df_hist["Cliente"].apply(lambda x: str(x).split("(Desc.")[0].strip() if "(Desc." in str(x) else str(x).strip())
-
-            cols_ordenadas = ["Fecha", "Producto", "Cliente", "Compra/Venta", "Cantidad", "Total"]
-            df_hist = df_hist[[c for c in cols_ordenadas if c in df_hist.columns]]
-
-            if "Producto" in df_hist.columns:
-                df_hist = df_hist.set_index("Producto")
-            st.dataframe(df_hist, use_container_width=True)
-        else:
-            st.info("Aún no hay registros en el historial.")
-    else:
-        st.info("Aún no hay registros en el historial.")
-
-with pestana4:
-    st.subheader("📋 Sugerencia de Pedido (Por Surtir con Proveedor) y Costos")
-    st.markdown("Consulta el pedido sugerido al proveedor, el costo estimado por artículo y el total a invertir.")
-    
-    reg_hist_actuales = cargar_historial_cache()
-    
-    if registros_inv:
-        df_h = pd.DataFrame(reg_hist_actuales) if reg_hist_actuales else pd.DataFrame()
-        promedios_dict = {}
-        
-        if not df_h.empty and "Producto" in df_h.columns and "Cantidad" in df_h.columns and "Fecha" in df_h.columns:
-            if "Compra/Venta" in df_h.columns:
-                df_ventas = df_h[df_h["Compra/Venta"].astype(str).str.contains("Venta|Devolución", case=False, na=False)].copy()
-            else:
-                df_ventas = df_h.copy()
-                
-            if not df_ventas.empty:
-                try:
-                    df_ventas["Fecha_str"] = df_ventas["Fecha"].astype(str).str.strip()
-                    df_ventas["Mes"] = df_ventas["Fecha_str"].str.slice(3, 10)
-                    
-                    def procesar_cant_neto(row):
-                        tipo = str(row.get("Compra/Venta", ""))
-                        cant = float(str(row.get("Cantidad", 0)).replace("$", "").replace(",", "").strip())
-                        if "Devolución" in tipo or "Cancelado" in tipo:
-                            return -cant
-                        return cant
-
-                    df_ventas["Cantidad_num"] = df_ventas.apply(procesar_cant_neto, axis=1)
-                    
-                    totales_prod_mes = df_ventas.groupby(["Producto", "Mes"])["Cantidad_num"].sum().reset_index()
-                    promedios = totales_prod_mes.groupby("Producto")["Cantidad_num"].mean().reset_index()
-                    for _, row in promedios.iterrows():
-                        promedios_dict[row["Producto"]] = max(0.0, float(row["Cantidad_num"]))
-                except:
-                    pass
-
-        lista_resurtido = []
-        gran_total_inversion = 0.0
-
-        for p in registros_inv:
-            nombre = str(p.get("Nombre del Producto", "")).strip()
-            
-            stock = 0.0
-            for k, v in p.items():
-                if "stock" in k.lower() or "cantidad" in k.lower():
-                    try:
-                        stock = float(str(v).replace(",", ""))
-                        break
-                    except:
-                        pass
-            
-            todos_los_pedidos_res = cargar_pedidos_cache()
-            por_entregar_val = 0.0
-            for tp in todos_los_pedidos_res:
-                if tp.get("Estado") in ["Por entregar", "Déficit"] and tp.get("Producto") == nombre:
-                    por_entregar_val += float(str(tp.get("Cantidad", 0)).replace(",", ""))
-            
-            p_directo = 0.0
-            for k, v in p.items():
-                if "precio directo" in k.lower() or "directo" in k.lower():
-                    raw_pd = str(v).replace("$", "").replace(",", "").strip()
-                    try:
-                        p_directo = float(raw_pd)
-                        break
-                    except:
-                        pass
-            if p_directo == 0.0:
-                for k, v in p.items():
-                    if "precio" in k.lower():
-                        raw_pd = str(v).replace("$", "").replace(",", "").strip()
-                        try:
-                            val_p = float(raw_pd)
-                            if val_p > 0:
-                                p_directo = val_p
-                                break
-                        except:
-                            continue
-
-            promedio_mes_val = promedios_dict.get(nombre, 0.0)
-            sugerido_pedido = por_entregar_val + promedio_mes_val
-            costo_total_producto = sugerido_pedido * p_directo
-            gran_total_inversion += costo_total_producto
-            
-            stock_str = str(int(stock)) if stock.is_integer() else f"{stock:g}"
-            surtir_str = str(int(por_entregar_val)) if por_entregar_val.is_integer() else f"{por_entregar_val:g}"
-            prom_str = str(int(promedio_mes_val)) if promedio_mes_val.is_integer() else f"{promedio_mes_val:g}"
-            sugerido_str = str(int(sugerido_pedido)) if sugerido_pedido.is_integer() else f"{sugerido_pedido:g}"
-            
-            lista_resurtido.append({
-                "Producto": nombre,
-                "Stock Actual": stock_str,
-                "Por Entregar (Clientes)": surtir_str,
-                "Promedio/Mes": prom_str,
-                "Sugerido": sugerido_str,
-                "Costo Unit.": f"${p_directo:,.2f}",
-                "Inversión Est.": f"${costo_total_producto:,.2f}"
-            })
-            
-        df_resurtido = pd.DataFrame(lista_resurtido)
-
-        def generar_pdf_resurtido(resurtido, total_inv):
-            buffer = io.BytesIO()
-            doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=75, bottomMargin=40)
-            elements = []
-            
-            styles = getSampleStyleSheet()
-            title_style = ParagraphStyle('TitleStyle', parent=styles['Heading1'], fontSize=15, textColor=colors.HexColor('#4A1525'), spaceAfter=15, alignment=1)
-            header_style = ParagraphStyle('HeaderStyle', parent=styles['Normal'], fontSize=9, textColor=colors.whitesmoke, fontName='Helvetica-Bold', alignment=1)
-            cell_style = ParagraphStyle('CellStyle', parent=styles['Normal'], fontSize=8, leading=10, alignment=1)
-            cell_left = ParagraphStyle('CellLeft', parent=styles['Normal'], fontSize=8, leading=10, alignment=0)
-            
-            elements.append(Paragraph("Nature’s Select - Sugerencia de Pedido (Resurtido)", title_style))
-            elements.append(Spacer(1, 10))
-            
-            data = [[Paragraph("Producto", header_style), Paragraph("Stock", header_style), Paragraph("Por Entregar", header_style), Paragraph("Prom./Mes", header_style), Paragraph("Sugerido", header_style), Paragraph("Costo Unit.", header_style), Paragraph("Inversión Est.", header_style)]]
-            for r in resurtido:
-                data.append([
-                    Paragraph(str(r.get("Producto", "")), cell_left),
-                    Paragraph(str(r.get("Stock Actual", "")), cell_style),
-                    Paragraph(str(r.get("Por Entregar (Clientes)", "")), cell_style),
-                    Paragraph(str(r.get("Promedio/Mes", "")), cell_style),
-                    Paragraph(str(r.get("Sugerido", "")), cell_style),
-                    Paragraph(str(r.get("Costo Unit.", "")), cell_style),
-                    Paragraph(str(r.get("Inversión Est.", "")), cell_style)
-                ])
-                
-            total_row_style = ParagraphStyle('TotalRow', parent=styles['Normal'], fontSize=8, leading=10, alignment=2)
-            total_val_style = ParagraphStyle('TotalVal', parent=styles['Normal'], fontSize=8, leading=10, alignment=1)
-            
-            data.append([
-                Paragraph("Inversión Total Estimada:", total_row_style),
-                "", "", "", "", "",
-                Paragraph(f"${total_inv:,.2f}", total_val_style)
-            ])
-            
-            t = Table(data, colWidths=[140, 50, 70, 60, 60, 65, 95])
-            t.setStyle(TableStyle([
-                ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#4A1525')),
-                ('ALIGN', (0,0), (-1,-1), 'CENTER'),
-                ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
-                ('BOTTOMPADDING', (0,0), (-1,0), 6),
-                ('TOPPADDING', (0,0), (-1,0), 6),
-                ('BACKGROUND', (0,1), (-1,-2), colors.HexColor('#FDFBFB')),
-                ('GRID', (0,0), (-1,-2), 0.5, colors.HexColor('#D1C4E9')),
-                ('SPAN', (0, -1), (5, -1)),
-                ('BACKGROUND', (0,-1), (-1,-1), colors.HexColor('#F4ECF7')),
-                ('GRID', (0,-1), (-1,-1), 0.5, colors.HexColor('#D1C4E9')),
-            ]))
-            elements.append(t)
-            
-            doc.build(elements, canvasmaker=NumberedCanvas)
-            buffer.seek(0)
-            return buffer.getvalue()
-
-        pdf_bytes_res = generar_pdf_resurtido(lista_resurtido, gran_total_inversion)
-        st.download_button(
-            label="📄 Descargar Reporte de Resurtido en PDF",
-            data=pdf_bytes_res,
-            file_name=f"reporte_resurtido_{datetime.now().strftime('%d-%m-%Y')}.pdf",
-            mime="application/pdf"
-        )
-        st.markdown("---")
-        
-        if "Producto" in df_resurtido.columns:
-            df_resurtido = df_resurtido.set_index("Producto")
-            
-        st.dataframe(df_resurtido, use_container_width=True)
-        
-        st.markdown(f"""
-            <div class="metric-card">
-                <h3 style="margin: 0; color: #2E7D32 !important; font-weight: 600;">💰 Inversión Total Estimada: ${gran_total_inversion:,.2f}</h3>
-            </div>
-        """, unsafe_allow_html=True)
-    else:
-        st.info("No hay productos en el inventario.")
-
-with pestana5:
-    st.subheader("Agregar un Producto Nuevo al Inventario")
-    with st.form("form_nuevo_producto"):
-        nuevo_nombre = st.text_input("Nombre del Producto con Presentación * (ej. Miel de Abeja 500g)")
-        col1, col2 = st.columns(2)
-        with col1:
-            stock_inicial = st.number_input("Cantidad Inicial en Stock", min_value=0.0, step=1.0, value=0.0)
-            precio_dir = st.number_input("Precio Directo", min_value=0.0, step=1.0, value=0.0)
-        with col2:
-            precio_ven = st.number_input("Precio de Venta", min_value=0.0, step=1.0, value=0.0)
-            categoria = st.text_input("Categoría")
-            
-        submitted = st.form_submit_button("Guardar Producto en la Nube")
-        if submitted:
-            if not nuevo_nombre.strip():
-                st.error("¡El nombre del producto es obligatorio!")
-            else:
-                try:
-                    n_nom_final = nuevo_nombre.strip()  
-                    n_cat_final = categoria.strip() if categoria.strip() else "2"
-
-                    nueva_fila = [""] * len(headers)
-                    datos_ingresados = {
-                        "Nombre del Producto": n_nom_final,
-                        "Cantidad en Stock": stock_inicial,
-                        "Precio de Venta": precio_ven,
-                        "Nivel Mínimo de Alerta": 2,
-                        "Precio Directo": precio_dir,
-                        "Categoría.": n_cat_final
-                    }
-                    for idx, header in enumerate(headers):
-                        h_limpio = header.strip()
-                        if h_limpio in datos_ingresados:
-                            nueva_fila[idx] = datos_ingresados[h_limpio]
-                    hoja_inv.append_row(nueva_fila)
-                    st.success(f"¡El producto '{n_nom_final}' se ha dado de alta correctamente!")
-                    
-                    st.cache_data.clear()
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Error al guardar: {e}")
+                                hoja_hist.update_cell(fila_hist_encontrada
