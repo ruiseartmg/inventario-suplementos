@@ -53,12 +53,12 @@ st.markdown("""
             background-color: #1B5E20 !important;
         }
 
-        /* Estilo rojo para botones de Cancelar */
-        div[class*="st-key-cancelar"] > button {
+        /* Estilo rojo robusto para botones de Cancelar */
+        div[class*="cancelar"] > button {
             background-color: #C62828 !important;
             box-shadow: 0 4px 10px rgba(198, 40, 40, 0.3) !important;
         }
-        div[class*="st-key-cancelar"] > button:hover {
+        div[class*="cancelar"] > button:hover {
             background-color: #B71C1C !important;
         }
 
@@ -672,10 +672,15 @@ with pestana2:
                     st.markdown(f"**👤 {cli_clean}** {desc_badge} \n🛍️ **{prod_ped}** — Cantidad: **{cant_ped:g}** [{estado_lbl}] \n<span style='color: gray; font-size: 11px;'>ID: {ped.get('ID')} | Fecha: {ped.get('Fecha')}</span>", unsafe_allow_html=True)
                 
                 def procesar_entrega(nuevo_estado):
-                    todos_p = cargar_pedidos_cache()
-                    ped_id = normalizar_id(ped.get("ID"))
-                    fila_real = next((i + 2 for i, tp in enumerate(todos_p) if normalizar_id(tp.get("ID")) == ped_id), None)
+                    ped_id_str = str(ped.get("ID"))
+                    try:
+                        cell = hoja_pedidos.find(ped_id_str)
+                        fila_real = cell.row
+                    except:
+                        fila_real = None
+
                     if not fila_real:
+                        todos_p = cargar_pedidos_cache()
                         for i, tp in enumerate(todos_p):
                             if str(tp.get("Cliente")).strip() == str(ped.get("Cliente")).strip() and str(tp.get("Producto")).strip() == str(ped.get("Producto")).strip() and tp.get("Estado") in ["Por entregar", "Déficit"]:
                                 fila_real = i + 2
@@ -759,11 +764,15 @@ with pestana2:
 
                 with col_btn_cancel:
                     if st.button("❌ Cancelar", key=f"cancelar_ped_{ped.get('ID')}_{idx}"):
-                        todos_p = cargar_pedidos_cache()
-                        ped_id = normalizar_id(ped.get("ID"))
-                        fila_real = next((i + 2 for i, tp in enumerate(todos_p) if normalizar_id(tp.get("ID")) == ped_id), None)
-                        
+                        ped_id_str = str(ped.get("ID"))
+                        try:
+                            cell = hoja_pedidos.find(ped_id_str)
+                            fila_real = cell.row
+                        except:
+                            fila_real = None
+
                         if not fila_real:
+                            todos_p = cargar_pedidos_cache()
                             for i, tp in enumerate(todos_p):
                                 if str(tp.get("Cliente")).strip() == str(ped.get("Cliente")).strip() and str(tp.get("Producto")).strip() == str(ped.get("Producto")).strip() and tp.get("Estado") in ["Por entregar", "Déficit"]:
                                     fila_real = i + 2
@@ -934,11 +943,15 @@ with pestana2:
                 with col_btn_cobrar:
                     st.markdown("<br>", unsafe_allow_html=True)
                     if st.button("💰 Marcar como Pagado", key=f"cobrar_{ped.get('ID')}_{idx}"):
-                        todos_p = cargar_pedidos_cache()
-                        ped_id = normalizar_id(ped.get("ID"))
-                        fila_real = next((i + 2 for i, tp in enumerate(todos_p) if normalizar_id(tp.get("ID")) == ped_id), None)
-                        
+                        ped_id_str = str(ped.get("ID"))
+                        try:
+                            cell = hoja_pedidos.find(ped_id_str)
+                            fila_real = cell.row
+                        except:
+                            fila_real = None
+
                         if not fila_real:
+                            todos_p = cargar_pedidos_cache()
                             for i, tp in enumerate(todos_p):
                                 if str(tp.get("Cliente")).strip() == str(ped.get("Cliente")).strip() and str(tp.get("Producto")).strip() == str(ped.get("Producto")).strip() and tp.get("Estado") == "Por pagar":
                                     fila_real = i + 2
@@ -976,11 +989,15 @@ with pestana2:
                 with col_btn_cancel_c:
                     st.markdown("<br>", unsafe_allow_html=True)
                     if st.button("❌ Cancelar", key=f"cancelar_cobro_{ped.get('ID')}_{idx}"):
-                        todos_p = cargar_pedidos_cache()
-                        ped_id = normalizar_id(ped.get("ID"))
-                        fila_real = next((i + 2 for i, tp in enumerate(todos_p) if normalizar_id(tp.get("ID")) == ped_id), None)
-                        
+                        ped_id_str = str(ped.get("ID"))
+                        try:
+                            cell = hoja_pedidos.find(ped_id_str)
+                            fila_real = cell.row
+                        except:
+                            fila_real = None
+
                         if not fila_real:
+                            todos_p = cargar_pedidos_cache()
                             for i, tp in enumerate(todos_p):
                                 if str(tp.get("Cliente")).strip() == str(ped.get("Cliente")).strip() and str(tp.get("Producto")).strip() == str(ped.get("Producto")).strip() and tp.get("Estado") == "Por pagar":
                                     fila_real = i + 2
@@ -1122,7 +1139,7 @@ with pestana3:
         st.info("Aún no hay registros en el historial.")
 
 with pestana4:
-    st.subheader("📋 Sugerencia de Pedido (Por Surtir con Proveedor) y Costos")
+    st.subheader("📋 Sugerencia de Pedido (Por Surtirกับ Proveedor) y Costos")
     st.markdown("Consulta el pedido sugerido al proveedor, el costo estimado por artículo y el total a invertir.")
     
     reg_hist_actuales = cargar_historial_cache()
