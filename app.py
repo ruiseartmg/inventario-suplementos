@@ -19,9 +19,9 @@ st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Open+Sans:wght@400;600&display=swap');
 
-        .stApp, html, body, [class*="css"], p, span, label, input, select {
+        html, body, .stApp {
             font-family: 'Open Sans', sans-serif !important;
-            background-color: #FAFAFA;
+            background-color: #FAFAFA !important;
             color: #263238;
         }
         
@@ -31,6 +31,7 @@ st.markdown("""
             font-weight: 600;
         }
 
+        /* Estilos principales para botones */
         div.stButton > button {
             background-color: #2E7D32 !important;
             color: #FFFFFF !important;
@@ -41,11 +42,18 @@ st.markdown("""
             box-shadow: 0 4px 10px rgba(46, 125, 50, 0.3) !important;
             transition: 0.3s !important;
         }
-        div.stButton > button:hover {
-            background-color: #1B5E20 !important;
+        
+        /* Quitar fondo blanco del texto dentro de cualquier botón */
+        div.stButton > button * {
+            background-color: transparent !important;
             color: #FFFFFF !important;
         }
 
+        div.stButton > button:hover {
+            background-color: #1B5E20 !important;
+        }
+
+        /* Estilo rojo para botones de Cancelar */
         div[class*="st-key-cancelar"] > button {
             background-color: #C62828 !important;
             box-shadow: 0 4px 10px rgba(198, 40, 40, 0.3) !important;
