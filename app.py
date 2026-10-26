@@ -1,17 +1,17 @@
-import streamlit as st
+import io
+import base64
+import os
+from datetime import datetime, timedelta
+
 import gspread
 from google.oauth2.service_account import Credentials
-from datetime import datetime, timedelta
-import os
-import base64
 import pandas as pd
-import time
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.pdfgen import canvas
-import io
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+import streamlit as st
 
 st.set_page_config(page_title="Nature’s Select - Inventario", page_icon="🌿", layout="wide")
 
