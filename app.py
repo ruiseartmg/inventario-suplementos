@@ -171,6 +171,46 @@ def cargar_pedidos_cache():
 def cargar_historial_cache():
     return hoja_hist.get_all_records()
 
+def reasignar_deficit_si_hay_stock(prod_nombre):
+    """Función para tomar automáticamente stock liberado y asignarlo a pedidos en déficit."""
+    try:
+        inv_actuales = hoja_inv.get_all_records()
+        row_inv_idx = None
+        stock_fisc = 0.0
+        col_st_idx = 2
+        
+        headers_inv = list(inv_actuales[0].keys()) if inv_actuales else []
+        for idx_h, h_name in enumerate(headers_inv):
+            if "stock" in h_name.lower() or "cantidad" in h_name.lower():
+                col_st_idx = idx_h + 1
+                break
+        
+        for i, inv_item in enumerate(inv_actuales):
+            if str(inv_item.get("Nombre del Producto", "")).strip() == prod_nombre:
+                row_inv_idx = i + 2
+                for k, v in inv_item.items():
+                    if "stock" in k.lower() or "cantidad" in k.lower():
+                        try: stock_fisc = float(str(v).replace(",", ""))
+                        except: pass
+                break
+        
+        if not row_inv_idx or stock_fisc <= 0:
+            return
+
+        todos_p = hoja_pedidos.get_all_records()
+        for idx_p, tp in enumerate(todos_p):
+            if str(tp.get("Producto", "")).strip() == str(prod_nombre).strip() and tp.get("Estado") == "Déficit":
+                cant_def = float(str(tp.get("Cantidad", 0)).replace(",", ""))
+                if stock_fisc >= cant_def:
+                    stock_fisc -= cant_def
+                    hoja_inv.update_cell(row_inv_idx, col_st_idx, stock_fisc)
+                    
+                    fila_ped_real = idx_p + 2
+                    hoja_pedidos.update_cell(fila_ped_real, 7, "Por entregar")
+                    break
+    except Exception as e:
+        print(f"Error en reasignación: {e}")
+
 try:
     registros_inv = cargar_inventario_cache()
     headers = list(registros_inv[0].keys()) if registros_inv else ["Nombre del Producto", "Cantidad en Stock", "Precio de Venta", "Nivel Mínimo de Alerta", "Precio Directo", "Categoría."]
@@ -367,6 +407,7 @@ with pestana1:
                             cantidad, 
                             total_devolucion
                         ])
+                        reasignar_deficit_si_hay_stock(prod_seleccionado)
                         
                         st.success(f"🔄 Devolución registrada con éxito. Se reingresaron **{cantidad:g} unidades** al inventario para **{cli_final}**.")
                         st.cache_data.clear()
@@ -387,6 +428,7 @@ with pestana1:
                         nuevo_stock = stock_actual + cantidad
                         hoja_inv.update_cell(row_idx, col_stock_idx, nuevo_stock)
                         hoja_hist.append_row([ahora_mexico.strftime("%d-%m-%Y"), ahora_mexico.strftime("%H:%M:%S"), "Proveedor", prod_seleccionado, "Compra", cantidad, 0.0])
+                        reasignar_deficit_si_hay_stock(prod_seleccionado)
                         st.success(f"📦 ¡Entrada de proveedor registrada con éxito! +{cantidad} al stock de {prod_seleccionado}.")
                         st.cache_data.clear()
                         st.rerun()
@@ -792,7 +834,8 @@ with pestana2:
                                                 break
                                         hoja_inv.update_cell(i + 2, col_st_idx, st_act + cant_ped)
                                         break
-                                st.warning(f"Pedido cancelado. Se devolvieron **{cant_ped:g} unidades** al inventario.")
+                                reasignar_deficit_si_hay_stock(prod_ped)
+                                st.warning(f"Pedido cancelado. Se devolvieron **{cant_ped:g} unidades** al inventario y se reasignó stock a pendientes.")
                             else:
                                 st.warning("El pedido en déficit fue cancelado.")
                             st.cache_data.clear()
@@ -1025,6 +1068,7 @@ with pestana2:
                                     hoja_hist.update_cell(idx_h_item + 2, 7, 0.0)
                                     break
                             
+                            reasignar_deficit_si_hay_stock(prod_ped)
                             st.warning(f"Pedido cancelado. Se devolvieron **{cant_ped:g} unidades** de **{prod_ped}** al inventario.")
                             st.cache_data.clear()
                             st.rerun()
@@ -1139,7 +1183,7 @@ with pestana3:
         st.info("Aún no hay registros en el historial.")
 
 with pestana4:
-    st.subheader("📋 Sugerencia de Pedido (Por Surtirกับ Proveedor) y Costos")
+    st.subheader("📋 Sugerencia de Pedido (Por Surtir con Proveedor) y Costos")
     st.markdown("Consulta el pedido sugerido al proveedor, el costo estimado por artículo y el total a invertir.")
     
     reg_hist_actuales = cargar_historial_cache()
