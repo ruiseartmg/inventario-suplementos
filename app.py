@@ -835,11 +835,75 @@ with pestana2:
                                         hoja_inv.update_cell(i + 2, col_st_idx, st_act + cant_ped)
                                         break
                                 reasignar_deficit_si_hay_stock(prod_ped)
-                                st.warning(f"Pedido cancelado. Se devolvieron **{cant_ped:g} unidades** al inventario y se reasignó stock a pendientes.")
+                                st.warning(f"Pedido cancelado. Se devolvieron **{cant_ped:g} unidades** al inventario.")
                             else:
                                 st.warning("El pedido en déficit fue cancelado.")
                             st.cache_data.clear()
                             st.rerun()
+
+                # Opción de Cancelación Parcial o Reducción de Piezas sin perder el turno
+                with st.expander(f"⚙️ Modificar o reducir cantidad para {cli_clean}"):
+                    cant_a_cancelar = st.number_input(
+                        "¿Cuántas piezas deseas restar/cancelar de este pedido?", 
+                        min_value=1.0, 
+                        max_value=cant_ped, 
+                        value=1.0, 
+                        step=1.0, 
+                        key=f"num_cancel_parcial_{ped.get('ID')}_{idx}"
+                    )
+                    if st.button("✅ Confirmar Reducción de Piezas", key=f"btn_aplicar_red_{ped.get('ID')}_{idx}"):
+                        ped_id_str = str(ped.get("ID"))
+                        try:
+                            cell = hoja_pedidos.find(ped_id_str)
+                            fila_real = cell.row
+                        except:
+                            fila_real = None
+
+                        if not fila_real:
+                            todos_p = cargar_pedidos_cache()
+                            for i, tp in enumerate(todos_p):
+                                if str(tp.get("Cliente")).strip() == str(ped.get("Cliente")).strip() and str(tp.get("Producto")).strip() == str(ped.get("Producto")).strip() and tp.get("Estado") in ["Por entregar", "Déficit"]:
+                                    fila_real = i + 2
+                                    break
+
+                        if fila_real:
+                            nueva_cant = cant_ped - cant_a_cancelar
+                            if nueva_cant <= 0:
+                                hoja_pedidos.update_cell(fila_real, 7, "Cancelado")
+                                if estado_ped == "Por entregar":
+                                    inv_actuales = cargar_inventario_cache()
+                                    for i, inv_item in enumerate(inv_actuales):
+                                        if str(inv_item.get("Nombre del Producto", "")).strip() == prod_ped:
+                                            st_act = float(str(inv_item.get("Cantidad en Stock", 0)).replace(",", ""))
+                                            col_st_idx = 2
+                                            for idx_h, h_name in enumerate(headers):
+                                                if "stock" in h_name.lower():
+                                                    col_st_idx = idx_h + 1
+                                                    break
+                                            hoja_inv.update_cell(i + 2, col_st_idx, st_act + cant_ped)
+                                            break
+                                    reasignar_deficit_si_hay_stock(prod_ped)
+                                st.warning(f"Pedido cancelado por completo. Se devolvieron **{cant_ped:g} unidades** al inventario.")
+                            else:
+                                hoja_pedidos.update_cell(fila_real, 5, nueva_cant)
+                                if estado_ped == "Por entregar":
+                                    inv_actuales = cargar_inventario_cache()
+                                    for i, inv_item in enumerate(inv_actuales):
+                                        if str(inv_item.get("Nombre del Producto", "")).strip() == prod_ped:
+                                            st_act = float(str(inv_item.get("Cantidad en Stock", 0)).replace(",", ""))
+                                            col_st_idx = 2
+                                            for idx_h, h_name in enumerate(headers):
+                                                if "stock" in h_name.lower():
+                                                    col_st_idx = idx_h + 1
+                                                    break
+                                            hoja_inv.update_cell(i + 2, col_st_idx, st_act + cant_a_cancelar)
+                                            break
+                                    reasignar_deficit_si_hay_stock(prod_ped)
+                                st.success(f"¡Pedido actualizado! Se redujeron **{cant_a_cancelar:g} unidades**. El pedido de **{cli_clean}** ahora es de **{nueva_cant:g} unidades** y conserva su turno.")
+                            
+                            st.cache_data.clear()
+                            st.rerun()
+
                 st.divider()
         else:
             st.info("No hay pedidos pendientes por entregar en este momento.")
