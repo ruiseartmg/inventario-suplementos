@@ -31,96 +31,69 @@ st.markdown("""
             font-weight: 600;
         }
 
-        /* Estilos principales para botones */
+        /* 🚀 REGLA ESTRICTA PARA FORZAR BOTONES EN HORIZONTAL EN CELULARES */
+        @media (max-width: 768px) {
+            /* Obliga a TODOS los contenedores de columnas a ser filas inquebrantables */
+            div[data-testid="stHorizontalBlock"] {
+                display: flex !important;
+                flex-direction: row !important;
+                flex-wrap: nowrap !important; 
+                gap: 6px !important; /* Espacio mínimo entre botones */
+            }
+            
+            /* Obliga a cada columna interna a compartir el espacio a lo ancho */
+            div[data-testid="column"] {
+                width: 100% !important;
+                min-width: 0 !important;
+                flex: 1 1 0px !important;
+                padding: 0 !important;
+            }
+        }
+
+        /* 🎛️ ESTILOS COMPACTOS PARA LOS BOTONES */
         div.stButton > button {
             background-color: #2E7D32 !important;
             color: #FFFFFF !important;
             font-family: 'Montserrat', sans-serif !important;
-            font-weight: 600;
+            font-weight: 600 !important;
             border: none !important;
-            border-radius: 8px !important;
+            border-radius: 6px !important;
             box-shadow: 0 4px 10px rgba(46, 125, 50, 0.3) !important;
             transition: 0.3s !important;
+            
+            /* Ajustes críticos para tamaño en celular */
+            width: 100% !important;
+            padding: 2px 2px !important;
+            min-height: 38px !important;
+            height: 38px !important;
+            font-size: 13px !important;
+            line-height: 1.2 !important;
+            white-space: nowrap !important; /* Evita que el texto del botón se parta */
         }
         
-        /* Quitar fondo blanco del texto dentro de cualquier botón */
         div.stButton > button * {
-            background-color: transparent !important;
             color: #FFFFFF !important;
+            background-color: transparent !important;
         }
 
         div.stButton > button:hover {
             background-color: #1B5E20 !important;
         }
 
-        div[class*="cancelar"] > button {
-            background-color: #C62828 !important;
-            box-shadow: 0 4px 10px rgba(198, 40, 40, 0.3) !important;
-        }
-        div[class*="cancelar"] > button:hover {
-            background-color: #B71C1C !important;
-        }
-
         .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p {
             font-size: 15px;
         }
         
-        .metric-card, .stock-badge, .deficit-alert-card, .surtible-alert-card, .por-pagar-card {
-            border-radius: 12px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-        }
-        .metric-card { background-color: #E8F5E9; padding: 18px; border-left: 6px solid #2E7D32; }
-        .stock-badge { background-color: #E8F5E9; color: #1B5E20; padding: 8px 14px; display: inline-block; border: 1px solid #C8E6C9; }
-        .deficit-alert-card { background-color: #FFEBEE; padding: 15px; border-left: 6px solid #C62828; }
-        .surtible-alert-card { background-color: #E8F5E9; padding: 15px; border-left: 6px solid #2E7D32; }
-        .por-pagar-card { background-color: #FFF8E1; padding: 15px; border-left: 6px solid #F57F17; }
-
-        /* Clase para empujar botones en computadora, pero desaparecer en celular */
-        .espacio-desktop {
-            height: 28px;
-        }
-
-        /* 📱 DISEÑO MÓVIL FORZADO EXACTO A LA MAQUETA */
-        @media (max-width: 768px) {
-            /* Escondemos los espacios en blanco en móvil para que no se descuadre */
-            .espacio-desktop {
-                display: none !important;
-            }
-
-            /* Permitimos que el bloque de columnas envuelva su contenido */
-            div[data-testid="stHorizontalBlock"] {
-                flex-wrap: wrap !important;
-                gap: 5px !important;
-            }
-            
-            /* 1) La primera columna (El texto/información) ocupará toda la pantalla arriba */
-            div[data-testid="column"]:nth-child(1) {
-                min-width: 100% !important;
-                max-width: 100% !important;
-                flex: 0 0 100% !important;
-                margin-bottom: 8px !important;
-            }
-            
-            /* 2) Las columnas 2, 3 y 4 (Los Botones) compartirán equitativamente la fila de abajo */
-            div[data-testid="column"]:nth-child(2),
-            div[data-testid="column"]:nth-child(3),
-            div[data-testid="column"]:nth-child(4) {
-                min-width: 0 !important;
-                flex: 1 1 0% !important;
-                width: auto !important;
-            }
-
-            /* Ajustamos los botones para que el icono y texto quepan perfecto */
-            div[data-testid="column"]:nth-child(2) div.stButton > button,
-            div[data-testid="column"]:nth-child(3) div.stButton > button,
-            div[data-testid="column"]:nth-child(4) div.stButton > button {
-                width: 100% !important;
-                padding: 4px 2px !important;
-                font-size: 13px !important;
-                min-height: 42px !important;
-            }
-        }
+        /* TARJETAS DE DISEÑO */
+        .metric-card { background-color: #E8F5E9; padding: 18px; border-radius: 12px; border-left: 6px solid #2E7D32; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .stock-badge { background-color: #E8F5E9; color: #1B5E20; padding: 8px 14px; border-radius: 8px; font-weight: 600; display: inline-block; margin-bottom: 15px; border: 1px solid #C8E6C9; }
+        .deficit-alert-card { background-color: #FFEBEE; padding: 15px; border-radius: 10px; border-left: 6px solid #C62828; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
+        .surtible-alert-card { background-color: #E8F5E9; padding: 15px; border-radius: 10px; border-left: 6px solid #2E7D32; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
+        .por-pagar-card { background-color: #FFF8E1; padding: 15px; border-radius: 10px; border-left: 6px solid #F57F17; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
+        
+        /* Clase para corregir el margen de inputs junto a botones */
+        .alinear-input { height: 28px; }
+        @media (max-width: 768px) { .alinear-input { height: 26px; } }
     </style>
 """, unsafe_allow_html=True)
 
@@ -703,9 +676,8 @@ with pestana2:
             
             st.markdown("---")
             
+            # --- RENDERIZADO AISLADO PARA EVITAR APILAMIENTO ---
             for idx, ped in enumerate(pendientes_visibles):
-                col_info, col_btn_pagado, col_btn_fiado, col_btn_cancel = st.columns([3.5, 1.5, 1.5, 1.2])
-                
                 estado_ped = ped.get('Estado')
                 prod_ped = str(ped.get("Producto", ""))
                 cant_ped = float(str(ped.get("Cantidad", 0)).replace(",", ""))
@@ -725,8 +697,14 @@ with pestana2:
                 elif estado_ped == "Déficit":
                     estado_lbl = "🟢 Listo" if stock_disponible >= cant_ped else "🚨 Déficit"
                 
-                with col_info:
-                    st.markdown(f"**👤 {cli_clean}** {desc_badge} \n🛍️ **{prod_ped}** — Cantidad: **{cant_ped:g}** [{estado_lbl}] \n<span style='color: gray; font-size: 11px;'>ID: {ped.get('ID')} | Fecha: {ped.get('Fecha')}</span>", unsafe_allow_html=True)
+                # 1. TEXTO LIBRE (fuera de columnas para que siempre esté arriba)
+                st.markdown(f"""
+                    <div style="line-height: 1.6; margin-bottom: 6px; padding-left: 4px;">
+                        <b>👤 {cli_clean}</b> {desc_badge} <br>
+                        🛍️ <b>{prod_ped}</b> — Cantidad: <b>{cant_ped:g}</b> <br>
+                        [{estado_lbl}] <span style='color: gray; font-size: 11px;'>ID: {ped.get('ID')} | Fecha: {ped.get('Fecha')}</span>
+                    </div>
+                """, unsafe_allow_html=True)
                 
                 def procesar_entrega(nuevo_estado):
                     ped_id_str = str(ped.get("ID"))
@@ -805,6 +783,9 @@ with pestana2:
                         st.cache_data.clear()
                         st.rerun()
 
+                # 2. FILA EXCLUSIVA DE 3 BOTONES (el CSS forzará que estos nunca se apilen)
+                col_btn_pagado, col_btn_fiado, col_btn_cancel = st.columns(3)
+                
                 with col_btn_pagado:
                     if estado_ped == "Déficit" and stock_disponible <= 0:
                         st.button("⏳ Sin Stock", key=f"entregar_pag_{ped.get('ID')}_{idx}", disabled=True)
@@ -824,15 +805,17 @@ with pestana2:
                         st.session_state[f"cancel_mode_{ped.get('ID')}"] = True
                         st.rerun()
 
+                # Panel de cancelación 
                 if st.session_state.get(f"cancel_mode_{ped.get('ID')}", False):
                     st.markdown(f"""
-                        <div style="background-color: #FFEBEE; padding: 14px; border-radius: 10px; border-left: 5px solid #C62828; margin-top: 10px; margin-bottom: 10px;">
-                            <b>⚙️ Opciones de cancelación para {cli_clean}:</b> Elige si deseas restar solo algunas piezas o cancelar el pedido completo.
+                        <div style="background-color: #FFEBEE; padding: 14px; border-radius: 10px; border-left: 5px solid #C62828; margin-top: 15px; margin-bottom: 10px;">
+                            <b>⚙️ Opciones de cancelación para {cli_clean}:</b>
                         </div>
                     """, unsafe_allow_html=True)
                     
-                    col_c_num, col_c_parc, col_c_tot, col_c_cerrar = st.columns([2.2, 1.8, 1.8, 1.2])
-                    with col_c_num:
+                    # Dividimos las opciones de cancelación en dos filas para que no se aplasten en celular
+                    cc1, cc2 = st.columns(2)
+                    with cc1:
                         cant_a_cancelar = st.number_input(
                             "Piezas a restar:", 
                             min_value=1.0, 
@@ -841,8 +824,8 @@ with pestana2:
                             step=1.0, 
                             key=f"num_cancel_parcial_{ped.get('ID')}_{idx}"
                         )
-                    with col_c_parc:
-                        st.markdown('<div class="espacio-desktop"></div>', unsafe_allow_html=True)
+                    with cc2:
+                        st.markdown('<div class="alinear-input"></div>', unsafe_allow_html=True)
                         if st.button("📉 Aplicar Parcial", key=f"btn_parcial_{ped.get('ID')}_{idx}"):
                             ped_id_str = str(ped.get("ID"))
                             try:
@@ -897,8 +880,8 @@ with pestana2:
                                 st.cache_data.clear()
                                 st.rerun()
 
-                    with col_c_tot:
-                        st.markdown('<div class="espacio-desktop"></div>', unsafe_allow_html=True)
+                    cc3, cc4 = st.columns(2)
+                    with cc3:
                         if st.button("❌ Cancelar Todo", key=f"btn_todo_{ped.get('ID')}_{idx}"):
                             ped_id_str = str(ped.get("ID"))
                             try:
@@ -937,8 +920,7 @@ with pestana2:
                                 st.cache_data.clear()
                                 st.rerun()
 
-                    with col_c_cerrar:
-                        st.markdown('<div class="espacio-desktop"></div>', unsafe_allow_html=True)
+                    with cc4:
                         if st.button("↩️ Volver", key=f"btn_cerrar_{ped.get('ID')}_{idx}"):
                             st.session_state[f"cancel_mode_{ped.get('ID')}"] = False
                             st.rerun()
@@ -1045,19 +1027,17 @@ with pestana2:
             col_pdf_c, col_tot_c = st.columns([1, 1])
             with col_pdf_c:
                 st.download_button(
-                    label="📄 Descargar Cuentas por Cobrar en PDF",
+                    label="📄 Descargar Cuentas por Cobrar",
                     data=pdf_bytes_cobrar,
                     file_name=f"cuentas_por_cobrar_{datetime.now().strftime('%d-%m-%Y')}.pdf",
                     mime="application/pdf"
                 )
             with col_tot_c:
-                st.markdown(f"<h3 style='text-align: right; margin-top: 0; color: #F57F17;'>Total Fiado por Cobrar: ${gran_total_por_cobrar:,.2f}</h3>", unsafe_allow_html=True)
+                st.markdown(f"<h3 style='text-align: right; margin-top: 0; color: #F57F17;'>Total Fiado: ${gran_total_por_cobrar:,.2f}</h3>", unsafe_allow_html=True)
 
             st.markdown("---")
 
             for idx, ped in enumerate(pedidos_por_pagar):
-                col_info_c, col_btn_cobrar, col_btn_cancel_c = st.columns([4.2, 1.8, 1.5])
-                
                 prod_ped = str(ped.get("Producto", ""))
                 cant_ped = float(str(ped.get("Cantidad", 0)).replace(",", ""))
                 
@@ -1075,18 +1055,20 @@ with pestana2:
                 precio_final = p_unitario * (1.0 - (desc_val / 100.0))
                 total_deuda = cant_ped * precio_final
                 
-                with col_info_c:
-                    st.markdown(f"""
-                        <div class="por-pagar-card">
-                            <b>👤 Cliente:</b> {cli_clean} {desc_badge} <br>
-                            <b>🛍️ Producto:</b> {prod_ped} — Cantidad: <b>{cant_ped:g}</b> <br>
-                            <b>💰 Monto Pendiente:</b> <span style="color:#C62828; font-weight:bold;">${total_deuda:,.2f}</span> <br>
-                            <span style='color: gray; font-size: 11px;'>ID: {ped.get('ID')} | Fecha de entrega: {ped.get('Fecha')}</span>
-                        </div>
-                    """, unsafe_allow_html=True)
+                # 1. TARJETA DE TEXTO ARRIBA
+                st.markdown(f"""
+                    <div class="por-pagar-card" style="margin-bottom: 8px;">
+                        <b>👤 Cliente:</b> {cli_clean} {desc_badge} <br>
+                        <b>🛍️ Producto:</b> {prod_ped} — Cantidad: <b>{cant_ped:g}</b> <br>
+                        <b>💰 Monto Pendiente:</b> <span style="color:#C62828; font-weight:bold;">${total_deuda:,.2f}</span> <br>
+                        <span style='color: gray; font-size: 11px;'>ID: {ped.get('ID')} | Fecha de entrega: {ped.get('Fecha')}</span>
+                    </div>
+                """, unsafe_allow_html=True)
+                
+                # 2. BOTONES ALINEADOS ABAJO
+                col_btn_cobrar, col_btn_cancel_c = st.columns(2)
                 
                 with col_btn_cobrar:
-                    st.markdown('<div class="espacio-desktop"></div>', unsafe_allow_html=True)
                     if st.button("💰 Marcar como Pagado", key=f"cobrar_{ped.get('ID')}_{idx}"):
                         ped_id_str = str(ped.get("ID"))
                         try:
@@ -1132,7 +1114,6 @@ with pestana2:
                             st.rerun()
 
                 with col_btn_cancel_c:
-                    st.markdown('<div class="espacio-desktop"></div>', unsafe_allow_html=True)
                     if st.button("❌ Cancelar", key=f"cancelar_cobro_{ped.get('ID')}_{idx}"):
                         ped_id_str = str(ped.get("ID"))
                         try:
@@ -1245,7 +1226,7 @@ with pestana3:
 
         pdf_bytes_hist = generar_pdf_historial(registros_h)
         st.download_button(
-            label="📄 Descargar Historial en PDF",
+            label="📄 Descargar Historial",
             data=pdf_bytes_hist,
             file_name=f"reporte_historial_{datetime.now().strftime('%d-%m-%Y')}.pdf",
             mime="application/pdf"
@@ -1441,7 +1422,7 @@ with pestana4:
 
         pdf_bytes_res = generar_pdf_resurtido(lista_resurtido, gran_total_inversion)
         st.download_button(
-            label="📄 Descargar Reporte de Resurtido en PDF",
+            label="📄 Descargar Resurtido PDF",
             data=pdf_bytes_res,
             file_name=f"reporte_resurtido_{datetime.now().strftime('%d-%m-%Y')}.pdf",
             mime="application/pdf"
