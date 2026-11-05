@@ -53,76 +53,72 @@ st.markdown("""
             background-color: #1B5E20 !important;
         }
 
+        div[class*="cancelar"] > button {
+            background-color: #C62828 !important;
+            box-shadow: 0 4px 10px rgba(198, 40, 40, 0.3) !important;
+        }
+        div[class*="cancelar"] > button:hover {
+            background-color: #B71C1C !important;
+        }
+
         .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p {
             font-size: 15px;
         }
         
-        .metric-card {
-            background-color: #E8F5E9;
-            padding: 18px;
+        .metric-card, .stock-badge, .deficit-alert-card, .surtible-alert-card, .por-pagar-card {
             border-radius: 12px;
-            border-left: 6px solid #2E7D32;
             margin-bottom: 15px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.04);
         }
+        .metric-card { background-color: #E8F5E9; padding: 18px; border-left: 6px solid #2E7D32; }
+        .stock-badge { background-color: #E8F5E9; color: #1B5E20; padding: 8px 14px; display: inline-block; border: 1px solid #C8E6C9; }
+        .deficit-alert-card { background-color: #FFEBEE; padding: 15px; border-left: 6px solid #C62828; }
+        .surtible-alert-card { background-color: #E8F5E9; padding: 15px; border-left: 6px solid #2E7D32; }
+        .por-pagar-card { background-color: #FFF8E1; padding: 15px; border-left: 6px solid #F57F17; }
 
-        .stock-badge {
-            background-color: #E8F5E9;
-            color: #1B5E20;
-            padding: 8px 14px;
-            border-radius: 8px;
-            font-weight: 600;
-            display: inline-block;
-            margin-bottom: 15px;
-            border: 1px solid #C8E6C9;
+        /* Clase para empujar botones en computadora, pero desaparecer en celular */
+        .espacio-desktop {
+            height: 28px;
         }
 
-        .deficit-alert-card {
-            background-color: #FFEBEE;
-            padding: 15px;
-            border-radius: 10px;
-            border-left: 6px solid #C62828;
-            margin-bottom: 12px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
-        }
-
-        .surtible-alert-card {
-            background-color: #E8F5E9;
-            padding: 15px;
-            border-radius: 10px;
-            border-left: 6px solid #2E7D32;
-            margin-bottom: 12px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
-        }
-
-        .por-pagar-card {
-            background-color: #FFF8E1;
-            padding: 15px;
-            border-radius: 10px;
-            border-left: 6px solid #F57F17;
-            margin-bottom: 12px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
-        }
-
-        /* Diseño compacto y optimizado para teléfonos celulares (botones lado a lado) */
+        /* 📱 DISEÑO MÓVIL FORZADO EXACTO A LA MAQUETA */
         @media (max-width: 768px) {
+            /* Escondemos los espacios en blanco en móvil para que no se descuadre */
+            .espacio-desktop {
+                display: none !important;
+            }
+
+            /* Permitimos que el bloque de columnas envuelva su contenido */
             div[data-testid="stHorizontalBlock"] {
-                display: flex !important;
-                flex-direction: row !important;
-                align-items: center !important;
+                flex-wrap: wrap !important;
+                gap: 5px !important;
             }
-            div[data-testid="column"] {
-                width: auto !important;
-                flex: 1 !important;
+            
+            /* 1) La primera columna (El texto/información) ocupará toda la pantalla arriba */
+            div[data-testid="column"]:nth-child(1) {
+                min-width: 100% !important;
+                max-width: 100% !important;
+                flex: 0 0 100% !important;
+                margin-bottom: 8px !important;
+            }
+            
+            /* 2) Las columnas 2, 3 y 4 (Los Botones) compartirán equitativamente la fila de abajo */
+            div[data-testid="column"]:nth-child(2),
+            div[data-testid="column"]:nth-child(3),
+            div[data-testid="column"]:nth-child(4) {
                 min-width: 0 !important;
-                padding: 0 2px !important;
+                flex: 1 1 0% !important;
+                width: auto !important;
             }
-            div.stButton > button {
-                padding: 6px 4px !important;
-                font-size: 11px !important;
-                min-height: 32px !important;
-                border-radius: 6px !important;
+
+            /* Ajustamos los botones para que el icono y texto quepan perfecto */
+            div[data-testid="column"]:nth-child(2) div.stButton > button,
+            div[data-testid="column"]:nth-child(3) div.stButton > button,
+            div[data-testid="column"]:nth-child(4) div.stButton > button {
                 width: 100% !important;
+                padding: 4px 2px !important;
+                font-size: 13px !important;
+                min-height: 42px !important;
             }
         }
     </style>
@@ -185,7 +181,6 @@ def cargar_historial_cache():
     return hoja_hist.get_all_records()
 
 def reasignar_deficit_si_hay_stock(prod_nombre):
-    """Función para tomar automáticamente stock liberado y asignarlo a pedidos en déficit."""
     try:
         inv_actuales = hoja_inv.get_all_records()
         row_inv_idx = None
@@ -524,7 +519,6 @@ with pestana2:
         stock_por_producto[nombre_p] = st_val
         precio_por_producto[nombre_p] = p_vta
 
-    # SUBTAB 1: POR ENTREGAR
     with subtab1:
         st.markdown("Gestiona las entregas pendientes de tus clientes.")
         pendientes_activos = [p for p in pedidos_totales if p.get("Estado") in ["Por entregar", "Déficit"]]
@@ -830,7 +824,6 @@ with pestana2:
                         st.session_state[f"cancel_mode_{ped.get('ID')}"] = True
                         st.rerun()
 
-                # Panel condicional que aparece ÚNICAMENTE al oprimir el botón "❌ Cancelar"
                 if st.session_state.get(f"cancel_mode_{ped.get('ID')}", False):
                     st.markdown(f"""
                         <div style="background-color: #FFEBEE; padding: 14px; border-radius: 10px; border-left: 5px solid #C62828; margin-top: 10px; margin-bottom: 10px;">
@@ -849,7 +842,7 @@ with pestana2:
                             key=f"num_cancel_parcial_{ped.get('ID')}_{idx}"
                         )
                     with col_c_parc:
-                        st.markdown("<br>", unsafe_allow_html=True)
+                        st.markdown('<div class="espacio-desktop"></div>', unsafe_allow_html=True)
                         if st.button("📉 Aplicar Parcial", key=f"btn_parcial_{ped.get('ID')}_{idx}"):
                             ped_id_str = str(ped.get("ID"))
                             try:
@@ -905,7 +898,7 @@ with pestana2:
                                 st.rerun()
 
                     with col_c_tot:
-                        st.markdown("<br>", unsafe_allow_html=True)
+                        st.markdown('<div class="espacio-desktop"></div>', unsafe_allow_html=True)
                         if st.button("❌ Cancelar Todo", key=f"btn_todo_{ped.get('ID')}_{idx}"):
                             ped_id_str = str(ped.get("ID"))
                             try:
@@ -945,7 +938,7 @@ with pestana2:
                                 st.rerun()
 
                     with col_c_cerrar:
-                        st.markdown("<br>", unsafe_allow_html=True)
+                        st.markdown('<div class="espacio-desktop"></div>', unsafe_allow_html=True)
                         if st.button("↩️ Volver", key=f"btn_cerrar_{ped.get('ID')}_{idx}"):
                             st.session_state[f"cancel_mode_{ped.get('ID')}"] = False
                             st.rerun()
@@ -954,7 +947,6 @@ with pestana2:
         else:
             st.info("No hay pedidos pendientes por entregar en este momento.")
 
-    # SUBTAB 2: CUENTAS POR COBRAR (POR PAGAR)
     with subtab2:
         st.markdown("Lista de artículos que ya fueron entregados al cliente pero están **pendientes de cobro**.")
         pedidos_por_pagar = [p for p in pedidos_totales if p.get("Estado") == "Por pagar"]
@@ -1094,7 +1086,7 @@ with pestana2:
                     """, unsafe_allow_html=True)
                 
                 with col_btn_cobrar:
-                    st.markdown("<br>", unsafe_allow_html=True)
+                    st.markdown('<div class="espacio-desktop"></div>', unsafe_allow_html=True)
                     if st.button("💰 Marcar como Pagado", key=f"cobrar_{ped.get('ID')}_{idx}"):
                         ped_id_str = str(ped.get("ID"))
                         try:
@@ -1140,7 +1132,7 @@ with pestana2:
                             st.rerun()
 
                 with col_btn_cancel_c:
-                    st.markdown("<br>", unsafe_allow_html=True)
+                    st.markdown('<div class="espacio-desktop"></div>', unsafe_allow_html=True)
                     if st.button("❌ Cancelar", key=f"cancelar_cobro_{ped.get('ID')}_{idx}"):
                         ped_id_str = str(ped.get("ID"))
                         try:
