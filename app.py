@@ -31,69 +31,56 @@ st.markdown("""
             font-weight: 600;
         }
 
-        /* 🚀 REGLA ESTRICTA PARA FORZAR BOTONES EN HORIZONTAL EN CELULARES */
-        @media (max-width: 768px) {
-            /* Obliga a TODOS los contenedores de columnas a ser filas inquebrantables */
-            div[data-testid="stHorizontalBlock"] {
-                display: flex !important;
-                flex-direction: row !important;
-                flex-wrap: nowrap !important; 
-                gap: 6px !important; /* Espacio mínimo entre botones */
-            }
-            
-            /* Obliga a cada columna interna a compartir el espacio a lo ancho */
-            div[data-testid="column"] {
-                width: 100% !important;
-                min-width: 0 !important;
-                flex: 1 1 0px !important;
-                padding: 0 !important;
-            }
-        }
-
-        /* 🎛️ ESTILOS COMPACTOS PARA LOS BOTONES */
-        div.stButton > button {
+        /* 🎛️ ESTILOS NATIVOS Y SEGUROS PARA LOS BOTONES */
+        button[kind="secondary"], button[kind="formSubmit"] {
             background-color: #2E7D32 !important;
             color: #FFFFFF !important;
-            font-family: 'Montserrat', sans-serif !important;
-            font-weight: 600 !important;
             border: none !important;
-            border-radius: 6px !important;
-            box-shadow: 0 4px 10px rgba(46, 125, 50, 0.3) !important;
-            transition: 0.3s !important;
-            
-            /* Ajustes críticos para tamaño en celular */
+            border-radius: 8px !important;
+            font-weight: 600 !important;
+            font-family: 'Montserrat', sans-serif !important;
+            box-shadow: 0 4px 6px rgba(46, 125, 50, 0.2) !important;
+            min-height: 42px !important;
+            height: auto !important;
             width: 100% !important;
-            padding: 2px 2px !important;
-            min-height: 38px !important;
-            height: 38px !important;
-            font-size: 13px !important;
-            line-height: 1.2 !important;
-            white-space: nowrap !important; /* Evita que el texto del botón se parta */
+            padding: 8px 12px !important;
+            transition: 0.2s !important;
         }
-        
-        div.stButton > button * {
-            color: #FFFFFF !important;
-            background-color: transparent !important;
+        button[kind="secondary"]:hover, button[kind="formSubmit"]:hover {
+            background-color: #1B5E20 !important;
         }
 
-        div.stButton > button:hover {
-            background-color: #1B5E20 !important;
+        button[kind="primary"] {
+            background-color: #C62828 !important;
+            color: #FFFFFF !important;
+            border: none !important;
+            border-radius: 8px !important;
+            font-weight: 600 !important;
+            font-family: 'Montserrat', sans-serif !important;
+            box-shadow: 0 4px 6px rgba(198, 40, 40, 0.2) !important;
+            min-height: 42px !important;
+            height: auto !important;
+            width: 100% !important;
+            padding: 8px 12px !important;
+            transition: 0.2s !important;
+        }
+        button[kind="primary"]:hover {
+            background-color: #B71C1C !important;
+        }
+        
+        button[kind="secondary"] *, button[kind="primary"] *, button[kind="formSubmit"] * {
+            color: #FFFFFF !important;
         }
 
         .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p {
             font-size: 15px;
         }
         
-        /* TARJETAS DE DISEÑO */
+        /* TARJETAS DE DISEÑO LIMPIO */
         .metric-card { background-color: #E8F5E9; padding: 18px; border-radius: 12px; border-left: 6px solid #2E7D32; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
         .stock-badge { background-color: #E8F5E9; color: #1B5E20; padding: 8px 14px; border-radius: 8px; font-weight: 600; display: inline-block; margin-bottom: 15px; border: 1px solid #C8E6C9; }
         .deficit-alert-card { background-color: #FFEBEE; padding: 15px; border-radius: 10px; border-left: 6px solid #C62828; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
         .surtible-alert-card { background-color: #E8F5E9; padding: 15px; border-radius: 10px; border-left: 6px solid #2E7D32; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
-        .por-pagar-card { background-color: #FFF8E1; padding: 15px; border-radius: 10px; border-left: 6px solid #F57F17; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
-        
-        /* Clase para corregir el margen de inputs junto a botones */
-        .alinear-input { height: 28px; }
-        @media (max-width: 768px) { .alinear-input { height: 26px; } }
     </style>
 """, unsafe_allow_html=True)
 
@@ -676,7 +663,7 @@ with pestana2:
             
             st.markdown("---")
             
-            # --- RENDERIZADO AISLADO PARA EVITAR APILAMIENTO ---
+            # --- RENDERIZADO LIMPIO Y SEGURO (Nativo de Streamlit) ---
             for idx, ped in enumerate(pendientes_visibles):
                 estado_ped = ped.get('Estado')
                 prod_ped = str(ped.get("Producto", ""))
@@ -697,12 +684,13 @@ with pestana2:
                 elif estado_ped == "Déficit":
                     estado_lbl = "🟢 Listo" if stock_disponible >= cant_ped else "🚨 Déficit"
                 
-                # 1. TEXTO LIBRE (fuera de columnas para que siempre esté arriba)
+                # 1. TEXTO EN UNA TARJETA LIMPIA
                 st.markdown(f"""
-                    <div style="line-height: 1.6; margin-bottom: 6px; padding-left: 4px;">
-                        <b>👤 {cli_clean}</b> {desc_badge} <br>
+                    <div style="background-color: #FFFFFF; padding: 12px; border-radius: 10px; border-left: 5px solid #2E7D32; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 12px;">
+                        <b style="font-size: 15px;">👤 {cli_clean}</b> {desc_badge} <br>
                         🛍️ <b>{prod_ped}</b> — Cantidad: <b>{cant_ped:g}</b> <br>
-                        [{estado_lbl}] <span style='color: gray; font-size: 11px;'>ID: {ped.get('ID')} | Fecha: {ped.get('Fecha')}</span>
+                        <span style="color: #424242; font-weight: 500;">Estado: {estado_lbl}</span><br>
+                        <span style='color: gray; font-size: 11px;'>ID: {ped.get('ID')} | Fecha: {ped.get('Fecha')}</span>
                     </div>
                 """, unsafe_allow_html=True)
                 
@@ -783,7 +771,7 @@ with pestana2:
                         st.cache_data.clear()
                         st.rerun()
 
-                # 2. FILA EXCLUSIVA DE 3 BOTONES (el CSS forzará que estos nunca se apilen)
+                # 2. BOTONES EN COLUMNAS (Se apilarán bonito en móvil y se verán juntos en PC)
                 col_btn_pagado, col_btn_fiado, col_btn_cancel = st.columns(3)
                 
                 with col_btn_pagado:
@@ -801,31 +789,27 @@ with pestana2:
                             procesar_entrega("Por pagar")
 
                 with col_btn_cancel:
-                    if st.button("❌ Cancelar", key=f"cancelar_ped_{ped.get('ID')}_{idx}"):
+                    # Usamos type="primary" de Streamlit para que nuestra CSS lo pinte rojo
+                    if st.button("❌ Cancelar", key=f"cancelar_ped_{ped.get('ID')}_{idx}", type="primary"):
                         st.session_state[f"cancel_mode_{ped.get('ID')}"] = True
                         st.rerun()
 
-                # Panel de cancelación 
+                # 3. PANEL DE CANCELACIÓN ORDENADO
                 if st.session_state.get(f"cancel_mode_{ped.get('ID')}", False):
                     st.markdown(f"""
-                        <div style="background-color: #FFEBEE; padding: 14px; border-radius: 10px; border-left: 5px solid #C62828; margin-top: 15px; margin-bottom: 10px;">
+                        <div style="background-color: #FFEBEE; padding: 12px; border-radius: 10px; border-left: 5px solid #C62828; margin-top: 10px; margin-bottom: 10px;">
                             <b>⚙️ Opciones de cancelación para {cli_clean}:</b>
                         </div>
                     """, unsafe_allow_html=True)
                     
-                    # Dividimos las opciones de cancelación en dos filas para que no se aplasten en celular
-                    cc1, cc2 = st.columns(2)
-                    with cc1:
+                    col_cant, col_btn_parc = st.columns(2)
+                    with col_cant:
                         cant_a_cancelar = st.number_input(
                             "Piezas a restar:", 
-                            min_value=1.0, 
-                            max_value=cant_ped, 
-                            value=min(1.0, cant_ped), 
-                            step=1.0, 
+                            min_value=1.0, max_value=cant_ped, value=min(1.0, cant_ped), step=1.0, 
                             key=f"num_cancel_parcial_{ped.get('ID')}_{idx}"
                         )
-                    with cc2:
-                        st.markdown('<div class="alinear-input"></div>', unsafe_allow_html=True)
+                    with col_btn_parc:
                         if st.button("📉 Aplicar Parcial", key=f"btn_parcial_{ped.get('ID')}_{idx}"):
                             ped_id_str = str(ped.get("ID"))
                             try:
@@ -874,15 +858,15 @@ with pestana2:
                                                 hoja_inv.update_cell(i + 2, col_st_idx, st_act + cant_a_cancelar)
                                                 break
                                         reasignar_deficit_si_hay_stock(prod_ped)
-                                    st.success(f"¡Pedido actualizado! Se redujeron **{cant_a_cancelar:g} unidades**. El pedido de **{cli_clean}** ahora es de **{nueva_cant:g} unidades** y conserva su turno.")
+                                    st.success(f"¡Pedido actualizado! Se redujeron **{cant_a_cancelar:g} unidades**. El pedido de **{cli_clean}** ahora es de **{nueva_cant:g} unidades**.")
                                 
                                 st.session_state[f"cancel_mode_{ped.get('ID')}"] = False
                                 st.cache_data.clear()
                                 st.rerun()
 
-                    cc3, cc4 = st.columns(2)
-                    with cc3:
-                        if st.button("❌ Cancelar Todo", key=f"btn_todo_{ped.get('ID')}_{idx}"):
+                    col_btn_todo, col_btn_volver = st.columns(2)
+                    with col_btn_todo:
+                        if st.button("❌ Cancelar Todo", key=f"btn_todo_{ped.get('ID')}_{idx}", type="primary"):
                             ped_id_str = str(ped.get("ID"))
                             try:
                                 cell = hoja_pedidos.find(ped_id_str)
@@ -920,7 +904,7 @@ with pestana2:
                                 st.cache_data.clear()
                                 st.rerun()
 
-                    with cc4:
+                    with col_btn_volver:
                         if st.button("↩️ Volver", key=f"btn_cerrar_{ped.get('ID')}_{idx}"):
                             st.session_state[f"cancel_mode_{ped.get('ID')}"] = False
                             st.rerun()
@@ -1057,15 +1041,15 @@ with pestana2:
                 
                 # 1. TARJETA DE TEXTO ARRIBA
                 st.markdown(f"""
-                    <div class="por-pagar-card" style="margin-bottom: 8px;">
-                        <b>👤 Cliente:</b> {cli_clean} {desc_badge} <br>
-                        <b>🛍️ Producto:</b> {prod_ped} — Cantidad: <b>{cant_ped:g}</b> <br>
-                        <b>💰 Monto Pendiente:</b> <span style="color:#C62828; font-weight:bold;">${total_deuda:,.2f}</span> <br>
+                    <div style="background-color: #FFF8E1; padding: 12px; border-radius: 10px; border-left: 5px solid #F57F17; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 12px;">
+                        <b style="font-size: 15px;">👤 {cli_clean}</b> {desc_badge} <br>
+                        🛍️ <b>{prod_ped}</b> — Cantidad: <b>{cant_ped:g}</b> <br>
+                        💰 <b>Monto Pendiente:</b> <span style="color:#C62828; font-weight:bold;">${total_deuda:,.2f}</span> <br>
                         <span style='color: gray; font-size: 11px;'>ID: {ped.get('ID')} | Fecha de entrega: {ped.get('Fecha')}</span>
                     </div>
                 """, unsafe_allow_html=True)
                 
-                # 2. BOTONES ALINEADOS ABAJO
+                # 2. BOTONES APILADOS NATURALMENTE
                 col_btn_cobrar, col_btn_cancel_c = st.columns(2)
                 
                 with col_btn_cobrar:
@@ -1114,7 +1098,7 @@ with pestana2:
                             st.rerun()
 
                 with col_btn_cancel_c:
-                    if st.button("❌ Cancelar", key=f"cancelar_cobro_{ped.get('ID')}_{idx}"):
+                    if st.button("❌ Cancelar", key=f"cancelar_cobro_{ped.get('ID')}_{idx}", type="primary"):
                         ped_id_str = str(ped.get("ID"))
                         try:
                             cell = hoja_pedidos.find(ped_id_str)
@@ -1454,7 +1438,7 @@ with pestana5:
             precio_ven = st.number_input("Precio de Venta", min_value=0.0, step=1.0, value=0.0)
             categoria = st.text_input("Categoría")
             
-        submitted = st.form_submit_button("Guardar Producto en la Nube")
+        submitted = st.form_submit_button("Guardar Producto en la Nube", type="secondary")
         if submitted:
             if not nuevo_nombre.strip():
                 st.error("¡El nombre del producto es obligatorio!")
