@@ -117,15 +117,16 @@ except Exception as e:
     st.error(f"Error al conectar con Google Sheets: {e}")
     st.stop()
 
-@st.cache_data(ttl=120)
+# Caché extendido a 600 segundos (10 min) para evitar sobrepasar el límite de peticiones de Google API (Error 429)
+@st.cache_data(ttl=600)
 def cargar_inventario_cache():
     return hoja_inv.get_all_records()
 
-@st.cache_data(ttl=120)
+@st.cache_data(ttl=600)
 def cargar_pedidos_cache():
     return hoja_pedidos.get_all_records()
 
-@st.cache_data(ttl=120)
+@st.cache_data(ttl=600)
 def cargar_historial_cache():
     return hoja_hist.get_all_records()
 
@@ -487,7 +488,6 @@ with pestana2:
                 nombre_pdf = f"reporte_pedidos_{datetime.now().strftime('%d-%m-%Y')}.pdf"
                 label_btn_pdf = "📄 Descargar Reporte de Pendientes PDF"
 
-            # 🎨 ESTILOS UNIFICADOS Y ANCHOS CORREGIDOS (PDF PEDIDOS)
             def generar_pdf_pedidos(pendientes, titulo_custom):
                 buffer = io.BytesIO()
                 doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=75, bottomMargin=40)
@@ -555,7 +555,6 @@ with pestana2:
                     Paragraph(f"${gran_total_pedidos:,.2f}", total_val_style)
                 ])
                 
-                # Anchos exactos ajustados para evitar que los números o Cant. se partan
                 t = Table(data, colWidths=[55, 90, 110, 38, 70, 50, 42, 57])
                 t.setStyle(TableStyle([
                     ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#4A1525')),
@@ -567,7 +566,7 @@ with pestana2:
                     ('ROWBACKGROUNDS', (0,1), (-1,-2), [colors.HexColor('#FFFFFF'), colors.HexColor('#FAFAFA')]),
                     ('GRID', (0,0), (-1,-2), 0.5, colors.HexColor('#E0E0E0')),
                     ('SPAN', (0, -1), (6, -1)),
-                    ('BACKGROUND', (0,-1), (-1,-1), colors.HexColor('#FDF3E7')), # Tono arena institucional
+                    ('BACKGROUND', (0,-1), (-1,-1), colors.HexColor('#FDF3E7')),
                     ('GRID', (0,-1), (-1,-1), 0.5, colors.HexColor('#E6D7C3')),
                 ]))
                 elements.append(t)
@@ -896,7 +895,6 @@ with pestana2:
         pedidos_por_pagar = [p for p in pedidos_totales if p.get("Estado") == "Por pagar"]
         
         if pedidos_por_pagar:
-            # 🎨 ESTILOS UNIFICADOS Y ANCHOS CORREGIDOS (PDF CUENTAS POR COBRAR)
             def generar_pdf_cuentas_por_cobrar(lista_por_pagar):
                 buffer = io.BytesIO()
                 doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=75, bottomMargin=40)
@@ -1095,7 +1093,7 @@ with pestana2:
                             inv_actuales = cargar_inventario_cache()
                             for i, inv_item in enumerate(inv_actuales):
                                 if str(inv_item.get("Nombre del Producto", "")).strip() == prod_ped:
-                                    st_act = float(str(inv_item.get("Cantidad in Stock", 0)).replace(",", ""))
+                                    st_act = float(str(inv_item.get("Cantidad en Stock", 0)).replace(",", ""))
                                     col_st_idx = 2
                                     for idx_h, h_name in enumerate(headers):
                                         if "stock" in h_name.lower():
