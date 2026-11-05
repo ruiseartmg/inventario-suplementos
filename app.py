@@ -112,6 +112,27 @@ st.markdown("""
             margin-bottom: 12px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.04);
         }
+
+        /* Diseño compacto y optimizado para teléfonos celulares */
+        @media (max-width: 768px) {
+            div[data-testid="stHorizontalBlock"] {
+                display: flex !important;
+                flex-direction: row !important;
+                align-items: center !important;
+            }
+            div[data-testid="column"] {
+                width: auto !important;
+                flex: 1 !important;
+                min-width: 0 !important;
+                padding: 0 2px !important;
+            }
+            div.stButton > button {
+                padding: 4px 6px !important;
+                font-size: 11px !important;
+                min-height: 30px !important;
+                border-radius: 6px !important;
+            }
+        }
     </style>
 """, unsafe_allow_html=True)
 
