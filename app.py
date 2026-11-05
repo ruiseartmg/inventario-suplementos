@@ -517,7 +517,30 @@ with pestana2:
         pendientes_activos = [p for p in pedidos_totales if p.get("Estado") in ["Por entregar", "Déficit"]]
         
         if pendientes_activos:
-            def generar_pdf_pedidos(pendientes):
+            clientes_limpios_set = set()
+            for p in pendientes_activos:
+                c_raw = p.get("Cliente", "")
+                c_clean = c_raw.split("(Desc.")[0].strip() if "(Desc." in c_raw else c_raw.strip()
+                clientes_limpios_set.add(c_clean)
+                
+            clientes_disponibles = sorted(list(clientes_limpios_set))
+            filtro_cliente = st.selectbox("🔍 Filtrar por Cliente específico:", ["-- Todos los Clientes --"] + clientes_disponibles)
+            
+            if filtro_cliente != "-- Todos los Clientes --":
+                pendientes_visibles = [
+                    p for p in pendientes_activos 
+                    if (p.get("Cliente", "").split("(Desc.")[0].strip() if "(Desc." in p.get("Cliente", "") else p.get("Cliente", "").strip()) == filtro_cliente
+                ]
+                titulo_pdf = f"Nature’s Select - Nota de Pedido: {filtro_cliente}"
+                nombre_pdf = f"nota_pedido_{filtro_cliente.lower().replace(' ', '_')}_{datetime.now().strftime('%d-%m-%Y')}.pdf"
+                label_btn_pdf = f"📄 Descargar Nota de Pedido de {filtro_cliente} PDF"
+            else:
+                pendientes_visibles = pendientes_activos
+                titulo_pdf = "Nature’s Select - Reporte de Pedidos Pendientes por Entregar"
+                nombre_pdf = f"reporte_pedidos_{datetime.now().strftime('%d-%m-%Y')}.pdf"
+                label_btn_pdf = "📄 Descargar Reporte de Pendientes PDF"
+
+            def generar_pdf_pedidos(pendientes, titulo_custom):
                 buffer = io.BytesIO()
                 doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=75, bottomMargin=40)
                 elements = []
@@ -528,7 +551,7 @@ with pestana2:
                 cell_style = ParagraphStyle('CellStyle', parent=styles['Normal'], fontSize=8, leading=10, alignment=1)
                 cell_left = ParagraphStyle('CellLeft', parent=styles['Normal'], fontSize=8, leading=10, alignment=0)
                 
-                elements.append(Paragraph("Nature’s Select - Reporte de Pedidos Pendientes por Entregar", title_style))
+                elements.append(Paragraph(titulo_custom, title_style))
                 elements.append(Spacer(1, 10))
                 
                 data = [[Paragraph("Fecha", header_style), Paragraph("Cliente", header_style), Paragraph("Producto", header_style), Paragraph("Cant.", header_style), Paragraph("Estado", header_style), Paragraph("Precio", header_style), Paragraph("Desc.", header_style), Paragraph("Total", header_style)]]
@@ -602,10 +625,10 @@ with pestana2:
                 buffer.seek(0)
                 return buffer.getvalue()
 
-            pdf_bytes = generar_pdf_pedidos(pendientes_activos)
+            pdf_bytes = generar_pdf_pedidos(pendientes_visibles, titulo_pdf)
             
             gran_total_interfaz = 0.0
-            for p in pendientes_activos:
+            for p in pendientes_visibles:
                 p_prod = str(p.get("Producto", ""))
                 try: p_cant = float(str(p.get("Cantidad", 0)).replace(",", ""))
                 except: p_cant = 0.0
@@ -617,9 +640,9 @@ with pestana2:
             col_descarga, col_total = st.columns([1, 1])
             with col_descarga:
                 st.download_button(
-                    label="📄 Descargar Reporte de Pendientes PDF",
+                    label=label_btn_pdf,
                     data=pdf_bytes,
-                    file_name=f"reporte_pedidos_{datetime.now().strftime('%d-%m-%Y')}.pdf",
+                    file_name=nombre_pdf,
                     mime="application/pdf"
                 )
             with col_total:
@@ -629,7 +652,7 @@ with pestana2:
 
             pedidos_deficit_real = []
             pedidos_deficit_surtible = []
-            for ped in pendientes_activos:
+            for ped in pendientes_visibles:
                 if ped.get("Estado") == "Déficit":
                     p_nom = ped.get("Producto")
                     c_ped = float(str(ped.get("Cantidad", 0)).replace(",", ""))
@@ -670,25 +693,10 @@ with pestana2:
                         </div>
                     """, unsafe_allow_html=True)
                 st.markdown("---")
-
-            clientes_limpios_set = set()
-            for p in pendientes_activos:
-                c_raw = p.get("Cliente", "")
-                c_clean = c_raw.split("(Desc.")[0].strip() if "(Desc." in c_raw else c_raw.strip()
-                clientes_limpios_set.add(c_clean)
-                
-            clientes_disponibles = sorted(list(clientes_limpios_set))
-            filtro_cliente = st.selectbox("🔍 Filtrar por Cliente específico:", ["-- Todos los Clientes --"] + clientes_disponibles)
-            
-            if filtro_cliente != "-- Todos los Clientes --":
-                pendientes_activos = [
-                    p for p in pendientes_activos 
-                    if (p.get("Cliente", "").split("(Desc.")[0].strip() if "(Desc." in p.get("Cliente", "") else p.get("Cliente", "").strip()) == filtro_cliente
-                ]
             
             st.markdown("---")
             
-            for idx, ped in enumerate(pendientes_activos):
+            for idx, ped in enumerate(pendientes_visibles):
                 col_info, col_btn_pagado, col_btn_fiado, col_btn_cancel = st.columns([3.5, 1.5, 1.5, 1.2])
                 
                 estado_ped = ped.get('Estado')
