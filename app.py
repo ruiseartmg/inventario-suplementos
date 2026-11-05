@@ -487,15 +487,15 @@ with pestana2:
                 nombre_pdf = f"reporte_pedidos_{datetime.now().strftime('%d-%m-%Y')}.pdf"
                 label_btn_pdf = "📄 Descargar Reporte de Pendientes PDF"
 
-            # 🎨 ESTILOS UNIFICADOS INSTITUCIONALES PARA REPORTES PDF
+            # 🎨 ESTILOS UNIFICADOS INSTITUCIONALES Y ANCHOS CORREGIDOS (PDF)
             def generar_pdf_pedidos(pendientes, titulo_custom):
                 buffer = io.BytesIO()
                 doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=75, bottomMargin=40)
                 elements = []
                 
                 styles = getSampleStyleSheet()
-                title_style = ParagraphStyle('TitleStyle', parent=styles['Heading1'], fontSize=15, textColor=colors.HexColor('#4A1525'), fontName='Helvetica-Bold', spaceAfter=15, alignment=1)
-                header_style = ParagraphStyle('HeaderStyle', parent=styles['Normal'], fontSize=9, textColor=colors.whitesmoke, fontName='Helvetica-Bold', alignment=1)
+                title_style = ParagraphStyle('TitleStyle', parent=styles['Heading1'], fontSize=14, textColor=colors.HexColor('#4A1525'), fontName='Helvetica-Bold', spaceAfter=15, alignment=1)
+                header_style = ParagraphStyle('HeaderStyle', parent=styles['Normal'], fontSize=8.5, textColor=colors.whitesmoke, fontName='Helvetica-Bold', alignment=1)
                 cell_style = ParagraphStyle('CellStyle', parent=styles['Normal'], fontSize=8, leading=10, alignment=1, fontName='Helvetica')
                 cell_left = ParagraphStyle('CellLeft', parent=styles['Normal'], fontSize=8, leading=10, alignment=0, fontName='Helvetica')
                 
@@ -546,8 +546,8 @@ with pestana2:
                         Paragraph(f"${p_total:,.2f}", cell_style)
                     ])
                     
-                total_row_style = ParagraphStyle('TotalRow', parent=styles['Normal'], fontSize=8, leading=10, alignment=2, fontName='Helvetica-Bold', textColor=colors.HexColor('#4A1525'))
-                total_val_style = ParagraphStyle('TotalVal', parent=styles['Normal'], fontSize=8, leading=10, alignment=1, fontName='Helvetica-Bold', textColor=colors.HexColor('#4A1525'))
+                total_row_style = ParagraphStyle('TotalRow', parent=styles['Normal'], fontSize=8.5, leading=10, alignment=2, fontName='Helvetica-Bold', textColor=colors.HexColor('#4A1525'))
+                total_val_style = ParagraphStyle('TotalVal', parent=styles['Normal'], fontSize=8.5, leading=10, alignment=1, fontName='Helvetica-Bold', textColor=colors.HexColor('#4A1525'))
                 
                 data.append([
                     Paragraph("Total Pendiente:", total_row_style),
@@ -555,7 +555,7 @@ with pestana2:
                     Paragraph(f"${gran_total_pedidos:,.2f}", total_val_style)
                 ])
                 
-                t = Table(data, colWidths=[55, 95, 110, 35, 75, 45, 35, 55])
+                t = Table(data, colWidths=[55, 90, 115, 32, 75, 48, 42, 45])
                 t.setStyle(TableStyle([
                     ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#4A1525')),
                     ('ALIGN', (0,0), (-1,-1), 'CENTER'),
@@ -566,8 +566,8 @@ with pestana2:
                     ('ROWBACKGROUNDS', (0,1), (-1,-2), [colors.HexColor('#FFFFFF'), colors.HexColor('#FAFAFA')]),
                     ('GRID', (0,0), (-1,-2), 0.5, colors.HexColor('#E0E0E0')),
                     ('SPAN', (0, -1), (6, -1)),
-                    ('BACKGROUND', (0,-1), (-1,-1), colors.HexColor('#F4ECF7')),
-                    ('GRID', (0,-1), (-1,-1), 0.5, colors.HexColor('#D1C4E9')),
+                    ('BACKGROUND', (0,-1), (-1,-1), colors.HexColor('#FDF3E7')),
+                    ('GRID', (0,-1), (-1,-1), 0.5, colors.HexColor('#E6D7C3')),
                 ]))
                 elements.append(t)
                 doc.build(elements, canvasmaker=NumberedCanvas)
@@ -966,8 +966,8 @@ with pestana2:
                     ('ROWBACKGROUNDS', (0,1), (-1,-2), [colors.HexColor('#FFFFFF'), colors.HexColor('#FAFAFA')]),
                     ('GRID', (0,0), (-1,-2), 0.5, colors.HexColor('#E0E0E0')),
                     ('SPAN', (0, -1), (5, -1)),
-                    ('BACKGROUND', (0,-1), (-1,-1), colors.HexColor('#F4ECF7')),
-                    ('GRID', (0,-1), (-1,-1), 0.5, colors.HexColor('#D1C4E9')),
+                    ('BACKGROUND', (0,-1), (-1,-1), colors.HexColor('#FDF3E7')),
+                    ('GRID', (0,-1), (-1,-1), 0.5, colors.HexColor('#E6D7C3')),
                 ]))
                 elements.append(t)
                 doc.build(elements, canvasmaker=NumberedCanvas)
@@ -1367,8 +1367,8 @@ with pestana4:
                 ('ROWBACKGROUNDS', (0,1), (-1,-2), [colors.HexColor('#FFFFFF'), colors.HexColor('#FAFAFA')]),
                 ('GRID', (0,0), (-1,-2), 0.5, colors.HexColor('#E0E0E0')),
                 ('SPAN', (0, -1), (5, -1)),
-                ('BACKGROUND', (0,-1), (-1,-1), colors.HexColor('#F4ECF7')),
-                ('GRID', (0,-1), (-1,-1), 0.5, colors.HexColor('#D1C4E9')),
+                ('BACKGROUND', (0,-1), (-1,-1), colors.HexColor('#FDF3E7')),
+                ('GRID', (0,-1), (-1,-1), 0.5, colors.HexColor('#E6D7C3')),
             ]))
             elements.append(t)
             doc.build(elements, canvasmaker=NumberedCanvas)
