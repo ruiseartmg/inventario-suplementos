@@ -31,56 +31,100 @@ st.markdown("""
             font-weight: 600;
         }
 
-        /* 🎛️ ESTILOS NATIVOS Y SEGUROS PARA LOS BOTONES */
-        button[kind="secondary"], button[kind="formSubmit"] {
+        /* Estilos principales para botones */
+        div.stButton > button {
             background-color: #2E7D32 !important;
             color: #FFFFFF !important;
+            font-family: 'Montserrat', sans-serif !important;
+            font-weight: 600;
             border: none !important;
             border-radius: 8px !important;
-            font-weight: 600 !important;
-            font-family: 'Montserrat', sans-serif !important;
-            box-shadow: 0 4px 6px rgba(46, 125, 50, 0.2) !important;
-            min-height: 42px !important;
-            height: auto !important;
-            width: 100% !important;
-            padding: 8px 12px !important;
-            transition: 0.2s !important;
-        }
-        button[kind="secondary"]:hover, button[kind="formSubmit"]:hover {
-            background-color: #1B5E20 !important;
-        }
-
-        button[kind="primary"] {
-            background-color: #C62828 !important;
-            color: #FFFFFF !important;
-            border: none !important;
-            border-radius: 8px !important;
-            font-weight: 600 !important;
-            font-family: 'Montserrat', sans-serif !important;
-            box-shadow: 0 4px 6px rgba(198, 40, 40, 0.2) !important;
-            min-height: 42px !important;
-            height: auto !important;
-            width: 100% !important;
-            padding: 8px 12px !important;
-            transition: 0.2s !important;
-        }
-        button[kind="primary"]:hover {
-            background-color: #B71C1C !important;
+            box-shadow: 0 4px 10px rgba(46, 125, 50, 0.3) !important;
+            transition: 0.3s !important;
         }
         
-        button[kind="secondary"] *, button[kind="primary"] *, button[kind="formSubmit"] * {
+        /* Quitar fondo blanco del texto dentro de cualquier botón */
+        div.stButton > button * {
+            background-color: transparent !important;
             color: #FFFFFF !important;
+        }
+
+        div.stButton > button:hover {
+            background-color: #1B5E20 !important;
         }
 
         .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p {
             font-size: 15px;
         }
         
-        /* TARJETAS DE DISEÑO LIMPIO */
-        .metric-card { background-color: #E8F5E9; padding: 18px; border-radius: 12px; border-left: 6px solid #2E7D32; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
-        .stock-badge { background-color: #E8F5E9; color: #1B5E20; padding: 8px 14px; border-radius: 8px; font-weight: 600; display: inline-block; margin-bottom: 15px; border: 1px solid #C8E6C9; }
-        .deficit-alert-card { background-color: #FFEBEE; padding: 15px; border-radius: 10px; border-left: 6px solid #C62828; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
-        .surtible-alert-card { background-color: #E8F5E9; padding: 15px; border-radius: 10px; border-left: 6px solid #2E7D32; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
+        .metric-card {
+            background-color: #E8F5E9;
+            padding: 18px;
+            border-radius: 12px;
+            border-left: 6px solid #2E7D32;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .stock-badge {
+            background-color: #E8F5E9;
+            color: #1B5E20;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 15px;
+            border: 1px solid #C8E6C9;
+        }
+
+        .deficit-alert-card {
+            background-color: #FFEBEE;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 6px solid #C62828;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+        }
+
+        .surtible-alert-card {
+            background-color: #E8F5E9;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 6px solid #2E7D32;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+        }
+
+        .por-pagar-card {
+            background-color: #FFF8E1;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 6px solid #F57F17;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+        }
+
+        /* Diseño compacto y optimizado para teléfonos celulares (botones lado a lado) */
+        @media (max-width: 768px) {
+            div[data-testid="stHorizontalBlock"] {
+                display: flex !important;
+                flex-direction: row !important;
+                align-items: center !important;
+            }
+            div[data-testid="column"] {
+                width: auto !important;
+                flex: 1 !important;
+                min-width: 0 !important;
+                padding: 0 2px !important;
+            }
+            div.stButton > button {
+                padding: 6px 4px !important;
+                font-size: 11px !important;
+                min-height: 32px !important;
+                border-radius: 6px !important;
+                width: 100% !important;
+            }
+        }
     </style>
 """, unsafe_allow_html=True)
 
@@ -141,6 +185,7 @@ def cargar_historial_cache():
     return hoja_hist.get_all_records()
 
 def reasignar_deficit_si_hay_stock(prod_nombre):
+    """Función para tomar automáticamente stock liberado y asignarlo a pedidos en déficit."""
     try:
         inv_actuales = hoja_inv.get_all_records()
         row_inv_idx = None
@@ -479,6 +524,7 @@ with pestana2:
         stock_por_producto[nombre_p] = st_val
         precio_por_producto[nombre_p] = p_vta
 
+    # SUBTAB 1: POR ENTREGAR
     with subtab1:
         st.markdown("Gestiona las entregas pendientes de tus clientes.")
         pendientes_activos = [p for p in pedidos_totales if p.get("Estado") in ["Por entregar", "Déficit"]]
@@ -663,8 +709,9 @@ with pestana2:
             
             st.markdown("---")
             
-            # --- RENDERIZADO LIMPIO Y SEGURO (Nativo de Streamlit) ---
             for idx, ped in enumerate(pendientes_visibles):
+                col_info, col_btn_pagado, col_btn_fiado, col_btn_cancel = st.columns([3.5, 1.5, 1.5, 1.2])
+                
                 estado_ped = ped.get('Estado')
                 prod_ped = str(ped.get("Producto", ""))
                 cant_ped = float(str(ped.get("Cantidad", 0)).replace(",", ""))
@@ -684,15 +731,8 @@ with pestana2:
                 elif estado_ped == "Déficit":
                     estado_lbl = "🟢 Listo" if stock_disponible >= cant_ped else "🚨 Déficit"
                 
-                # 1. TEXTO EN UNA TARJETA LIMPIA
-                st.markdown(f"""
-                    <div style="background-color: #FFFFFF; padding: 12px; border-radius: 10px; border-left: 5px solid #2E7D32; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 12px;">
-                        <b style="font-size: 15px;">👤 {cli_clean}</b> {desc_badge} <br>
-                        🛍️ <b>{prod_ped}</b> — Cantidad: <b>{cant_ped:g}</b> <br>
-                        <span style="color: #424242; font-weight: 500;">Estado: {estado_lbl}</span><br>
-                        <span style='color: gray; font-size: 11px;'>ID: {ped.get('ID')} | Fecha: {ped.get('Fecha')}</span>
-                    </div>
-                """, unsafe_allow_html=True)
+                with col_info:
+                    st.markdown(f"**👤 {cli_clean}** {desc_badge} \n🛍️ **{prod_ped}** — Cantidad: **{cant_ped:g}** [{estado_lbl}] \n<span style='color: gray; font-size: 11px;'>ID: {ped.get('ID')} | Fecha: {ped.get('Fecha')}</span>", unsafe_allow_html=True)
                 
                 def procesar_entrega(nuevo_estado):
                     ped_id_str = str(ped.get("ID"))
@@ -771,9 +811,6 @@ with pestana2:
                         st.cache_data.clear()
                         st.rerun()
 
-                # 2. BOTONES EN COLUMNAS (Se apilarán bonito en móvil y se verán juntos en PC)
-                col_btn_pagado, col_btn_fiado, col_btn_cancel = st.columns(3)
-                
                 with col_btn_pagado:
                     if estado_ped == "Déficit" and stock_disponible <= 0:
                         st.button("⏳ Sin Stock", key=f"entregar_pag_{ped.get('ID')}_{idx}", disabled=True)
@@ -789,27 +826,30 @@ with pestana2:
                             procesar_entrega("Por pagar")
 
                 with col_btn_cancel:
-                    # Usamos type="primary" de Streamlit para que nuestra CSS lo pinte rojo
-                    if st.button("❌ Cancelar", key=f"cancelar_ped_{ped.get('ID')}_{idx}", type="primary"):
+                    if st.button("❌ Cancelar", key=f"cancelar_ped_{ped.get('ID')}_{idx}"):
                         st.session_state[f"cancel_mode_{ped.get('ID')}"] = True
                         st.rerun()
 
-                # 3. PANEL DE CANCELACIÓN ORDENADO
+                # Panel condicional que aparece ÚNICAMENTE al oprimir el botón "❌ Cancelar"
                 if st.session_state.get(f"cancel_mode_{ped.get('ID')}", False):
                     st.markdown(f"""
-                        <div style="background-color: #FFEBEE; padding: 12px; border-radius: 10px; border-left: 5px solid #C62828; margin-top: 10px; margin-bottom: 10px;">
-                            <b>⚙️ Opciones de cancelación para {cli_clean}:</b>
+                        <div style="background-color: #FFEBEE; padding: 14px; border-radius: 10px; border-left: 5px solid #C62828; margin-top: 10px; margin-bottom: 10px;">
+                            <b>⚙️ Opciones de cancelación para {cli_clean}:</b> Elige si deseas restar solo algunas piezas o cancelar el pedido completo.
                         </div>
                     """, unsafe_allow_html=True)
                     
-                    col_cant, col_btn_parc = st.columns(2)
-                    with col_cant:
+                    col_c_num, col_c_parc, col_c_tot, col_c_cerrar = st.columns([2.2, 1.8, 1.8, 1.2])
+                    with col_c_num:
                         cant_a_cancelar = st.number_input(
                             "Piezas a restar:", 
-                            min_value=1.0, max_value=cant_ped, value=min(1.0, cant_ped), step=1.0, 
+                            min_value=1.0, 
+                            max_value=cant_ped, 
+                            value=min(1.0, cant_ped), 
+                            step=1.0, 
                             key=f"num_cancel_parcial_{ped.get('ID')}_{idx}"
                         )
-                    with col_btn_parc:
+                    with col_c_parc:
+                        st.markdown("<br>", unsafe_allow_html=True)
                         if st.button("📉 Aplicar Parcial", key=f"btn_parcial_{ped.get('ID')}_{idx}"):
                             ped_id_str = str(ped.get("ID"))
                             try:
@@ -858,15 +898,15 @@ with pestana2:
                                                 hoja_inv.update_cell(i + 2, col_st_idx, st_act + cant_a_cancelar)
                                                 break
                                         reasignar_deficit_si_hay_stock(prod_ped)
-                                    st.success(f"¡Pedido actualizado! Se redujeron **{cant_a_cancelar:g} unidades**. El pedido de **{cli_clean}** ahora es de **{nueva_cant:g} unidades**.")
+                                    st.success(f"¡Pedido actualizado! Se redujeron **{cant_a_cancelar:g} unidades**. El pedido de **{cli_clean}** ahora es de **{nueva_cant:g} unidades** y conserva su turno.")
                                 
                                 st.session_state[f"cancel_mode_{ped.get('ID')}"] = False
                                 st.cache_data.clear()
                                 st.rerun()
 
-                    col_btn_todo, col_btn_volver = st.columns(2)
-                    with col_btn_todo:
-                        if st.button("❌ Cancelar Todo", key=f"btn_todo_{ped.get('ID')}_{idx}", type="primary"):
+                    with col_c_tot:
+                        st.markdown("<br>", unsafe_allow_html=True)
+                        if st.button("❌ Cancelar Todo", key=f"btn_todo_{ped.get('ID')}_{idx}"):
                             ped_id_str = str(ped.get("ID"))
                             try:
                                 cell = hoja_pedidos.find(ped_id_str)
@@ -904,7 +944,8 @@ with pestana2:
                                 st.cache_data.clear()
                                 st.rerun()
 
-                    with col_btn_volver:
+                    with col_c_cerrar:
+                        st.markdown("<br>", unsafe_allow_html=True)
                         if st.button("↩️ Volver", key=f"btn_cerrar_{ped.get('ID')}_{idx}"):
                             st.session_state[f"cancel_mode_{ped.get('ID')}"] = False
                             st.rerun()
@@ -913,6 +954,7 @@ with pestana2:
         else:
             st.info("No hay pedidos pendientes por entregar en este momento.")
 
+    # SUBTAB 2: CUENTAS POR COBRAR (POR PAGAR)
     with subtab2:
         st.markdown("Lista de artículos que ya fueron entregados al cliente pero están **pendientes de cobro**.")
         pedidos_por_pagar = [p for p in pedidos_totales if p.get("Estado") == "Por pagar"]
@@ -1011,17 +1053,19 @@ with pestana2:
             col_pdf_c, col_tot_c = st.columns([1, 1])
             with col_pdf_c:
                 st.download_button(
-                    label="📄 Descargar Cuentas por Cobrar",
+                    label="📄 Descargar Cuentas por Cobrar en PDF",
                     data=pdf_bytes_cobrar,
                     file_name=f"cuentas_por_cobrar_{datetime.now().strftime('%d-%m-%Y')}.pdf",
                     mime="application/pdf"
                 )
             with col_tot_c:
-                st.markdown(f"<h3 style='text-align: right; margin-top: 0; color: #F57F17;'>Total Fiado: ${gran_total_por_cobrar:,.2f}</h3>", unsafe_allow_html=True)
+                st.markdown(f"<h3 style='text-align: right; margin-top: 0; color: #F57F17;'>Total Fiado por Cobrar: ${gran_total_por_cobrar:,.2f}</h3>", unsafe_allow_html=True)
 
             st.markdown("---")
 
             for idx, ped in enumerate(pedidos_por_pagar):
+                col_info_c, col_btn_cobrar, col_btn_cancel_c = st.columns([4.2, 1.8, 1.5])
+                
                 prod_ped = str(ped.get("Producto", ""))
                 cant_ped = float(str(ped.get("Cantidad", 0)).replace(",", ""))
                 
@@ -1039,20 +1083,18 @@ with pestana2:
                 precio_final = p_unitario * (1.0 - (desc_val / 100.0))
                 total_deuda = cant_ped * precio_final
                 
-                # 1. TARJETA DE TEXTO ARRIBA
-                st.markdown(f"""
-                    <div style="background-color: #FFF8E1; padding: 12px; border-radius: 10px; border-left: 5px solid #F57F17; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 12px;">
-                        <b style="font-size: 15px;">👤 {cli_clean}</b> {desc_badge} <br>
-                        🛍️ <b>{prod_ped}</b> — Cantidad: <b>{cant_ped:g}</b> <br>
-                        💰 <b>Monto Pendiente:</b> <span style="color:#C62828; font-weight:bold;">${total_deuda:,.2f}</span> <br>
-                        <span style='color: gray; font-size: 11px;'>ID: {ped.get('ID')} | Fecha de entrega: {ped.get('Fecha')}</span>
-                    </div>
-                """, unsafe_allow_html=True)
-                
-                # 2. BOTONES APILADOS NATURALMENTE
-                col_btn_cobrar, col_btn_cancel_c = st.columns(2)
+                with col_info_c:
+                    st.markdown(f"""
+                        <div class="por-pagar-card">
+                            <b>👤 Cliente:</b> {cli_clean} {desc_badge} <br>
+                            <b>🛍️ Producto:</b> {prod_ped} — Cantidad: <b>{cant_ped:g}</b> <br>
+                            <b>💰 Monto Pendiente:</b> <span style="color:#C62828; font-weight:bold;">${total_deuda:,.2f}</span> <br>
+                            <span style='color: gray; font-size: 11px;'>ID: {ped.get('ID')} | Fecha de entrega: {ped.get('Fecha')}</span>
+                        </div>
+                    """, unsafe_allow_html=True)
                 
                 with col_btn_cobrar:
+                    st.markdown("<br>", unsafe_allow_html=True)
                     if st.button("💰 Marcar como Pagado", key=f"cobrar_{ped.get('ID')}_{idx}"):
                         ped_id_str = str(ped.get("ID"))
                         try:
@@ -1098,7 +1140,8 @@ with pestana2:
                             st.rerun()
 
                 with col_btn_cancel_c:
-                    if st.button("❌ Cancelar", key=f"cancelar_cobro_{ped.get('ID')}_{idx}", type="primary"):
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    if st.button("❌ Cancelar", key=f"cancelar_cobro_{ped.get('ID')}_{idx}"):
                         ped_id_str = str(ped.get("ID"))
                         try:
                             cell = hoja_pedidos.find(ped_id_str)
@@ -1210,7 +1253,7 @@ with pestana3:
 
         pdf_bytes_hist = generar_pdf_historial(registros_h)
         st.download_button(
-            label="📄 Descargar Historial",
+            label="📄 Descargar Historial en PDF",
             data=pdf_bytes_hist,
             file_name=f"reporte_historial_{datetime.now().strftime('%d-%m-%Y')}.pdf",
             mime="application/pdf"
@@ -1406,7 +1449,7 @@ with pestana4:
 
         pdf_bytes_res = generar_pdf_resurtido(lista_resurtido, gran_total_inversion)
         st.download_button(
-            label="📄 Descargar Resurtido PDF",
+            label="📄 Descargar Reporte de Resurtido en PDF",
             data=pdf_bytes_res,
             file_name=f"reporte_resurtido_{datetime.now().strftime('%d-%m-%Y')}.pdf",
             mime="application/pdf"
@@ -1438,7 +1481,7 @@ with pestana5:
             precio_ven = st.number_input("Precio de Venta", min_value=0.0, step=1.0, value=0.0)
             categoria = st.text_input("Categoría")
             
-        submitted = st.form_submit_button("Guardar Producto en la Nube", type="secondary")
+        submitted = st.form_submit_button("Guardar Producto en la Nube")
         if submitted:
             if not nuevo_nombre.strip():
                 st.error("¡El nombre del producto es obligatorio!")
