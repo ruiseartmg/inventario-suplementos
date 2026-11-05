@@ -53,15 +53,6 @@ st.markdown("""
             background-color: #1B5E20 !important;
         }
 
-        /* Estilo rojo robusto para botones de Cancelar */
-        div[class*="cancelar"] > button {
-            background-color: #C62828 !important;
-            box-shadow: 0 4px 10px rgba(198, 40, 40, 0.3) !important;
-        }
-        div[class*="cancelar"] > button:hover {
-            background-color: #B71C1C !important;
-        }
-
         .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p {
             font-size: 15px;
         }
@@ -113,7 +104,7 @@ st.markdown("""
             box-shadow: 0 2px 6px rgba(0,0,0,0.04);
         }
 
-        /* Diseño compacto y optimizado para teléfonos celulares */
+        /* Diseño compacto y optimizado para teléfonos celulares (botones lado a lado) */
         @media (max-width: 768px) {
             div[data-testid="stHorizontalBlock"] {
                 display: flex !important;
@@ -127,10 +118,11 @@ st.markdown("""
                 padding: 0 2px !important;
             }
             div.stButton > button {
-                padding: 4px 6px !important;
+                padding: 6px 4px !important;
                 font-size: 11px !important;
-                min-height: 30px !important;
+                min-height: 32px !important;
                 border-radius: 6px !important;
+                width: 100% !important;
             }
         }
     </style>
