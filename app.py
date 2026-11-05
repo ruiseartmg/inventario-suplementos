@@ -487,7 +487,7 @@ with pestana2:
                 nombre_pdf = f"reporte_pedidos_{datetime.now().strftime('%d-%m-%Y')}.pdf"
                 label_btn_pdf = "📄 Descargar Reporte de Pendientes PDF"
 
-            # 🎨 ESTILOS UNIFICADOS INSTITUCIONALES Y ANCHOS CORREGIDOS (PDF)
+            # 🎨 ESTILOS UNIFICADOS Y ANCHOS CORREGIDOS (PDF PEDIDOS)
             def generar_pdf_pedidos(pendientes, titulo_custom):
                 buffer = io.BytesIO()
                 doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=75, bottomMargin=40)
@@ -555,7 +555,8 @@ with pestana2:
                     Paragraph(f"${gran_total_pedidos:,.2f}", total_val_style)
                 ])
                 
-                t = Table(data, colWidths=[55, 90, 115, 32, 75, 48, 42, 45])
+                # Anchos exactos ajustados para evitar que los números o Cant. se partan
+                t = Table(data, colWidths=[55, 90, 110, 38, 70, 50, 42, 57])
                 t.setStyle(TableStyle([
                     ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#4A1525')),
                     ('ALIGN', (0,0), (-1,-1), 'CENTER'),
@@ -566,7 +567,7 @@ with pestana2:
                     ('ROWBACKGROUNDS', (0,1), (-1,-2), [colors.HexColor('#FFFFFF'), colors.HexColor('#FAFAFA')]),
                     ('GRID', (0,0), (-1,-2), 0.5, colors.HexColor('#E0E0E0')),
                     ('SPAN', (0, -1), (6, -1)),
-                    ('BACKGROUND', (0,-1), (-1,-1), colors.HexColor('#FDF3E7')),
+                    ('BACKGROUND', (0,-1), (-1,-1), colors.HexColor('#FDF3E7')), # Tono arena institucional
                     ('GRID', (0,-1), (-1,-1), 0.5, colors.HexColor('#E6D7C3')),
                 ]))
                 elements.append(t)
@@ -895,6 +896,7 @@ with pestana2:
         pedidos_por_pagar = [p for p in pedidos_totales if p.get("Estado") == "Por pagar"]
         
         if pedidos_por_pagar:
+            # 🎨 ESTILOS UNIFICADOS Y ANCHOS CORREGIDOS (PDF CUENTAS POR COBRAR)
             def generar_pdf_cuentas_por_cobrar(lista_por_pagar):
                 buffer = io.BytesIO()
                 doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=75, bottomMargin=40)
@@ -946,8 +948,8 @@ with pestana2:
                         Paragraph(f"${p_total:,.2f}", cell_style)
                     ])
                     
-                total_row_style = ParagraphStyle('TotalRow', parent=styles['Normal'], fontSize=8, leading=10, alignment=2, fontName='Helvetica-Bold', textColor=colors.HexColor('#4A1525'))
-                total_val_style = ParagraphStyle('TotalVal', parent=styles['Normal'], fontSize=8, leading=10, alignment=1, fontName='Helvetica-Bold', textColor=colors.HexColor('#4A1525'))
+                total_row_style = ParagraphStyle('TotalRow', parent=styles['Normal'], fontSize=8.5, leading=10, alignment=2, fontName='Helvetica-Bold', textColor=colors.HexColor('#4A1525'))
+                total_val_style = ParagraphStyle('TotalVal', parent=styles['Normal'], fontSize=8.5, leading=10, alignment=1, fontName='Helvetica-Bold', textColor=colors.HexColor('#4A1525'))
                 
                 data.append([
                     Paragraph("Total Pendiente por Cobrar:", total_row_style),
@@ -955,7 +957,7 @@ with pestana2:
                     Paragraph(f"${gran_total_cobrar:,.2f}", total_val_style)
                 ])
                 
-                t = Table(data, colWidths=[65, 115, 130, 40, 55, 40, 60])
+                t = Table(data, colWidths=[60, 110, 125, 40, 60, 42, 65])
                 t.setStyle(TableStyle([
                     ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#4A1525')),
                     ('ALIGN', (0,0), (-1,-1), 'CENTER'),
@@ -1093,7 +1095,7 @@ with pestana2:
                             inv_actuales = cargar_inventario_cache()
                             for i, inv_item in enumerate(inv_actuales):
                                 if str(inv_item.get("Nombre del Producto", "")).strip() == prod_ped:
-                                    st_act = float(str(inv_item.get("Cantidad en Stock", 0)).replace(",", ""))
+                                    st_act = float(str(inv_item.get("Cantidad in Stock", 0)).replace(",", ""))
                                     col_st_idx = 2
                                     for idx_h, h_name in enumerate(headers):
                                         if "stock" in h_name.lower():
@@ -1347,8 +1349,8 @@ with pestana4:
                     Paragraph(str(r.get("Inversión Est.", "")), cell_style)
                 ])
                 
-            total_row_style = ParagraphStyle('TotalRow', parent=styles['Normal'], fontSize=8, leading=10, alignment=2, fontName='Helvetica-Bold', textColor=colors.HexColor('#4A1525'))
-            total_val_style = ParagraphStyle('TotalVal', parent=styles['Normal'], fontSize=8, leading=10, alignment=1, fontName='Helvetica-Bold', textColor=colors.HexColor('#4A1525'))
+            total_row_style = ParagraphStyle('TotalRow', parent=styles['Normal'], fontSize=8.5, leading=10, alignment=2, fontName='Helvetica-Bold', textColor=colors.HexColor('#4A1525'))
+            total_val_style = ParagraphStyle('TotalVal', parent=styles['Normal'], fontSize=8.5, leading=10, alignment=1, fontName='Helvetica-Bold', textColor=colors.HexColor('#4A1525'))
             
             data.append([
                 Paragraph("Inversión Total Estimada:", total_row_style),
