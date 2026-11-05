@@ -31,100 +31,51 @@ st.markdown("""
             font-weight: 600;
         }
 
-        /* Estilos principales para botones */
-        div.stButton > button {
+        button[kind="secondary"], button[kind="formSubmit"] {
             background-color: #2E7D32 !important;
             color: #FFFFFF !important;
-            font-family: 'Montserrat', sans-serif !important;
-            font-weight: 600;
             border: none !important;
             border-radius: 8px !important;
-            box-shadow: 0 4px 10px rgba(46, 125, 50, 0.3) !important;
-            transition: 0.3s !important;
+            font-weight: 600 !important;
+            font-family: 'Montserrat', sans-serif !important;
+            box-shadow: 0 4px 6px rgba(46, 125, 50, 0.2) !important;
+            min-height: 42px !important;
+            height: auto !important;
+            width: 100% !important;
+            padding: 8px 12px !important;
+            transition: 0.2s !important;
         }
-        
-        /* Quitar fondo blanco del texto dentro de cualquier botón */
-        div.stButton > button * {
-            background-color: transparent !important;
-            color: #FFFFFF !important;
-        }
-
-        div.stButton > button:hover {
+        button[kind="secondary"]:hover, button[kind="formSubmit"]:hover {
             background-color: #1B5E20 !important;
         }
 
-        .stTabs [data-baseweb="tab-list"] button [data-testid="stMarkdownContainer"] p {
-            font-size: 15px;
+        button[kind="primary"] {
+            background-color: #C62828 !important;
+            color: #FFFFFF !important;
+            border: none !important;
+            border-radius: 8px !important;
+            font-weight: 600 !important;
+            font-family: 'Montserrat', sans-serif !important;
+            box-shadow: 0 4px 6px rgba(198, 40, 40, 0.2) !important;
+            min-height: 42px !important;
+            height: auto !important;
+            width: 100% !important;
+            padding: 8px 12px !important;
+            transition: 0.2s !important;
+        }
+        button[kind="primary"]:hover {
+            background-color: #B71C1C !important;
         }
         
-        .metric-card {
-            background-color: #E8F5E9;
-            padding: 18px;
-            border-radius: 12px;
-            border-left: 6px solid #2E7D32;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        button[kind="secondary"] *, button[kind="primary"] *, button[kind="formSubmit"] * {
+            color: #FFFFFF !important;
         }
 
-        .stock-badge {
-            background-color: #E8F5E9;
-            color: #1B5E20;
-            padding: 8px 14px;
-            border-radius: 8px;
-            font-weight: 600;
-            display: inline-block;
-            margin-bottom: 15px;
-            border: 1px solid #C8E6C9;
-        }
-
-        .deficit-alert-card {
-            background-color: #FFEBEE;
-            padding: 15px;
-            border-radius: 10px;
-            border-left: 6px solid #C62828;
-            margin-bottom: 12px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
-        }
-
-        .surtible-alert-card {
-            background-color: #E8F5E9;
-            padding: 15px;
-            border-radius: 10px;
-            border-left: 6px solid #2E7D32;
-            margin-bottom: 12px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
-        }
-
-        .por-pagar-card {
-            background-color: #FFF8E1;
-            padding: 15px;
-            border-radius: 10px;
-            border-left: 6px solid #F57F17;
-            margin-bottom: 12px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
-        }
-
-        /* Diseño compacto y optimizado para teléfonos celulares (botones lado a lado) */
-        @media (max-width: 768px) {
-            div[data-testid="stHorizontalBlock"] {
-                display: flex !important;
-                flex-direction: row !important;
-                align-items: center !important;
-            }
-            div[data-testid="column"] {
-                width: auto !important;
-                flex: 1 !important;
-                min-width: 0 !important;
-                padding: 0 2px !important;
-            }
-            div.stButton > button {
-                padding: 6px 4px !important;
-                font-size: 11px !important;
-                min-height: 32px !important;
-                border-radius: 6px !important;
-                width: 100% !important;
-            }
-        }
+        .metric-card { background-color: #E8F5E9; padding: 18px; border-radius: 12px; border-left: 6px solid #2E7D32; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .stock-badge { background-color: #E8F5E9; color: #1B5E20; padding: 8px 14px; border-radius: 8px; font-weight: 600; display: inline-block; margin-bottom: 15px; border: 1px solid #C8E6C9; }
+        .deficit-alert-card { background-color: #FFEBEE; padding: 15px; border-radius: 10px; border-left: 6px solid #C62828; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
+        .surtible-alert-card { background-color: #E8F5E9; padding: 15px; border-radius: 10px; border-left: 6px solid #2E7D32; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
+        .por-pagar-card { background-color: #FFF8E1; padding: 15px; border-radius: 10px; border-left: 6px solid #F57F17; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
     </style>
 """, unsafe_allow_html=True)
 
@@ -132,11 +83,6 @@ SCOPE = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive"
 ]
-
-def normalizar_id(val):
-    if val is None:
-        return ""
-    return str(val).split('.')[0].strip()
 
 @st.cache_resource
 def obtener_conexion():
@@ -162,7 +108,6 @@ try:
     spreadsheet = obtener_conexion()
     hoja_inv = spreadsheet.worksheet("Hoja 1")
     hoja_hist = spreadsheet.worksheet("Historial")
-    
     try:
         hoja_pedidos = spreadsheet.worksheet("Pedidos")
     except:
@@ -185,7 +130,6 @@ def cargar_historial_cache():
     return hoja_hist.get_all_records()
 
 def reasignar_deficit_si_hay_stock(prod_nombre):
-    """Función para tomar automáticamente stock liberado y asignarlo a pedidos en déficit."""
     try:
         inv_actuales = hoja_inv.get_all_records()
         row_inv_idx = None
@@ -217,7 +161,6 @@ def reasignar_deficit_si_hay_stock(prod_nombre):
                 if stock_fisc >= cant_def:
                     stock_fisc -= cant_def
                     hoja_inv.update_cell(row_inv_idx, col_st_idx, stock_fisc)
-                    
                     fila_ped_real = idx_p + 2
                     hoja_pedidos.update_cell(fila_ped_real, 7, "Por entregar")
                     break
@@ -258,7 +201,7 @@ class NumberedCanvas(canvas.Canvas):
         
         if os.path.exists(LOGO_PATH):
             try:
-                self.setFillAlpha(0.08)
+                self.setFillAlpha(0.06)
                 self.drawImage(LOGO_PATH, 106, 246, width=400, height=300, preserveAspectRatio=True, mask='auto')
             except:
                 pass
@@ -302,7 +245,6 @@ pestana1, pestana2, pestana3, pestana4, pestana5 = st.tabs([
 
 with pestana1:
     st.subheader("Registrar Pedido o Movimiento")
-    
     nombres_productos = [str(p.get("Nombre del Producto", "")).strip() for p in registros_inv if p.get("Nombre del Producto")]
     
     if nombres_productos:
@@ -350,7 +292,6 @@ with pestana1:
                 st.error("❌ El nombre del cliente es obligatorio. Por favor, ingrésalo antes de continuar.")
             else:
                 ahora_mexico = datetime.utcnow() - timedelta(hours=6)
-                
                 row_idx = None
                 producto_obj = None
                 inv_actuales = cargar_inventario_cache()
@@ -421,7 +362,6 @@ with pestana1:
                             total_devolucion
                         ])
                         reasignar_deficit_si_hay_stock(prod_seleccionado)
-                        
                         st.success(f"🔄 Devolución registrada con éxito. Se reingresaron **{cantidad:g} unidades** al inventario para **{cli_final}**.")
                         st.cache_data.clear()
                         st.rerun()
@@ -464,7 +404,6 @@ with pestana1:
             r["Por entregar"] = suma_por_entregar.get(n_prod, 0.0)
 
         df_inv = pd.DataFrame(registros_inv)
-        
         cols_a_quitar = [c for c in df_inv.columns if "precio directo" in c.lower() or "directo" in c.lower() or "por surtir" in c.lower() or "por_surtir" in c.lower() or "presentacion" in c.lower() or "presentación" in c.lower() or "alerta" in c.lower() or "categoria" in c.lower() or "categoría" in c.lower()]
         df_inv = df_inv.drop(columns=cols_a_quitar, errors="ignore")
 
@@ -484,9 +423,7 @@ with pestana1:
         orden_final = [col_prod]
         if col_stock and col_stock in columnas_disponibles:
             orden_final.append(col_stock)
-        
         orden_final.append("Por entregar")
-        
         if col_precio and col_precio in columnas_disponibles:
             orden_final.append(col_precio)
             
@@ -495,7 +432,6 @@ with pestana1:
                 orden_final.append(c)
                 
         df_inv = df_inv[[c for c in orden_final if c in df_inv.columns]]
-
         if "Nombre del Producto" in df_inv.columns:
             df_inv = df_inv.set_index("Nombre del Producto")
             
@@ -503,7 +439,6 @@ with pestana1:
 
 with pestana2:
     st.subheader("📦 Pedidos Pendientes y Entregas")
-    
     subtab1, subtab2 = st.tabs(["📦 Por Entregar", "💳 Cuentas por Cobrar (Por Pagar)"])
     
     pedidos_totales = cargar_pedidos_cache()
@@ -524,7 +459,6 @@ with pestana2:
         stock_por_producto[nombre_p] = st_val
         precio_por_producto[nombre_p] = p_vta
 
-    # SUBTAB 1: POR ENTREGAR
     with subtab1:
         st.markdown("Gestiona las entregas pendientes de tus clientes.")
         pendientes_activos = [p for p in pedidos_totales if p.get("Estado") in ["Por entregar", "Déficit"]]
@@ -553,16 +487,17 @@ with pestana2:
                 nombre_pdf = f"reporte_pedidos_{datetime.now().strftime('%d-%m-%Y')}.pdf"
                 label_btn_pdf = "📄 Descargar Reporte de Pendientes PDF"
 
+            # 🎨 ESTILOS UNIFICADOS INSTITUCIONALES PARA REPORTES PDF
             def generar_pdf_pedidos(pendientes, titulo_custom):
                 buffer = io.BytesIO()
                 doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=30, leftMargin=30, topMargin=75, bottomMargin=40)
                 elements = []
                 
                 styles = getSampleStyleSheet()
-                title_style = ParagraphStyle('TitleStyle', parent=styles['Heading1'], fontSize=15, textColor=colors.HexColor('#4A1525'), spaceAfter=15, alignment=1)
+                title_style = ParagraphStyle('TitleStyle', parent=styles['Heading1'], fontSize=15, textColor=colors.HexColor('#4A1525'), fontName='Helvetica-Bold', spaceAfter=15, alignment=1)
                 header_style = ParagraphStyle('HeaderStyle', parent=styles['Normal'], fontSize=9, textColor=colors.whitesmoke, fontName='Helvetica-Bold', alignment=1)
-                cell_style = ParagraphStyle('CellStyle', parent=styles['Normal'], fontSize=8, leading=10, alignment=1)
-                cell_left = ParagraphStyle('CellLeft', parent=styles['Normal'], fontSize=8, leading=10, alignment=0)
+                cell_style = ParagraphStyle('CellStyle', parent=styles['Normal'], fontSize=8, leading=10, alignment=1, fontName='Helvetica')
+                cell_left = ParagraphStyle('CellLeft', parent=styles['Normal'], fontSize=8, leading=10, alignment=0, fontName='Helvetica')
                 
                 elements.append(Paragraph(titulo_custom, title_style))
                 elements.append(Spacer(1, 10))
@@ -611,8 +546,8 @@ with pestana2:
                         Paragraph(f"${p_total:,.2f}", cell_style)
                     ])
                     
-                total_row_style = ParagraphStyle('TotalRow', parent=styles['Normal'], fontSize=8, leading=10, alignment=2)
-                total_val_style = ParagraphStyle('TotalVal', parent=styles['Normal'], fontSize=8, leading=10, alignment=1)
+                total_row_style = ParagraphStyle('TotalRow', parent=styles['Normal'], fontSize=8, leading=10, alignment=2, fontName='Helvetica-Bold', textColor=colors.HexColor('#4A1525'))
+                total_val_style = ParagraphStyle('TotalVal', parent=styles['Normal'], fontSize=8, leading=10, alignment=1, fontName='Helvetica-Bold', textColor=colors.HexColor('#4A1525'))
                 
                 data.append([
                     Paragraph("Total Pendiente:", total_row_style),
@@ -627,8 +562,9 @@ with pestana2:
                     ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
                     ('BOTTOMPADDING', (0,0), (-1,0), 6),
                     ('TOPPADDING', (0,0), (-1,0), 6),
-                    ('BACKGROUND', (0,1), (-1,-2), colors.HexColor('#FDFBFB')),
-                    ('GRID', (0,0), (-1,-2), 0.5, colors.HexColor('#D1C4E9')),
+                    ('BACKGROUND', (0,1), (-1,-2), colors.HexColor('#FFFFFF')),
+                    ('ROWBACKGROUNDS', (0,1), (-1,-2), [colors.HexColor('#FFFFFF'), colors.HexColor('#FAFAFA')]),
+                    ('GRID', (0,0), (-1,-2), 0.5, colors.HexColor('#E0E0E0')),
                     ('SPAN', (0, -1), (6, -1)),
                     ('BACKGROUND', (0,-1), (-1,-1), colors.HexColor('#F4ECF7')),
                     ('GRID', (0,-1), (-1,-1), 0.5, colors.HexColor('#D1C4E9')),
@@ -710,8 +646,6 @@ with pestana2:
             st.markdown("---")
             
             for idx, ped in enumerate(pendientes_visibles):
-                col_info, col_btn_pagado, col_btn_fiado, col_btn_cancel = st.columns([3.5, 1.5, 1.5, 1.2])
-                
                 estado_ped = ped.get('Estado')
                 prod_ped = str(ped.get("Producto", ""))
                 cant_ped = float(str(ped.get("Cantidad", 0)).replace(",", ""))
@@ -731,8 +665,14 @@ with pestana2:
                 elif estado_ped == "Déficit":
                     estado_lbl = "🟢 Listo" if stock_disponible >= cant_ped else "🚨 Déficit"
                 
-                with col_info:
-                    st.markdown(f"**👤 {cli_clean}** {desc_badge} \n🛍️ **{prod_ped}** — Cantidad: **{cant_ped:g}** [{estado_lbl}] \n<span style='color: gray; font-size: 11px;'>ID: {ped.get('ID')} | Fecha: {ped.get('Fecha')}</span>", unsafe_allow_html=True)
+                st.markdown(f"""
+                    <div style="background-color: #FFFFFF; padding: 12px; border-radius: 10px; border-left: 5px solid #4A1525; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 12px;">
+                        <b style="font-size: 15px;">👤 {cli_clean}</b> {desc_badge} <br>
+                        🛍️ <b>{prod_ped}</b> — Cantidad: <b>{cant_ped:g}</b> <br>
+                        <span style="color: #424242; font-weight: 500;">Estado: {estado_lbl}</span><br>
+                        <span style='color: gray; font-size: 11px;'>ID: {ped.get('ID')} | Fecha: {ped.get('Fecha')}</span>
+                    </div>
+                """, unsafe_allow_html=True)
                 
                 def procesar_entrega(nuevo_estado):
                     ped_id_str = str(ped.get("ID"))
@@ -811,6 +751,8 @@ with pestana2:
                         st.cache_data.clear()
                         st.rerun()
 
+                col_btn_pagado, col_btn_fiado, col_btn_cancel = st.columns(3)
+                
                 with col_btn_pagado:
                     if estado_ped == "Déficit" and stock_disponible <= 0:
                         st.button("⏳ Sin Stock", key=f"entregar_pag_{ped.get('ID')}_{idx}", disabled=True)
@@ -826,30 +768,25 @@ with pestana2:
                             procesar_entrega("Por pagar")
 
                 with col_btn_cancel:
-                    if st.button("❌ Cancelar", key=f"cancelar_ped_{ped.get('ID')}_{idx}"):
+                    if st.button("❌ Cancelar", key=f"cancelar_ped_{ped.get('ID')}_{idx}", type="primary"):
                         st.session_state[f"cancel_mode_{ped.get('ID')}"] = True
                         st.rerun()
 
-                # Panel condicional que aparece ÚNICAMENTE al oprimir el botón "❌ Cancelar"
                 if st.session_state.get(f"cancel_mode_{ped.get('ID')}", False):
                     st.markdown(f"""
-                        <div style="background-color: #FFEBEE; padding: 14px; border-radius: 10px; border-left: 5px solid #C62828; margin-top: 10px; margin-bottom: 10px;">
-                            <b>⚙️ Opciones de cancelación para {cli_clean}:</b> Elige si deseas restar solo algunas piezas o cancelar el pedido completo.
+                        <div style="background-color: #FFEBEE; padding: 12px; border-radius: 10px; border-left: 5px solid #C62828; margin-top: 10px; margin-bottom: 10px;">
+                            <b>⚙️ Opciones de cancelación para {cli_clean}:</b>
                         </div>
                     """, unsafe_allow_html=True)
                     
-                    col_c_num, col_c_parc, col_c_tot, col_c_cerrar = st.columns([2.2, 1.8, 1.8, 1.2])
-                    with col_c_num:
+                    col_cant, col_btn_parc = st.columns(2)
+                    with col_cant:
                         cant_a_cancelar = st.number_input(
                             "Piezas a restar:", 
-                            min_value=1.0, 
-                            max_value=cant_ped, 
-                            value=min(1.0, cant_ped), 
-                            step=1.0, 
+                            min_value=1.0, max_value=cant_ped, value=min(1.0, cant_ped), step=1.0, 
                             key=f"num_cancel_parcial_{ped.get('ID')}_{idx}"
                         )
-                    with col_c_parc:
-                        st.markdown("<br>", unsafe_allow_html=True)
+                    with col_btn_parc:
                         if st.button("📉 Aplicar Parcial", key=f"btn_parcial_{ped.get('ID')}_{idx}"):
                             ped_id_str = str(ped.get("ID"))
                             try:
@@ -898,15 +835,15 @@ with pestana2:
                                                 hoja_inv.update_cell(i + 2, col_st_idx, st_act + cant_a_cancelar)
                                                 break
                                         reasignar_deficit_si_hay_stock(prod_ped)
-                                    st.success(f"¡Pedido actualizado! Se redujeron **{cant_a_cancelar:g} unidades**. El pedido de **{cli_clean}** ahora es de **{nueva_cant:g} unidades** y conserva su turno.")
+                                    st.success(f"¡Pedido actualizado! Se redujeron **{cant_a_cancelar:g} unidades**. El pedido de **{cli_clean}** ahora es de **{nueva_cant:g} unidades**.")
                                 
                                 st.session_state[f"cancel_mode_{ped.get('ID')}"] = False
                                 st.cache_data.clear()
                                 st.rerun()
 
-                    with col_c_tot:
-                        st.markdown("<br>", unsafe_allow_html=True)
-                        if st.button("❌ Cancelar Todo", key=f"btn_todo_{ped.get('ID')}_{idx}"):
+                    col_btn_todo, col_btn_volver = st.columns(2)
+                    with col_btn_todo:
+                        if st.button("❌ Cancelar Todo", key=f"btn_todo_{ped.get('ID')}_{idx}", type="primary"):
                             ped_id_str = str(ped.get("ID"))
                             try:
                                 cell = hoja_pedidos.find(ped_id_str)
@@ -944,8 +881,7 @@ with pestana2:
                                 st.cache_data.clear()
                                 st.rerun()
 
-                    with col_c_cerrar:
-                        st.markdown("<br>", unsafe_allow_html=True)
+                    with col_btn_volver:
                         if st.button("↩️ Volver", key=f"btn_cerrar_{ped.get('ID')}_{idx}"):
                             st.session_state[f"cancel_mode_{ped.get('ID')}"] = False
                             st.rerun()
@@ -954,7 +890,6 @@ with pestana2:
         else:
             st.info("No hay pedidos pendientes por entregar en este momento.")
 
-    # SUBTAB 2: CUENTAS POR COBRAR (POR PAGAR)
     with subtab2:
         st.markdown("Lista de artículos que ya fueron entregados al cliente pero están **pendientes de cobro**.")
         pedidos_por_pagar = [p for p in pedidos_totales if p.get("Estado") == "Por pagar"]
@@ -966,10 +901,10 @@ with pestana2:
                 elements = []
                 
                 styles = getSampleStyleSheet()
-                title_style = ParagraphStyle('TitleStyle', parent=styles['Heading1'], fontSize=15, textColor=colors.HexColor('#4A1525'), spaceAfter=15, alignment=1)
+                title_style = ParagraphStyle('TitleStyle', parent=styles['Heading1'], fontSize=15, textColor=colors.HexColor('#4A1525'), fontName='Helvetica-Bold', spaceAfter=15, alignment=1)
                 header_style = ParagraphStyle('HeaderStyle', parent=styles['Normal'], fontSize=9, textColor=colors.whitesmoke, fontName='Helvetica-Bold', alignment=1)
-                cell_style = ParagraphStyle('CellStyle', parent=styles['Normal'], fontSize=8, leading=10, alignment=1)
-                cell_left = ParagraphStyle('CellLeft', parent=styles['Normal'], fontSize=8, leading=10, alignment=0)
+                cell_style = ParagraphStyle('CellStyle', parent=styles['Normal'], fontSize=8, leading=10, alignment=1, fontName='Helvetica')
+                cell_left = ParagraphStyle('CellLeft', parent=styles['Normal'], fontSize=8, leading=10, alignment=0, fontName='Helvetica')
                 
                 elements.append(Paragraph("Nature’s Select - Cuentas por Cobrar (Entregados sin Pago)", title_style))
                 elements.append(Spacer(1, 10))
@@ -1011,8 +946,8 @@ with pestana2:
                         Paragraph(f"${p_total:,.2f}", cell_style)
                     ])
                     
-                total_row_style = ParagraphStyle('TotalRow', parent=styles['Normal'], fontSize=8, leading=10, alignment=2)
-                total_val_style = ParagraphStyle('TotalVal', parent=styles['Normal'], fontSize=8, leading=10, alignment=1)
+                total_row_style = ParagraphStyle('TotalRow', parent=styles['Normal'], fontSize=8, leading=10, alignment=2, fontName='Helvetica-Bold', textColor=colors.HexColor('#4A1525'))
+                total_val_style = ParagraphStyle('TotalVal', parent=styles['Normal'], fontSize=8, leading=10, alignment=1, fontName='Helvetica-Bold', textColor=colors.HexColor('#4A1525'))
                 
                 data.append([
                     Paragraph("Total Pendiente por Cobrar:", total_row_style),
@@ -1027,8 +962,9 @@ with pestana2:
                     ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
                     ('BOTTOMPADDING', (0,0), (-1,0), 6),
                     ('TOPPADDING', (0,0), (-1,0), 6),
-                    ('BACKGROUND', (0,1), (-1,-2), colors.HexColor('#FDFBFB')),
-                    ('GRID', (0,0), (-1,-2), 0.5, colors.HexColor('#D1C4E9')),
+                    ('BACKGROUND', (0,1), (-1,-2), colors.HexColor('#FFFFFF')),
+                    ('ROWBACKGROUNDS', (0,1), (-1,-2), [colors.HexColor('#FFFFFF'), colors.HexColor('#FAFAFA')]),
+                    ('GRID', (0,0), (-1,-2), 0.5, colors.HexColor('#E0E0E0')),
                     ('SPAN', (0, -1), (5, -1)),
                     ('BACKGROUND', (0,-1), (-1,-1), colors.HexColor('#F4ECF7')),
                     ('GRID', (0,-1), (-1,-1), 0.5, colors.HexColor('#D1C4E9')),
@@ -1053,19 +989,17 @@ with pestana2:
             col_pdf_c, col_tot_c = st.columns([1, 1])
             with col_pdf_c:
                 st.download_button(
-                    label="📄 Descargar Cuentas por Cobrar en PDF",
+                    label="📄 Descargar Cuentas por Cobrar",
                     data=pdf_bytes_cobrar,
                     file_name=f"cuentas_por_cobrar_{datetime.now().strftime('%d-%m-%Y')}.pdf",
                     mime="application/pdf"
                 )
             with col_tot_c:
-                st.markdown(f"<h3 style='text-align: right; margin-top: 0; color: #F57F17;'>Total Fiado por Cobrar: ${gran_total_por_cobrar:,.2f}</h3>", unsafe_allow_html=True)
+                st.markdown(f"<h3 style='text-align: right; margin-top: 0; color: #F57F17;'>Total Fiado: ${gran_total_por_cobrar:,.2f}</h3>", unsafe_allow_html=True)
 
             st.markdown("---")
 
             for idx, ped in enumerate(pedidos_por_pagar):
-                col_info_c, col_btn_cobrar, col_btn_cancel_c = st.columns([4.2, 1.8, 1.5])
-                
                 prod_ped = str(ped.get("Producto", ""))
                 cant_ped = float(str(ped.get("Cantidad", 0)).replace(",", ""))
                 
@@ -1083,18 +1017,18 @@ with pestana2:
                 precio_final = p_unitario * (1.0 - (desc_val / 100.0))
                 total_deuda = cant_ped * precio_final
                 
-                with col_info_c:
-                    st.markdown(f"""
-                        <div class="por-pagar-card">
-                            <b>👤 Cliente:</b> {cli_clean} {desc_badge} <br>
-                            <b>🛍️ Producto:</b> {prod_ped} — Cantidad: <b>{cant_ped:g}</b> <br>
-                            <b>💰 Monto Pendiente:</b> <span style="color:#C62828; font-weight:bold;">${total_deuda:,.2f}</span> <br>
-                            <span style='color: gray; font-size: 11px;'>ID: {ped.get('ID')} | Fecha de entrega: {ped.get('Fecha')}</span>
-                        </div>
-                    """, unsafe_allow_html=True)
+                st.markdown(f"""
+                    <div style="background-color: #FFF8E1; padding: 12px; border-radius: 10px; border-left: 5px solid #F57F17; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 12px;">
+                        <b style="font-size: 15px;">👤 {cli_clean}</b> {desc_badge} <br>
+                        🛍️ <b>{prod_ped}</b> — Cantidad: <b>{cant_ped:g}</b> <br>
+                        💰 <b>Monto Pendiente:</b> <span style="color:#C62828; font-weight:bold;">${total_deuda:,.2f}</span> <br>
+                        <span style='color: gray; font-size: 11px;'>ID: {ped.get('ID')} | Fecha de entrega: {ped.get('Fecha')}</span>
+                    </div>
+                """, unsafe_allow_html=True)
+                
+                col_btn_cobrar, col_btn_cancel_c = st.columns(2)
                 
                 with col_btn_cobrar:
-                    st.markdown("<br>", unsafe_allow_html=True)
                     if st.button("💰 Marcar como Pagado", key=f"cobrar_{ped.get('ID')}_{idx}"):
                         ped_id_str = str(ped.get("ID"))
                         try:
@@ -1112,7 +1046,6 @@ with pestana2:
 
                         if fila_real:
                             hoja_pedidos.update_cell(fila_real, 7, "Entregado")
-                            
                             hist_actuales = cargar_historial_cache()
                             fila_hist_encontrada = None
                             for idx_h_item, h_item in enumerate(hist_actuales):
@@ -1140,8 +1073,7 @@ with pestana2:
                             st.rerun()
 
                 with col_btn_cancel_c:
-                    st.markdown("<br>", unsafe_allow_html=True)
-                    if st.button("❌ Cancelar", key=f"cancelar_cobro_{ped.get('ID')}_{idx}"):
+                    if st.button("❌ Cancelar", key=f"cancelar_cobro_{ped.get('ID')}_{idx}", type="primary"):
                         ped_id_str = str(ped.get("ID"))
                         try:
                             cell = hoja_pedidos.find(ped_id_str)
@@ -1158,7 +1090,6 @@ with pestana2:
 
                         if fila_real:
                             hoja_pedidos.update_cell(fila_real, 7, "Cancelado")
-                            
                             inv_actuales = cargar_inventario_cache()
                             for i, inv_item in enumerate(inv_actuales):
                                 if str(inv_item.get("Nombre del Producto", "")).strip() == prod_ped:
@@ -1189,7 +1120,6 @@ with pestana2:
 
 with pestana3:
     st.subheader("Historial de Transacciones")
-    
     registros_h = cargar_historial_cache()
     if registros_h:
         def generar_pdf_historial(historial):
@@ -1198,17 +1128,17 @@ with pestana3:
             elements = []
             
             styles = getSampleStyleSheet()
-            title_style = ParagraphStyle('TitleStyle', parent=styles['Heading1'], fontSize=15, textColor=colors.HexColor('#4A1525'), spaceAfter=15, alignment=1)
+            title_style = ParagraphStyle('TitleStyle', parent=styles['Heading1'], fontSize=15, textColor=colors.HexColor('#4A1525'), fontName='Helvetica-Bold', spaceAfter=15, alignment=1)
             header_style = ParagraphStyle('HeaderStyle', parent=styles['Normal'], fontSize=9, textColor=colors.whitesmoke, fontName='Helvetica-Bold', alignment=1)
-            cell_style = ParagraphStyle('CellStyle', parent=styles['Normal'], fontSize=8, leading=10, alignment=1)
-            cell_left = ParagraphStyle('CellLeft', parent=styles['Normal'], fontSize=8, leading=10, alignment=0)
+            cell_style = ParagraphStyle('CellStyle', parent=styles['Normal'], fontSize=8, leading=10, alignment=1, fontName='Helvetica')
+            cell_left = ParagraphStyle('CellLeft', parent=styles['Normal'], fontSize=8, leading=10, alignment=0, fontName='Helvetica')
             
             elements.append(Paragraph("Nature’s Select - Historial de Transacciones", title_style))
             elements.append(Spacer(1, 10))
             
             historial_ordenado = sorted(historial, key=lambda x: str(x.get("Cliente", "")).lower())
-
             data = [[Paragraph("Fecha", header_style), Paragraph("Producto", header_style), Paragraph("Cliente", header_style), Paragraph("Tipo", header_style), Paragraph("Cant.", header_style), Paragraph("Total", header_style)]]
+            
             for h in historial_ordenado:
                 raw_tot = str(h.get("Total", "0")).replace("$", "").replace(",", "").strip()
                 if "pendiente" in raw_tot.lower():
@@ -1243,8 +1173,9 @@ with pestana3:
                 ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
                 ('BOTTOMPADDING', (0,0), (-1,0), 6),
                 ('TOPPADDING', (0,0), (-1,0), 6),
-                ('BACKGROUND', (0,1), (-1,-1), colors.HexColor('#FDFBFB')),
-                ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#D1C4E9')),
+                ('BACKGROUND', (0,1), (-1,-1), colors.HexColor('#FFFFFF')),
+                ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.HexColor('#FFFFFF'), colors.HexColor('#FAFAFA')]),
+                ('GRID', (0,0), (-1,-1), 0.5, colors.HexColor('#E0E0E0')),
             ]))
             elements.append(t)
             doc.build(elements, canvasmaker=NumberedCanvas)
@@ -1253,7 +1184,7 @@ with pestana3:
 
         pdf_bytes_hist = generar_pdf_historial(registros_h)
         st.download_button(
-            label="📄 Descargar Historial en PDF",
+            label="📄 Descargar Historial",
             data=pdf_bytes_hist,
             file_name=f"reporte_historial_{datetime.now().strftime('%d-%m-%Y')}.pdf",
             mime="application/pdf"
@@ -1295,7 +1226,6 @@ with pestana3:
 with pestana4:
     st.subheader("📋 Sugerencia de Pedido (Por Surtir con Proveedor) y Costos")
     st.markdown("Consulta el pedido sugerido al proveedor, el costo estimado por artículo y el total a invertir.")
-    
     reg_hist_actuales = cargar_historial_cache()
     
     if registros_inv:
@@ -1321,7 +1251,6 @@ with pestana4:
                         return cant
 
                     df_ventas["Cantidad_num"] = df_ventas.apply(procesar_cant_neto, axis=1)
-                    
                     totales_prod_mes = df_ventas.groupby(["Producto", "Mes"])["Cantidad_num"].sum().reset_index()
                     promedios = totales_prod_mes.groupby("Producto")["Cantidad_num"].mean().reset_index()
                     for _, row in promedios.iterrows():
@@ -1334,7 +1263,6 @@ with pestana4:
 
         for p in registros_inv:
             nombre = str(p.get("Nombre del Producto", "")).strip()
-            
             stock = 0.0
             for k, v in p.items():
                 if "stock" in k.lower() or "cantidad" in k.lower():
@@ -1399,10 +1327,10 @@ with pestana4:
             elements = []
             
             styles = getSampleStyleSheet()
-            title_style = ParagraphStyle('TitleStyle', parent=styles['Heading1'], fontSize=15, textColor=colors.HexColor('#4A1525'), spaceAfter=15, alignment=1)
+            title_style = ParagraphStyle('TitleStyle', parent=styles['Heading1'], fontSize=15, textColor=colors.HexColor('#4A1525'), fontName='Helvetica-Bold', spaceAfter=15, alignment=1)
             header_style = ParagraphStyle('HeaderStyle', parent=styles['Normal'], fontSize=9, textColor=colors.whitesmoke, fontName='Helvetica-Bold', alignment=1)
-            cell_style = ParagraphStyle('CellStyle', parent=styles['Normal'], fontSize=8, leading=10, alignment=1)
-            cell_left = ParagraphStyle('CellLeft', parent=styles['Normal'], fontSize=8, leading=10, alignment=0)
+            cell_style = ParagraphStyle('CellStyle', parent=styles['Normal'], fontSize=8, leading=10, alignment=1, fontName='Helvetica')
+            cell_left = ParagraphStyle('CellLeft', parent=styles['Normal'], fontSize=8, leading=10, alignment=0, fontName='Helvetica')
             
             elements.append(Paragraph("Nature’s Select - Sugerencia de Pedido (Resurtido)", title_style))
             elements.append(Spacer(1, 10))
@@ -1419,8 +1347,8 @@ with pestana4:
                     Paragraph(str(r.get("Inversión Est.", "")), cell_style)
                 ])
                 
-            total_row_style = ParagraphStyle('TotalRow', parent=styles['Normal'], fontSize=8, leading=10, alignment=2)
-            total_val_style = ParagraphStyle('TotalVal', parent=styles['Normal'], fontSize=8, leading=10, alignment=1)
+            total_row_style = ParagraphStyle('TotalRow', parent=styles['Normal'], fontSize=8, leading=10, alignment=2, fontName='Helvetica-Bold', textColor=colors.HexColor('#4A1525'))
+            total_val_style = ParagraphStyle('TotalVal', parent=styles['Normal'], fontSize=8, leading=10, alignment=1, fontName='Helvetica-Bold', textColor=colors.HexColor('#4A1525'))
             
             data.append([
                 Paragraph("Inversión Total Estimada:", total_row_style),
@@ -1435,21 +1363,21 @@ with pestana4:
                 ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
                 ('BOTTOMPADDING', (0,0), (-1,0), 6),
                 ('TOPPADDING', (0,0), (-1,0), 6),
-                ('BACKGROUND', (0,1), (-1,-2), colors.HexColor('#FDFBFB')),
-                ('GRID', (0,0), (-1,-2), 0.5, colors.HexColor('#D1C4E9')),
+                ('BACKGROUND', (0,1), (-1,-2), colors.HexColor('#FFFFFF')),
+                ('ROWBACKGROUNDS', (0,1), (-1,-2), [colors.HexColor('#FFFFFF'), colors.HexColor('#FAFAFA')]),
+                ('GRID', (0,0), (-1,-2), 0.5, colors.HexColor('#E0E0E0')),
                 ('SPAN', (0, -1), (5, -1)),
                 ('BACKGROUND', (0,-1), (-1,-1), colors.HexColor('#F4ECF7')),
                 ('GRID', (0,-1), (-1,-1), 0.5, colors.HexColor('#D1C4E9')),
             ]))
             elements.append(t)
-            
             doc.build(elements, canvasmaker=NumberedCanvas)
             buffer.seek(0)
             return buffer.getvalue()
 
         pdf_bytes_res = generar_pdf_resurtido(lista_resurtido, gran_total_inversion)
         st.download_button(
-            label="📄 Descargar Reporte de Resurtido en PDF",
+            label="📄 Descargar Resurtido PDF",
             data=pdf_bytes_res,
             file_name=f"reporte_resurtido_{datetime.now().strftime('%d-%m-%Y')}.pdf",
             mime="application/pdf"
@@ -1481,7 +1409,7 @@ with pestana5:
             precio_ven = st.number_input("Precio de Venta", min_value=0.0, step=1.0, value=0.0)
             categoria = st.text_input("Categoría")
             
-        submitted = st.form_submit_button("Guardar Producto en la Nube")
+        submitted = st.form_submit_button("Guardar Producto en la Nube", type="secondary")
         if submitted:
             if not nuevo_nombre.strip():
                 st.error("¡El nombre del producto es obligatorio!")
