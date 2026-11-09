@@ -893,7 +893,7 @@ with pestana2:
 
     with subtab2:
         st.markdown("Lista de artículos que ya fueron entregados al cliente pero están **pendientes de cobro**.")
-        pedidos_por_pagar = [p for p in pedidos_totales if p.get("Estado"] == "Por pagar"]
+        pedidos_por_pagar = [p for p in pedidos_totales if p.get("Estado") == "Por pagar"]
         
         if pedidos_por_pagar:
             def generar_pdf_cuentas_por_cobrar(lista_por_pagar):
@@ -1496,7 +1496,6 @@ with pestana6:
             if not nombre:
                 continue
 
-            # Buscar precio de venta
             precio_raw = 0.0
             for k, v in p.items():
                 if "precio de venta" in k.lower():
@@ -1505,11 +1504,9 @@ with pestana6:
                     except:
                         pass
 
-            # Si no tiene precio definido (0 o vacío), se omite del catálogo para clientes
             if precio_raw <= 0:
                 continue
 
-            # Buscar beneficio o descripción en las columnas del Google Sheet
             beneficio_texto = "✨ Producto 100% natural seleccionado para tu bienestar."
             for k, v in p.items():
                 if any(term in k.lower() for term in ["beneficio", "descripcion", "descripción", "detalle"]):
