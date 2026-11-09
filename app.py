@@ -2,6 +2,7 @@ import io
 import base64
 import os
 from datetime import datetime, timedelta
+import urllib.parse
 
 import gspread
 from google.oauth2.service_account import Credentials
@@ -117,7 +118,6 @@ except Exception as e:
     st.error(f"Error al conectar con Google Sheets: {e}")
     st.stop()
 
-# Caché extendido a 600 segundos (10 min) para evitar sobrepasar el límite de peticiones de Google API (Error 429)
 @st.cache_data(ttl=600)
 def cargar_inventario_cache():
     return hoja_inv.get_all_records()
@@ -236,12 +236,13 @@ except:
 
 st.markdown("---")
 
-pestana1, pestana2, pestana3, pestana4, pestana5 = st.tabs([
+pestana1, pestana2, pestana3, pestana4, pestana5, pestana6 = st.tabs([
     "🛒 Registrar Pedido", 
     "📦 Pedidos", 
     "📜 Historial", 
     "📋 Resurtido",
-    "➕ Nuevo Producto"
+    "➕ Nuevo Producto",
+    "🌐 Catálogo Web WhatsApp"
 ])
 
 with pestana1:
@@ -1438,3 +1439,114 @@ with pestana5:
                     st.rerun()
                 except Exception as e:
                     st.error(f"Error al guardar: {e}")
+
+with pestana6:
+    st.subheader("🌐 Generar Catálogo Web para WhatsApp")
+    st.markdown("Descarga tu archivo de catálogo HTML actualizado con todos los productos actuales de tu base de datos y sus precios al día.")
+    
+    if registros_inv:
+        # Generar contenido HTML dinámicamente basado en Google Sheets
+        html_catalogo = """<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nature’s Select - Catálogo de Productos</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        html, body { font-family: 'Open Sans', sans-serif !important; background-color: #FAFAFA !important; color: #263238; }
+        h1, h2, h3, h4, h5, h6 { font-family: 'Montserrat', sans-serif !important; color: #263238 !important; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade { animation: fadeIn 0.6s ease-out forwards; }
+        .product-card { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .product-card:hover { transform: translateY(-4px); box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.08); }
+    </style>
+    <script>
+        function actualizarPedido(idProducto, nombreProducto, precio) {
+            const select = document.getElementById('qty-' + idProducto);
+            const cantidad = select.value;
+            const btn = document.getElementById('btn-' + idProducto);
+            const mensaje = `Hola, me interesa pedir ${cantidad} pieza(s) de ${nombreProducto} ($${precio} c/u). ¿Aún hay disponibilidad?`;
+            const url = `https://wa.me/523313018552?text=` + encodeURIComponent(mensaje);
+            btn.href = url;
+        }
+    </script>
+</head>
+<body class="bg-[#FAFAFA] text-[#263238]">
+<header class="bg-white py-8 px-4 text-center shadow-sm animate-fade border-b border-stone-200">
+    <div class="max-w-xl mx-auto">
+        <div style="text-align: center; margin-bottom: 12px; width: 100%;">
+            <img src="https://raw.githubusercontent.com/ruiseartmg/inventario-suplementos/main/watermarked_img_3973813175880226978.jpg" alt="Nature's Select Logo" style="width: 100%; max-width: 280px; margin: 0 auto; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+        </div>
+        <span class="bg-[#E8F5E9] text-[#1B5E20] text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider">Catálogo 2026</span>
+        <p class="text-stone-600 text-sm md:text-base mt-3">Alimenta tu bienestar con lo mejor de la naturaleza. Elige tus piezas y haz tu pedido directo por WhatsApp.</p>
+    </div>
+</header>
+<main class="max-w-3xl mx-auto px-4 py-8 space-y-10">
+    <section class="animate-fade">
+        <div class="flex items-center space-x-2 mb-4 border-b border-stone-200 pb-2">
+            <span class="text-2xl">🌿</span>
+            <h2 class="text-xl font-bold text-[#4A1525]">Nuestros Productos</h2>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+"""
+
+        for idx, p in enumerate(registros_inv):
+            nombre = str(p.get("Nombre del Producto", "")).strip()
+            if not nombre:
+                continue
+
+            precio_raw = 0.0
+            for k, v in p.items():
+                if "precio de venta" in k.lower():
+                    try:
+                        precio_raw = float(str(v).replace("$", "").replace(",", "").strip())
+                    except:
+                        pass
+
+            id_limpio = f"prod_{idx}"
+            html_catalogo += f"""
+            <div class="product-card bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden flex flex-col justify-between p-4">
+                <div>
+                    <div class="flex justify-between items-start">
+                        <h3 class="font-semibold text-stone-900">{nombre}</h3>
+                    </div>
+                    <p class="text-xs text-[#2E7D32] font-medium mt-1">✨ Producto 100% natural seleccionado para tu bienestar.</p>
+                </div>
+                <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <span class="text-lg font-bold text-[#2E7D32]">${precio_raw:,.2f}</span>
+                        <select id="qty-{id_limpio}" onchange="actualizarPedido('{id_limpio}', '{nombre}', {precio_raw})" class="text-xs border border-stone-300 rounded px-1.5 py-1 bg-stone-50">
+                            <option value="1">1 pza</option>
+                            <option value="2">2 pzas</option>
+                            <option value="3">3 pzas</option>
+                            <option value="4">4 pzas</option>
+                            <option value="5">5 pzas</option>
+                        </select>
+                    </div>
+                    <a id="btn-{id_limpio}" href="https://wa.me/523313018552?text={urllib.parse.quote(f'Hola, me interesa pedir 1 pieza(s) de {nombre} (${precio_raw:,.2f} c/u). ¿Aún hay disponibilidad?')}" target="_blank" class="bg-[#2E7D32] hover:bg-[#1B5E20] text-white text-xs px-3 py-1.5 rounded-lg font-medium transition transform active:scale-95 shadow-sm">Pedir</a>
+                </div>
+            </div>
+            """
+
+        html_catalogo += """
+        </div>
+    </section>
+</main>
+<footer class="bg-stone-800 text-stone-300 py-8 px-4 text-center mt-12 animate-fade">
+    <p class="text-sm">💳 Pagos por transferencia o efectivo. Entregas a domicilio: <b>Próximamente disponible</b>.</p>
+    <p class="text-xs text-stone-400 mt-2">¡Gracias por consumir natural y apoyar el comercio local! ✨</p>
+</footer>
+</body>
+</html>
+"""
+
+        st.download_button(
+            label="📥 Descargar Catálogo HTML Actualizado",
+            data=html_catalogo,
+            file_name=f"catalogo_natures_select_{datetime.now().strftime('%d-%m-%Y')}.html",
+            mime="text/html"
+        )
+    else:
+        st.info("No hay productos disponibles para generar el catálogo.")
