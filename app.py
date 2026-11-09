@@ -893,7 +893,7 @@ with pestana2:
 
     with subtab2:
         st.markdown("Lista de artículos que ya fueron entregados al cliente pero están **pendientes de cobro**.")
-        pedidos_por_pagar = [p for p in pedidos_totales if p.get("Estado") == "Por pagar"]
+        pedidos_por_pagar = [p for p in pedidos_totales if p.get("Estado"] == "Por pagar"]
         
         if pedidos_por_pagar:
             def generar_pdf_cuentas_por_cobrar(lista_por_pagar):
@@ -1442,10 +1442,9 @@ with pestana5:
 
 with pestana6:
     st.subheader("🌐 Generar Catálogo Web para WhatsApp")
-    st.markdown("Descarga tu archivo de catálogo HTML actualizado con todos los productos actuales de tu base de datos y sus precios al día.")
+    st.markdown("Descarga tu archivo de catálogo HTML actualizado con los productos activos, sus precios y beneficios desde tu base de datos.")
     
     if registros_inv:
-        # Generar contenido HTML dinámicamente basado en Google Sheets
         html_catalogo = """<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1497,6 +1496,7 @@ with pestana6:
             if not nombre:
                 continue
 
+            # Buscar precio de venta
             precio_raw = 0.0
             for k, v in p.items():
                 if "precio de venta" in k.lower():
@@ -1505,6 +1505,19 @@ with pestana6:
                     except:
                         pass
 
+            # Si no tiene precio definido (0 o vacío), se omite del catálogo para clientes
+            if precio_raw <= 0:
+                continue
+
+            # Buscar beneficio o descripción en las columnas del Google Sheet
+            beneficio_texto = "✨ Producto 100% natural seleccionado para tu bienestar."
+            for k, v in p.items():
+                if any(term in k.lower() for term in ["beneficio", "descripcion", "descripción", "detalle"]):
+                    val_str = str(v).strip()
+                    if val_str:
+                        beneficio_texto = f"✨ {val_str}"
+                        break
+
             id_limpio = f"prod_{idx}"
             html_catalogo += f"""
             <div class="product-card bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden flex flex-col justify-between p-4">
@@ -1512,7 +1525,7 @@ with pestana6:
                     <div class="flex justify-between items-start">
                         <h3 class="font-semibold text-stone-900">{nombre}</h3>
                     </div>
-                    <p class="text-xs text-[#2E7D32] font-medium mt-1">✨ Producto 100% natural seleccionado para tu bienestar.</p>
+                    <p class="text-xs text-[#2E7D32] font-medium mt-1">{beneficio_texto}</p>
                 </div>
                 <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between">
                     <div class="flex items-center space-x-2">
