@@ -23,15 +23,13 @@
             <img src="https://raw.githubusercontent.com/ruiseartmg/inventario-suplementos/main/watermarked_img_3973813175880226978.jpg" alt="Nature's Select Logo" style="width: 100%; max-width: 280px; margin: 0 auto; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
         </div>
         <span class="bg-[#E8F5E9] text-[#1B5E20] text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider">Catálogo Oficial 2026</span>
-        <h1 class="text-2xl font-bold mt-3 text-[#4A1525]">🌿 Nature’s Select</h1>
-        <p class="text-stone-600 text-sm md:text-base mt-2">Alimenta tu bienestar con lo mejor de la naturaleza. Elige tus piezas y haz tu pedido directo por WhatsApp.</p>
+        <p class="text-stone-600 text-sm md:text-base mt-3">Alimenta tu bienestar con lo mejor de la naturaleza. Elige tus piezas y haz tu pedido directo por WhatsApp.</p>
     </div>
 </header>
 
 <main class="max-w-3xl mx-auto px-4 py-8 space-y-10">
     <section class="animate-fade">
         <div class="flex items-center space-x-2 mb-4 border-b border-stone-200 pb-2">
-            <span class="text-2xl">🌱</span>
             <h2 class="text-xl font-bold text-[#4A1525]">Nuestros Productos Disponibles</h2>
         </div>
         
@@ -55,7 +53,6 @@
     function cargarProductos() {
         const contenedor = document.getElementById('grid-productos');
         
-        // Añadimos {redirect: 'follow'} para que el navegador acepte el enlace de Google sin bloquearlo
         fetch(SCRIPT_URL, { redirect: 'follow' })
             .then(response => response.json())
             .then(productos => {
