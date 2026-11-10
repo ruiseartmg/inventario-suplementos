@@ -59,7 +59,6 @@
 
     <!-- Lógica de JavaScript -->
     <script>
-        // Enlace oficial de tu Google Apps Script configurado
         const API_URL = "https://script.google.com/macros/s/AKfycbxxgJ_D5-fF4xu1OzzPURgktY3FzrLuu26tJxh09YsYKnTD_Lx5d4uewDHjhBZ7gUOUcQ/exec"; 
         let carrito = [];
         let productosGlobal = [];
@@ -107,7 +106,7 @@
                         ${imagenesHtml}
                         <div class="p-5">
                             <h3 class="font-bold text-xl text-stone-900 mb-1">${prod.nombre}</h3>
-                            <p class="text-stone-600 text-sm mb-4">${prod.descripcion || ''}</p>
+                            <p class="text-stone-600 text-sm mb-4">${prod.beneficio || ''}</p>
                         </div>
                     </div>
                     <div class="p-5 pt-0 flex items-center justify-between">
@@ -208,11 +207,10 @@
 
             mensaje += `%0A*Total a pagar: $${total.toFixed(2)}*`;
 
-            const numeroWhatsApp = "523312345678"; // Reemplaza con tu número de WhatsApp real
+            const numeroWhatsApp = "523312345678"; // Reemplaza con tu número de WhatsApp
             window.open(`https://wa.me/${numeroWhatsApp}?text=${mensaje}`, '_blank');
         }
 
-        // Inicializar cargando los productos al abrir la página
         cargarProductos();
     </script>
 </body>
