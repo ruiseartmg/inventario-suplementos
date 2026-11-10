@@ -14,15 +14,6 @@
         .product-card { transition: transform 0.3s ease, box-shadow 0.3s ease; }
         .product-card:hover { transform: translateY(-4px); box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.08); }
     </style>
-    <script>
-        function actualizarPedido(idProducto, nombreProducto, precio) {
-            const select = document.getElementById('qty-' + idProducto);
-            const cantidad = select.value;
-            const btn = document.getElementById('btn-' + idProducto);
-            const mensaje = `Hola, me interesa pedir ${cantidad} pieza(s) de ${nombreProducto} ($${precio} c/u). ¿Aún hay disponibilidad?`;
-            btn.href = `https://wa.me/523313018552?text=` + encodeURIComponent(mensaje);
-        }
-    </script>
 </head>
 <body class="bg-[#FAFAFA] text-[#263238]">
 
@@ -41,104 +32,83 @@
     <section class="animate-fade">
         <div class="flex items-center space-x-2 mb-4 border-b border-stone-200 pb-2">
             <span class="text-2xl">🌱</span>
-            <h2 class="text-xl font-bold text-[#4A1525]">Nuestros Productos Disponibles</h2>
+            <h2 class="text-xl font-bold text-[#4A1525]">Nuestros Productos</h2>
         </div>
         
-        <!-- Tarjetas de Productos -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-            <!-- Producto 1 -->
-            <div class="product-card bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden flex flex-col justify-between p-4">
-                <div>
-                    <h3 class="font-semibold text-stone-900">Ashwagandha plb. 200g</h3>
-                    <p class="text-xs text-[#2E7D32] font-medium mt-1">✨ Ayuda a reducir el estrés y la ansiedad, mejorando la energía y concentración.</p>
-                </div>
-                <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-lg font-bold text-[#2E7D32]">$320.00</span>
-                        <select id="qty-prod_0" onchange="actualizarPedido('prod_0', 'Ashwagandha plb. 200g', 320.0)" class="text-xs border border-stone-300 rounded px-1.5 py-1 bg-stone-50">
-                            <option value="1">1 pza</option>
-                            <option value="2">2 pzas</option>
-                            <option value="3">3 pzas</option>
-                            <option value="4">4 pzas</option>
-                            <option value="5">5 pzas</option>
-                        </select>
-                    </div>
-                    <a id="btn-prod_0" href="https://wa.me/523313018552?text=Hola%2C%20me%20interesa%20pedir%201%20pieza%28s%29%20de%20Ashwagandha%20plb.%20200g%20%28%24320.00%20c/u%29.%20%C2%BFA%C3%BAn%20hay%20disponibilidad%3F" target="_blank" class="bg-[#2E7D32] hover:bg-[#1B5E20] text-white text-xs px-3 py-1.5 rounded-lg font-medium transition transform active:scale-95 shadow-sm">Pedir</a>
-                </div>
+        <!-- Aquí se cargarán solitos los productos desde tu Google Sheets -->
+        <div id="grid-productos" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="col-span-2 text-center py-12">
+                <p class="text-stone-500 animate-pulse text-sm">Cargando productos actualizados desde tu inventario...</p>
             </div>
-
-            <!-- Producto 2 -->
-            <div class="product-card bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden flex flex-col justify-between p-4">
-                <div>
-                    <h3 class="font-semibold text-stone-900">Cacao en Polvo 200g</h3>
-                    <p class="text-xs text-[#2E7D32] font-medium mt-1">✨ Alto contenido de antioxidantes; mejora el estado de ánimo y la salud cardiovascular.</p>
-                </div>
-                <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-lg font-bold text-[#2E7D32]">$220.00</span>
-                        <select id="qty-prod_1" onchange="actualizarPedido('prod_1', 'Cacao en Polvo 200g', 220.0)" class="text-xs border border-stone-300 rounded px-1.5 py-1 bg-stone-50">
-                            <option value="1">1 pza</option>
-                            <option value="2">2 pzas</option>
-                            <option value="3">3 pzas</option>
-                            <option value="4">4 pzas</option>
-                            <option value="5">5 pzas</option>
-                        </select>
-                    </div>
-                    <a id="btn-prod_1" href="https://wa.me/523313018552?text=Hola%2C%20me%20interesa%20pedir%201%20pieza%28s%29%20de%20Cacao%20en%20Polvo%20200g%20%28%24220.00%20c/u%29.%20%C2%BFA%C3%BAn%20hay%20disponibilidad%3F" target="_blank" class="bg-[#2E7D32] hover:bg-[#1B5E20] text-white text-xs px-3 py-1.5 rounded-lg font-medium transition transform active:scale-95 shadow-sm">Pedir</a>
-                </div>
-            </div>
-
-            <!-- Producto 3 -->
-            <div class="product-card bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden flex flex-col justify-between p-4">
-                <div>
-                    <h3 class="font-semibold text-stone-900">Magnesio 250g</h3>
-                    <p class="text-xs text-[#2E7D32] font-medium mt-1">✨ Contribuye al funcionamiento muscular, reduce la fatiga y mejora el descanso nocturno.</p>
-                </div>
-                <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-lg font-bold text-[#2E7D32]">$279.00</span>
-                        <select id="qty-prod_2" onchange="actualizarPedido('prod_2', 'Magnesio 250g', 279.0)" class="text-xs border border-stone-300 rounded px-1.5 py-1 bg-stone-50">
-                            <option value="1">1 pza</option>
-                            <option value="2">2 pzas</option>
-                            <option value="3">3 pzas</option>
-                            <option value="4">4 pzas</option>
-                            <option value="5">5 pzas</option>
-                        </select>
-                    </div>
-                    <a id="btn-prod_2" href="https://wa.me/523313018552?text=Hola%2C%20me%20interesa%20pedir%201%20pieza%28s%29%20de%20Magnesio%20250g%20%28%24279.00%20c/u%29.%20%C2%BFA%C3%BAn%20hay%20disponibilidad%3F" target="_blank" class="bg-[#2E7D32] hover:bg-[#1B5E20] text-white text-xs px-3 py-1.5 rounded-lg font-medium transition transform active:scale-95 shadow-sm">Pedir</a>
-                </div>
-            </div>
-
-            <!-- Producto 4 -->
-            <div class="product-card bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden flex flex-col justify-between p-4">
-                <div>
-                    <h3 class="font-semibold text-stone-900">Matcha 125g</h3>
-                    <p class="text-xs text-[#2E7D32] font-medium mt-1">✨ Acelera el metabolismo, quema calorías y brinda energía sostenida sin nerviosismo.</p>
-                </div>
-                <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-lg font-bold text-[#2E7D32]">$230.00</span>
-                        <select id="qty-prod_3" onchange="actualizarPedido('prod_3', 'Matcha 125g', 230.0)" class="text-xs border border-stone-300 rounded px-1.5 py-1 bg-stone-50">
-                            <option value="1">1 pza</option>
-                            <option value="2">2 pzas</option>
-                            <option value="3">3 pzas</option>
-                            <option value="4">4 pzas</option>
-                            <option value="5">5 pzas</option>
-                        </select>
-                    </div>
-                    <a id="btn-prod_3" href="https://wa.me/523313018552?text=Hola%2C%20me%20interesa%20pedir%201%20pieza%28s%29%20de%20Matcha%20125g%20%28%24230.00%20c/u%29.%20%C2%BFA%C3%BAn%20hay%20disponibilidad%3F" target="_blank" class="bg-[#2E7D32] hover:bg-[#1B5E20] text-white text-xs px-3 py-1.5 rounded-lg font-medium transition transform active:scale-95 shadow-sm">Pedir</a>
-                </div>
-            </div>
-
         </div>
     </section>
 </main>
 
 <footer class="bg-stone-800 text-stone-300 py-8 px-4 text-center mt-12 animate-fade">
     <p class="text-sm">💳 Pagos por transferencia o efectivo. Precios sujetos a cambios en tiempo real.</p>
-    <p class="text-xs text-stone-400 mt-2">¡Gracias per consumir natural y apoyar el comercio local! ✨</p>
+    <p class="text-xs text-stone-400 mt-2">¡Gracias por consumir natural y apoyar el comercio local! ✨</p>
 </footer>
+
+<script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxxgJ_D5-fF4xu1OzzPURgktY3FzrLuu26tJxh09YsYKnTD_Lx5d4uewDHjhBZ7gUOUcQ/exec";
+
+    function cargarProductos() {
+        const contenedor = document.getElementById('grid-productos');
+        
+        fetch(SCRIPT_URL)
+            .then(response => response.json())
+            .then(productos => {
+                if (!productos || productos.length === 0) {
+                    contenedor.innerHTML = '<p class="text-stone-500 text-center col-span-2 py-8">No hay productos disponibles por el momento.</p>';
+                    return;
+                }
+
+                let html = '';
+                productos.forEach((prod, index) => {
+                    const idProd = 'prod_' + index;
+                    const mensajeWa = `Hola, me interesa pedir 1 pieza(s) de ${prod.nombre} ($${prod.precio.toFixed(2)} c/u). ¿Aún hay disponibilidad?`;
+                    const linkWa = `https://wa.me/523313018552?text=` + encodeURIComponent(mensajeWa);
+
+                    html += `
+                        <div class="product-card bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden flex flex-col justify-between p-4">
+                            <div>
+                                <h3 class="font-semibold text-stone-900">${prod.nombre}</h3>
+                                <p class="text-xs text-[#2E7D32] font-medium mt-1">${prod.beneficio}</p>
+                            </div>
+                            <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-lg font-bold text-[#2E7D32]">$${prod.precio.toFixed(2)}</span>
+                                    <select id="qty-${idProd}" onchange="actualizarWap('${idProd}', '${prod.nombre}', ${prod.precio})" class="text-xs border border-stone-300 rounded px-1.5 py-1 bg-stone-50">
+                                        <option value="1">1 pza</option>
+                                        <option value="2">2 pzas</option>
+                                        <option value="3">3 pzas</option>
+                                        <option value="4">4 pzas</option>
+                                        <option value="5">5 pzas</option>
+                                    </select>
+                                </div>
+                                <a id="btn-${idProd}" href="${linkWa}" target="_blank" class="bg-[#2E7D32] hover:bg-[#1B5E20] text-white text-xs px-3 py-1.5 rounded-lg font-medium transition transform active:scale-95 shadow-sm">Pedir</a>
+                            </div>
+                        </div>
+                    `;
+                });
+                contenedor.innerHTML = html;
+            })
+            .catch(error => {
+                console.error("Error al cargar:", error);
+                contenedor.innerHTML = '<p class="text-red-500 text-center col-span-2 py-8">Error al conectar con el inventario. Intenta recargar más tarde.</p>';
+            });
+    }
+
+    function actualizarWap(idSelect, nombre, precio) {
+        const cantidad = document.getElementById('qty-' + idSelect).value;
+        const btn = document.getElementById('btn-' + idSelect);
+        const mensaje = `Hola, me interesa pedir ${cantidad} pieza(s) de ${nombre} ($${precio.toFixed(2)} c/u). ¿Aún hay disponibilidad?`;
+        btn.href = `https://wa.me/523313018552?text=` + encodeURIComponent(mensaje);
+    }
+
+    // Cargar al abrir la página
+    cargarProductos();
+</script>
 
 </body>
 </html>
