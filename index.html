@@ -3,36 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nature's Select - Catálogo</title>
+    <title>Nature's Select - Catálogo Oficial</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-stone-50 text-stone-800 font-sans">
 
-    <!-- Header / Barra Superior -->
-    <header class="bg-emerald-800 text-white shadow-md sticky top-0 z-40">
+    <!-- Header / Barra Superior con Logo y Estilo -->
+    <header class="bg-emerald-900 text-white shadow-lg sticky top-0 z-40 border-b border-emerald-800">
         <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-            <h1 class="text-2xl font-bold tracking-wide">Nature's Select</h1>
-            <button onclick="toggleCarrito()" class="bg-emerald-700 hover:bg-emerald-600 px-4 py-2 rounded-lg flex items-center gap-2 transition shadow">
-                🛒 Carrito <span id="contador-carrito" class="bg-white text-emerald-900 px-2 py-0.5 rounded-full text-xs font-bold">0</span>
+            <div class="flex items-center gap-3">
+                <!-- Puedes subir tu logo a la carpeta img como logo.png o cambiar esta ruta -->
+                <img src="img/logo.png" alt="Nature's Select Logo" class="h-10 w-10 object-contain rounded-full bg-white p-1 shadow" onerror="this.style.display='none'">
+                <div>
+                    <h1 class="text-2xl font-black tracking-wide text-white">Nature's Select</h1>
+                    <p class="text-xs text-emerald-200 font-medium">Catálogo Oficial de Suplementos</p>
+                </div>
+            </div>
+            <button onclick="toggleCarrito()" class="bg-emerald-700 hover:bg-emerald-600 px-4 py-2.5 rounded-xl flex items-center gap-2 transition shadow-md font-semibold text-sm">
+                🛒 Carrito <span id="contador-carrito" class="bg-white text-emerald-900 px-2 py-0.5 rounded-full text-xs font-extrabold">0</span>
             </button>
         </div>
     </header>
 
     <!-- Contenido Principal -->
     <main class="max-w-7xl mx-auto px-4 py-8">
-        <h2 class="text-3xl font-bold text-stone-900 mb-6 text-center">Nuestro Catálogo</h2>
+        <div class="text-center mb-10">
+            <h2 class="text-3xl font-extrabold text-stone-900 mb-2">Nuestros Productos</h2>
+            <p class="text-stone-600 max-w-xl mx-auto">Selecciona tus suplementos favoritos, revisa la información nutricional y haz tu pedido directo por WhatsApp.</p>
+        </div>
         <div id="contenedor-productos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <!-- Los productos se cargan dinámicamente aquí -->
         </div>
     </main>
 
     <!-- Panel / Modal del Carrito -->
-    <div id="modal-carrito" class="fixed inset-0 bg-black/50 hidden z-50 flex justify-end">
-        <div class="bg-white w-full max-w-md h-full shadow-2xl flex flex-col p-6">
+    <div id="modal-carrito" class="fixed inset-0 bg-black/50 hidden z-50 flex justify-end backdrop-blur-sm">
+        <div class="bg-white w-full max-w-md h-full shadow-2xl flex flex-col p-6 animate-in slide-in-from-right">
             <div class="flex justify-between items-center border-b pb-4">
                 <h3 class="text-xl font-bold text-stone-900">Tu Carrito de Compras</h3>
-                <button onclick="toggleCarrito()" class="text-stone-500 hover:text-stone-800 text-2xl font-bold">&times;</button>
+                <button onclick="toggleCarrito()" class="text-stone-400 hover:text-stone-800 text-3xl font-bold">&times;</button>
             </div>
             <div id="lista-carrito" class="flex-1 overflow-y-auto py-4 space-y-4">
                 <!-- Items seleccionados -->
@@ -40,9 +50,9 @@
             <div class="border-t pt-4">
                 <div class="flex justify-between text-lg font-bold mb-4">
                     <span>Total:</span>
-                    <span id="total-carrito">$0.00</span>
+                    <span id="total-carrito" class="text-emerald-700">$0.00</span>
                 </div>
-                <button onclick="enviarPedidoWhatsApp()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl transition shadow">
+                <button onclick="enviarPedidoWhatsApp()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 rounded-xl transition shadow-lg flex items-center justify-center gap-2 text-base">
                     Enviar pedido por WhatsApp 📱
                 </button>
             </div>
@@ -50,10 +60,10 @@
     </div>
 
     <!-- Modal para ver imagen en grande (Lightbox) -->
-    <div id="modal-imagen" class="fixed inset-0 bg-black/80 hidden z-50 flex items-center justify-center p-4" onclick="cerrarImagenGrande()">
-        <div class="relative max-w-2xl w-full flex justify-center" onclick="event.stopPropagation()">
-            <button onclick="cerrarImagenGrande()" class="absolute -top-10 right-0 text-white text-3xl font-bold px-2">&times;</button>
-            <img id="imagen-ampliada" src="" alt="Imagen ampliada" class="max-h-[85vh] max-w-full rounded-xl object-contain shadow-2xl">
+    <div id="modal-imagen" class="fixed inset-0 bg-black/85 hidden z-50 flex items-center justify-center p-4 backdrop-blur-md" onclick="cerrarImagenGrande()">
+        <div class="relative max-w-3xl w-full flex justify-center" onclick="event.stopPropagation()">
+            <button onclick="cerrarImagenGrande()" class="absolute -top-12 right-0 text-white text-4xl font-bold px-3 hover:text-emerald-400 transition">&times;</button>
+            <img id="imagen-ampliada" src="" alt="Imagen ampliada" class="max-h-[85vh] max-w-full rounded-2xl object-contain shadow-2xl bg-white/5 p-2">
         </div>
     </div>
 
@@ -84,26 +94,25 @@
                 // Soporte para dos imágenes (Columna G e H) con evento para abrir en grande
                 if (prod.imagen1 && prod.imagen2) {
                     imagenesHtml = `
-                        <div class="grid grid-cols-2 gap-1 h-48 bg-stone-100 overflow-hidden">
-                            <img src="${prod.imagen1}" alt="${prod.nombre} 1" class="w-full h-full object-cover cursor-pointer hover:opacity-90 transition" onclick="abrirImagenGrande('${prod.imagen1}')">
-                            <img src="${prod.imagen2}" alt="${prod.nombre} 2" class="w-full h-full object-cover cursor-pointer hover:opacity-90 transition" onclick="abrirImagenGrande('${prod.imagen2}')">
+                        <div class="grid grid-cols-2 gap-1 h-52 bg-stone-100 overflow-hidden border-b border-stone-100">
+                            <img src="${prod.imagen1}" alt="${prod.nombre} 1" class="w-full h-full object-cover cursor-pointer hover:scale-105 transition duration-300" title="Haz clic para ver en grande" onclick="abrirImagenGrande('${prod.imagen1}')">
+                            <img src="${prod.imagen2}" alt="${prod.nombre} 2" class="w-full h-full object-cover cursor-pointer hover:scale-105 transition duration-300" title="Haz clic para ver en grande" onclick="abrirImagenGrande('${prod.imagen2}')">
                         </div>
                     `;
                 } else if (prod.imagen1) {
                     imagenesHtml = `
-                        <div class="w-full h-48 overflow-hidden bg-stone-100">
-                            <img src="${prod.imagen1}" alt="${prod.nombre}" class="w-full h-full object-cover cursor-pointer hover:opacity-90 transition" onclick="abrirImagenGrande('${prod.imagen1}')">
+                        <div class="w-full h-52 overflow-hidden bg-stone-100 border-b border-stone-100">
+                            <img src="${prod.imagen1}" alt="${prod.nombre}" class="w-full h-full object-cover cursor-pointer hover:scale-105 transition duration-300" title="Haz clic para ver en grande" onclick="abrirImagenGrande('${prod.imagen1}')">
                         </div>
                     `;
                 } else {
-                    imagenesHtml = `<div class="w-full h-48 bg-stone-200 flex items-center justify-center text-stone-400 text-sm">Sin imagen</div>`;
+                    imagenesHtml = `<div class="w-full h-52 bg-stone-200 flex items-center justify-center text-stone-400 text-sm font-medium">Sin imagen disponible</div>`;
                 }
 
-                // Tomamos beneficio o descripcion indistintamente
                 const textoBeneficio = prod.beneficio || prod.descripcion || "";
 
                 const card = document.createElement("div");
-                card.className = "bg-white rounded-2xl shadow-md overflow-hidden flex flex-col justify-between border border-stone-100";
+                card.className = "bg-white rounded-2xl shadow-md hover:shadow-xl transition-shadow duration-300 overflow-hidden flex flex-col justify-between border border-stone-100";
                 card.innerHTML = `
                     <div>
                         ${imagenesHtml}
@@ -115,7 +124,7 @@
                     <div class="p-5 pt-0 flex flex-col gap-3">
                         <div class="flex items-center justify-between">
                             <span class="text-2xl font-black text-emerald-700">$${Number(prod.precio).toFixed(2)}</span>
-                            <select id="cantidad-${index}" class="bg-stone-100 border border-stone-300 rounded-lg px-3 py-1.5 text-sm font-semibold text-stone-700">
+                            <select id="cantidad-${index}" class="bg-stone-100 border border-stone-300 rounded-xl px-3 py-1.5 text-sm font-semibold text-stone-700 focus:outline-none focus:ring-2 focus:ring-emerald-600">
                                 <option value="1">1 pza</option>
                                 <option value="2">2 pza</option>
                                 <option value="3">3 pza</option>
@@ -124,7 +133,7 @@
                             </select>
                         </div>
                         <button onclick="agregarAlCarritoConCantidad(${index})" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white py-2.5 rounded-xl font-medium transition shadow-sm flex items-center justify-center gap-2">
-                            Agregar 🛒
+                            Agregar al carrito 🛒
                         </button>
                     </div>
                 `;
@@ -162,7 +171,7 @@
                 carrito.push({ ...producto, cantidad: cantidadSeleccionada });
             }
             actualizarCarrito();
-            toggleCarrito(); // Abre el carrito automáticamente para confirmar la adición
+            toggleCarrito(); // Abre el carrito automáticamente para confirmar
         }
 
         function actualizarCarrito() {
@@ -179,16 +188,16 @@
                 totalItems += item.cantidad;
 
                 const div = document.createElement("div");
-                div.className = "flex justify-between items-center bg-stone-50 p-3 rounded-xl border";
+                div.className = "flex justify-between items-center bg-stone-50 p-3 rounded-xl border border-stone-200";
                 div.innerHTML = `
                     <div>
                         <h4 class="font-bold text-sm text-stone-800">${item.nombre}</h4>
                         <p class="text-xs text-stone-500">$${item.precio} x ${item.cantidad}</p>
                     </div>
                     <div class="flex items-center gap-2">
-                        <button onclick="cambiarCantidad(${index}, -1)" class="bg-stone-200 hover:bg-stone-300 px-2.5 py-1 rounded-lg text-xs font-bold">-</button>
+                        <button onclick="cambiarCantidad(${index}, -1)" class="bg-stone-200 hover:bg-stone-300 px-2.5 py-1 rounded-lg text-xs font-bold text-stone-700">-</button>
                         <span class="text-sm font-bold w-4 text-center">${item.cantidad}</span>
-                        <button onclick="cambiarCantidad(${index}, 1)" class="bg-stone-200 hover:bg-stone-300 px-2.5 py-1 rounded-lg text-xs font-bold">+</button>
+                        <button onclick="cambiarCantidad(${index}, 1)" class="bg-stone-200 hover:bg-stone-300 px-2.5 py-1 rounded-lg text-xs font-bold text-stone-700">+</button>
                     </div>
                 `;
                 lista.appendChild(div);
@@ -223,7 +232,7 @@
 
             mensaje += `%0A*Total a pagar: $${total.toFixed(2)}*`;
 
-            const numeroWhatsApp = "523312345678"; // Reemplaza con tu número real
+            const numeroWhatsApp = "523312345678"; // Reemplaza con tu número real de WhatsApp
             window.open(`https://wa.me/${numeroWhatsApp}?text=${mensaje}`, '_blank');
         }
 
