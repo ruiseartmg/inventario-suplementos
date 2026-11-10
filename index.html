@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Bloqueamos la indexación en buscadores para mantenerlo privado -->
+    <meta name="robots" content="noindex, nofollow">
     <title>Nature’s Select - Catálogo en Línea</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
@@ -67,7 +69,7 @@
                     const mensajeWa = `Hola, me interesa pedir 1 pieza(s) de ${prod.nombre} ($${prod.precio.toFixed(2)} c/u). ¿Aún hay disponibilidad?`;
                     const linkWa = `https://wa.me/523313018552?text=` + encodeURIComponent(mensajeWa);
 
-                    // Si hay imagen, la mostramos; si no, dejamos espacio limpio
+                    // Si hay enlace de imagen en la columna G, se muestra; si está vacío, la tarjeta se adapta limpia
                     const imagenHtml = prod.imagen 
                         ? `<div class="w-full h-48 overflow-hidden bg-stone-100"><img src="${prod.imagen}" alt="${prod.nombre}" class="w-full h-full object-cover"></div>` 
                         : '';
