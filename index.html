@@ -14,6 +14,15 @@
         .product-card { transition: transform 0.3s ease, box-shadow 0.3s ease; }
         .product-card:hover { transform: translateY(-4px); box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.08); }
     </style>
+    <script>
+        function actualizarPedido(idProducto, nombreProducto, precio) {
+            const select = document.getElementById('qty-' + idProducto);
+            const cantidad = select.value;
+            const btn = document.getElementById('btn-' + idProducto);
+            const mensaje = `Hola, me interesa pedir ${cantidad} pieza(s) de ${nombreProducto} ($${precio} c/u). ¿Aún hay disponibilidad?`;
+            btn.href = `https://wa.me/523313018552?text=` + encodeURIComponent(mensaje);
+        }
+    </script>
 </head>
 <body class="bg-[#FAFAFA] text-[#263238]">
 
@@ -35,9 +44,19 @@
             <h2 class="text-xl font-bold text-[#4A1525]">Nuestros Productos</h2>
         </div>
         
-        <!-- Aquí se cargarán los productos en vivo -->
+        <!-- Contenedor dinámico -->
         <div id="grid-productos" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <p class="text-stone-500 text-center col-span-2 py-8">Cargando productos actualizados desde tu inventario...</p>
+            <!-- Productos temporales de respaldo mientras recarga -->
+            <div class="product-card bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden flex flex-col justify-between p-4">
+                <div>
+                    <h3 class="font-semibold text-stone-900">Ashwagandha plb. 200g</h3>
+                    <p class="text-xs text-[#2E7D32] font-medium mt-1">✨ Ayuda a reducir el estrés y la energía.</p>
+                </div>
+                <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between">
+                    <span class="text-lg font-bold text-[#2E7D32]">$320.00</span>
+                    <a href="https://wa.me/523313018552" target="_blank" class="bg-[#2E7D32] text-white text-xs px-3 py-1.5 rounded-lg font-medium">Pedir</a>
+                </div>
+            </div>
         </div>
     </section>
 </main>
@@ -46,18 +65,6 @@
     <p class="text-sm">💳 Pagos por transferencia o efectivo. Precios sujetos a cambios en tiempo real.</p>
     <p class="text-xs text-stone-400 mt-2">¡Gracias por consumir natural y apoyar el comercio local! ✨</p>
 </footer>
-
-<script>
-    // Función para actualizar el enlace de WhatsApp según la cantidad seleccionada
-    function actualizarPedido(idSelect, nombreProducto, precio) {
-        const select = document.getElementById(idSelect);
-        const cantidad = select.value;
-        const btn = document.getElementById('btn-' + idSelect);
-        
-        const mensaje = `Hola, me interesa pedir ${cantidad} pieza(s) de ${nombreProducto} ($${precio} c/u). ¿Aún hay disponibilidad?`;
-        btn.href = `https://wa.me/523313018552?text=` + encodeURIComponent(mensaje);
-    }
-</script>
 
 </body>
 </html>
