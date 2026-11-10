@@ -406,8 +406,10 @@ with pestana1:
             r["Por entregar"] = suma_por_entregar.get(n_prod, 0.0)
 
         df_inv = pd.DataFrame(registros_inv)
-        cols_a_quitar = [c for c in df_inv.columns if "precio directo" in c.lower() or "directo" in c.lower() or "por surtir" in c.lower() or "por_surtir" in c.lower() or "presentacion" in c.lower() or "presentación" in c.lower() or "alerta" in c.lower() or "categoria" in c.lower() or "categoría" in c.lower()]
-        df_inv = df_inv.drop(columns=cols_a_quitar, errors="ignore")
+
+        col_prod = next((c for c in df_inv.columns if "nombre" in c.lower()), "Nombre del Producto")
+        col_stock = next((c for c in df_inv.columns if "stock" in c.lower() or "cantidad en stock" in c.lower()), "Cantidad en Stock")
+        col_precio = next((c for c in df_inv.columns if "precio de venta" in c.lower()), "Precio de Venta")
 
         for col in df_inv.columns:
             if "precio" in col.lower():
@@ -417,25 +419,13 @@ with pestana1:
                 df_inv[col] = pd.to_numeric(df_inv[col], errors="coerce").fillna(0)
                 df_inv[col] = df_inv[col].apply(lambda x: str(int(x)) if x.is_integer() else f"{x:g}")
 
-        columnas_disponibles = list(df_inv.columns)
-        col_prod = next((c for c in columnas_disponibles if "nombre" in c.lower()), columnas_disponibles[0])
-        col_stock = next((c for c in columnas_disponibles if "stock" in c.lower() or "cantidad en stock" in c.lower()), None)
-        col_precio = next((c for c in columnas_disponibles if "precio de venta" in c.lower()), None)
-        
-        orden_final = [col_prod]
-        if col_stock and col_stock in columnas_disponibles:
-            orden_final.append(col_stock)
-        orden_final.append("Por entregar")
-        if col_precio and col_precio in columnas_disponibles:
-            orden_final.append(col_precio)
-            
-        for c in columnas_disponibles:
-            if c not in orden_final:
-                orden_final.append(c)
-                
-        df_inv = df_inv[[c for c in orden_final if c in df_inv.columns]]
-        if "Nombre del Producto" in df_inv.columns:
-            df_inv = df_inv.set_index("Nombre del Producto")
+        # SELECCIÓN ESTRICTA: Únicamente las 4 columnas solicitadas
+        cols_deseadas = [col_prod, col_stock, "Por entregar", col_precio]
+        cols_existentes = [c for c in cols_deseadas if c in df_inv.columns]
+        df_inv = df_inv[cols_existentes]
+
+        if col_prod in df_inv.columns:
+            df_inv = df_inv.set_index(col_prod)
             
         st.table(df_inv)
 
@@ -893,7 +883,7 @@ with pestana2:
 
     with subtab2:
         st.markdown("Lista de artículos que ya fueron entregados al cliente pero están **pendientes de cobro**.")
-        pedidos_por_pagar = [p for p in pedidos_totales if p.get("Estado") == "Por pagar"]
+        pedidos_por_pagar = [p for p in pedidos_totales if p.get("Estado"] == "Por pagar"]
         
         if pedidos_por_pagar:
             def generar_pdf_cuentas_por_cobrar(lista_por_pagar):
@@ -996,7 +986,7 @@ with pestana2:
                     mime="application/pdf"
                 )
             with col_tot_c:
-                st.markdown(f"<h3 style='text-align: right; margin-top: 0; color: #F57F17;'>Total Fiado: ${gran_total_por_cobrar:,.2f}</h3>", unsafe_allow_html=True)
+                st.markdown(f"<h3 style='text-align: right; margin-top: 0; color: #F57F17;>Total Fiado: ${gran_total_por_cobrar:,.2f}</h3>", unsafe_allow_html=True)
 
             st.markdown("---")
 
@@ -1445,7 +1435,6 @@ with pestana6:
     st.markdown("Descarga tu archivo de catálogo HTML actualizado con todos los productos actuales de tu base de datos y sus precios al día.")
     
     if registros_inv:
-        # Generar contenido HTML dinámicamente basado en Google Sheets
         html_catalogo = """<!DOCTYPE html>
 <html lang="es">
 <head>
