@@ -99,19 +99,31 @@
                     imagenesHtml = `<div class="w-full h-48 bg-stone-200 flex items-center justify-center text-stone-400 text-sm">Sin imagen</div>`;
                 }
 
+                // Tomamos beneficio o descripcion indistintamente
+                const textoBeneficio = prod.beneficio || prod.descripcion || "";
+
                 const card = document.createElement("div");
                 card.className = "bg-white rounded-2xl shadow-md overflow-hidden flex flex-col justify-between border border-stone-100";
                 card.innerHTML = `
                     <div>
                         ${imagenesHtml}
                         <div class="p-5">
-                            <h3 class="font-bold text-xl text-stone-900 mb-1">${prod.nombre}</h3>
-                            <p class="text-stone-600 text-sm mb-4">${prod.beneficio || ''}</p>
+                            <h3 class="font-bold text-xl text-stone-900 mb-2">${prod.nombre}</h3>
+                            <p class="text-stone-600 text-sm mb-4 leading-relaxed">${textoBeneficio}</p>
                         </div>
                     </div>
-                    <div class="p-5 pt-0 flex items-center justify-between">
-                        <span class="text-2xl font-black text-emerald-700">$${Number(prod.precio).toFixed(2)}</span>
-                        <button onclick="agregarAlCarrito(${index})" class="bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-2 rounded-xl font-medium transition shadow-sm">
+                    <div class="p-5 pt-0 flex flex-col gap-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-2xl font-black text-emerald-700">$${Number(prod.precio).toFixed(2)}</span>
+                            <select id="cantidad-${index}" class="bg-stone-100 border border-stone-300 rounded-lg px-3 py-1.5 text-sm font-semibold text-stone-700">
+                                <option value="1">1 pza</option>
+                                <option value="2">2 pza</option>
+                                <option value="3">3 pza</option>
+                                <option value="4">4 pza</option>
+                                <option value="5">5 pza</option>
+                            </select>
+                        </div>
+                        <button onclick="agregarAlCarritoConCantidad(${index})" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white py-2.5 rounded-xl font-medium transition shadow-sm flex items-center justify-center gap-2">
                             Agregar 🛒
                         </button>
                     </div>
@@ -137,16 +149,20 @@
             modal.classList.toggle("hidden");
         }
 
-        function agregarAlCarrito(index) {
+        function agregarAlCarritoConCantidad(index) {
             const producto = productosGlobal[index];
+            const selectCantidad = document.getElementById(`cantidad-${index}`);
+            const cantidadSeleccionada = parseInt(selectCantidad ? selectCantidad.value : 1);
+            
             const itemExistente = carrito.find(item => item.nombre === producto.nombre);
             
             if (itemExistente) {
-                itemExistente.cantidad += 1;
+                itemExistente.cantidad += cantidadSeleccionada;
             } else {
-                carrito.push({ ...producto, cantidad: 1 });
+                carrito.push({ ...producto, cantidad: cantidadSeleccionada });
             }
             actualizarCarrito();
+            toggleCarrito(); // Abre el carrito automáticamente para confirmar la adición
         }
 
         function actualizarCarrito() {
@@ -207,7 +223,7 @@
 
             mensaje += `%0A*Total a pagar: $${total.toFixed(2)}*`;
 
-            const numeroWhatsApp = "523312345678"; // Reemplaza con tu número de WhatsApp
+            const numeroWhatsApp = "523312345678"; // Reemplaza con tu número real
             window.open(`https://wa.me/${numeroWhatsApp}?text=${mensaje}`, '_blank');
         }
 
