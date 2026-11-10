@@ -84,6 +84,14 @@
     </div>
 </div>
 
+<!-- Modal para ver imagen en grande (Lightbox) -->
+<div id="modal-imagen" class="fixed inset-0 bg-black/80 hidden z-50 flex items-center justify-center p-4" onclick="cerrarImagenGrande()">
+    <div class="relative max-w-2xl w-full flex justify-center" onclick="event.stopPropagation()">
+        <button onclick="cerrarImagenGrande()" class="absolute -top-10 right-0 text-white text-3xl font-bold px-2">&times;</button>
+        <img id="imagen-ampliada" src="" alt="Imagen ampliada" class="max-h-[85vh] max-w-full rounded-xl object-contain shadow-2xl">
+    </div>
+</div>
+
 <footer class="bg-stone-800 text-stone-300 py-8 px-4 text-center mt-12 mb-16 animate-fade">
     <p class="text-sm">💳 Pagos por transferencia o efectivo. Precios sujetos a cambios en tiempo real.</p>
     <p class="text-xs text-stone-400 mt-2">¡Gracias por consumir natural y apoyar el comercio local! ✨</p>
@@ -112,14 +120,14 @@
                     if (prod.imagen1 && prod.imagen2) {
                         imagenesHtml = `
                             <div class="grid grid-cols-2 gap-1 h-48 bg-stone-100 overflow-hidden">
-                                <img src="${prod.imagen1}" alt="${prod.nombre} 1" class="w-full h-full object-cover">
-                                <img src="${prod.imagen2}" alt="${prod.nombre} 2" class="w-full h-full object-cover">
+                                <img src="${prod.imagen1}" alt="${prod.nombre} 1" class="w-full h-full object-cover cursor-pointer hover:opacity-90 transition" onclick="abrirImagenGrande('${prod.imagen1}')">
+                                <img src="${prod.imagen2}" alt="${prod.nombre} 2" class="w-full h-full object-cover cursor-pointer hover:opacity-90 transition" onclick="abrirImagenGrande('${prod.imagen2}')">
                             </div>
                         `;
                     } else if (prod.imagen1) {
                         imagenesHtml = `
                             <div class="w-full h-48 overflow-hidden bg-stone-100">
-                                <img src="${prod.imagen1}" alt="${prod.nombre}" class="w-full h-full object-cover">
+                                <img src="${prod.imagen1}" alt="${prod.nombre}" class="w-full h-full object-cover cursor-pointer hover:opacity-90 transition" onclick="abrirImagenGrande('${prod.imagen1}')">
                             </div>
                         `;
                     }
@@ -155,6 +163,17 @@
                 console.error("Error al cargar:", error);
                 contenedor.innerHTML = '<p class="text-red-500 text-center col-span-2 py-8">Error al conectar con el inventario. Intenta recargar más tarde.</p>';
             });
+    }
+
+    // Funciones del Lightbox (Ver imagen en grande)
+    function abrirImagenGrande(url) {
+        if (!url) return;
+        document.getElementById('imagen-ampliada').src = url;
+        document.getElementById('modal-imagen').classList.remove('hidden');
+    }
+
+    function cerrarImagenGrande() {
+        document.getElementById('modal-imagen').classList.add('hidden');
     }
 
     function agregarAlCarrito(index) {
