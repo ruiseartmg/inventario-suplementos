@@ -882,7 +882,7 @@ with pestana2:
 
     with subtab2:
         st.markdown("Lista de artículos que ya fueron entregados al cliente pero están **pendientes de cobro**.")
-        pedidos_por_pagar = [p for p in pedidos_totales if p.get("Estado"] == "Por pagar"]
+        pedidos_por_pagar = [p for p in pedidos_totales if p.get("Estado") == "Por pagar"]
         
         if pedidos_por_pagar:
             def generar_pdf_cuentas_por_cobrar(lista_por_pagar):
