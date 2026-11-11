@@ -242,7 +242,7 @@ pestana1, pestana2, pestana3, pestana4, pestana5, pestana6 = st.tabs([
     "📜 Historial", 
     "📋 Resurtido",
     "➕ Nuevo Producto",
-    "🌐 Catálogo Web WhatsApp"
+    "🌐 Catálogo Web"
 ])
 
 with pestana1:
@@ -1430,9 +1430,36 @@ with pestana5:
                     st.error(f"Error al guardar: {e}")
 
 with pestana6:
-    st.subheader("🌐 Generar Catálogo Web para WhatsApp")
-    st.markdown("Descarga tu archivo de catálogo HTML actualizado con todos los productos actuales de tu base de datos y sus precios al día.")
+    st.subheader("🌐 Catálogo Web en Línea (GitHub Pages)")
+    st.markdown("Tu catálogo ya está publicado en la web y disponible en tiempo real para tus clientes mediante GitHub Pages.")
     
+    url_catalogo_web = "https://ruiseartmg.github.io/inventario-suplementos/"
+    
+    st.markdown(f"""
+        <div style="background-color: #E8F5E9; padding: 20px; border-radius: 12px; border-left: 6px solid #2E7D32; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+            <h4 style="margin-top: 0; color: #1B5E20;">🔗 Enlace oficial del Catálogo:</h4>
+            <a href="{url_catalogo_web}" target="_blank" style="font-size: 16px; font-weight: bold; color: #2E7D32; word-break: break-all;">{url_catalogo_web}</a>
+        </div>
+    """, unsafe_allow_html=True)
+
+    col_btn_1, col_btn_2 = st.columns(2)
+    with col_btn_1:
+        st.markdown(f"""
+            <a href="{url_catalogo_web}" target="_blank">
+                <button style="background-color: #2E7D32; color: white; border: none; border-radius: 8px; font-weight: 600; padding: 10px 20px; width: 100%; cursor: pointer; text-align: center; display: block; text-decoration: none;">
+                    🌐 Abrir Catálogo en Vivo
+                </button>
+            </a>
+        """, unsafe_allow_html=True)
+        
+    with col_btn_2:
+        if st.button("📋 Copiar enlace al portapapeles"):
+            st.toast("¡Enlace listo para compartir por WhatsApp!", icon="✨")
+
+    st.divider()
+    st.markdown("### 🛠️ Respaldo o actualización manual")
+    st.markdown("Si en algún momento necesitas descargar el archivo `index.html` actualizado con los datos actuales para subirlo manualmente a GitHub, haz clic en el siguiente botón:")
+
     if registros_inv:
         html_catalogo = """<!DOCTYPE html>
 <html lang="es">
@@ -1576,10 +1603,10 @@ with pestana6:
 """
 
         st.download_button(
-            label="📥 Descargar Catálogo HTML Actualizado",
+            label="📥 Descargar index.html Actualizado",
             data=html_catalogo,
-            file_name=f"catalogo_natures_select_{datetime.now().strftime('%d-%m-%Y')}.html",
+            file_name="index.html",
             mime="text/html"
         )
     else:
-        st.info("No hay productos disponibles para generar el catálogo.")
+        st.info("No hay productos disponibles para generar el archivo.")
