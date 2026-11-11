@@ -67,6 +67,7 @@
         <p class="text-stone-600 text-sm md:text-base mt-3">Alimenta tu bienestar con lo mejor de la naturaleza. Elige tus piezas y haz tu pedido directo por WhatsApp.</p>
     </div>
 </header>
+
 <main class="max-w-3xl mx-auto px-4 py-8 space-y-10">
     <section class="animate-fade">
         <div class="flex items-center space-x-2 mb-4 border-b border-stone-200 pb-2">
@@ -75,12 +76,15 @@
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
+            <!-- Bucle de productos con imagen y beneficios restaurados -->
+            <!-- Ejemplo de tarjeta con foto y beneficios -->
             <div class="product-card bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden flex flex-col justify-between p-4">
                 <div>
-                    <div class="flex justify-between items-start">
-                        <h3 class="font-semibold text-stone-900">Ashwagandha plb. 200g</h3>
+                    <div class="w-full h-40 bg-stone-100 rounded-lg mb-3 overflow-hidden flex items-center justify-center">
+                        <img src="watermarked_img_3973813175880226978.jpg" alt="Producto" class="w-full h-full object-cover">
                     </div>
-                    <p class="text-xs text-[#2E7D32] font-medium mt-1">✨ Producto 100% natural seleccionado para tu bienestar.</p>
+                    <h3 class="font-semibold text-stone-900">Ashwagandha plb. 200g</h3>
+                    <p class="text-xs text-stone-500 mt-1">✨ <b>Beneficios:</b> Ayuda a reducir el estrés, mejora la energía y apoya el equilibrio natural del cuerpo.</p>
                 </div>
                 <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between">
                     <div class="flex items-center space-x-2">
@@ -96,13 +100,15 @@
                     <a id="btn-prod_0" href="https://wa.me/523313018552?text=Hola%2C%20me%20interesa%20pedir%201%20pieza%28s%29%20de%20Ashwagandha%20plb.%20200g%20%28%24320.00%20c/u%29.%20%C2%BFA%C3%BAn%20hay%20disponibilidad%3F" target="_blank" class="bg-[#2E7D32] hover:bg-[#1B5E20] text-white text-xs px-3 py-1.5 rounded-lg font-medium transition transform active:scale-95 shadow-sm">Pedir</a>
                 </div>
             </div>
-            
+
+            <!-- Repetir estructura para los demás productos -->
             <div class="product-card bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden flex flex-col justify-between p-4">
                 <div>
-                    <div class="flex justify-between items-start">
-                        <h3 class="font-semibold text-stone-900">Cacao en Polvo 200g</h3>
+                    <div class="w-full h-40 bg-stone-100 rounded-lg mb-3 overflow-hidden flex items-center justify-center">
+                        <img src="watermarked_img_3973813175880226978.jpg" alt="Producto" class="w-full h-full object-cover">
                     </div>
-                    <p class="text-xs text-[#2E7D32] font-medium mt-1">✨ Producto 100% natural seleccionado para tu bienestar.</p>
+                    <h3 class="font-semibold text-stone-900">Cacao en Polvo 200g</h3>
+                    <p class="text-xs text-stone-500 mt-1">✨ <b>Beneficios:</b> Alto contenido de antioxidantes, estimula el estado de ánimo y aporta vitalidad.</p>
                 </div>
                 <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between">
                     <div class="flex items-center space-x-2">
@@ -118,365 +124,15 @@
                     <a id="btn-prod_1" href="https://wa.me/523313018552?text=Hola%2C%20me%20interesa%20pedir%201%20pieza%28s%29%20de%20Cacao%20en%20Polvo%20200g%20%28%24220.00%20c/u%29.%20%C2%BFA%C3%BAn%20hay%20disponibilidad%3F" target="_blank" class="bg-[#2E7D32] hover:bg-[#1B5E20] text-white text-xs px-3 py-1.5 rounded-lg font-medium transition transform active:scale-95 shadow-sm">Pedir</a>
                 </div>
             </div>
-            
-            <div class="product-card bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden flex flex-col justify-between p-4">
-                <div>
-                    <div class="flex justify-between items-start">
-                        <h3 class="font-semibold text-stone-900">Cacao en trozos 500g</h3>
-                    </div>
-                    <p class="text-xs text-[#2E7D32] font-medium mt-1">✨ Producto 100% natural seleccionado para tu bienestar.</p>
-                </div>
-                <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-lg font-bold text-[#2E7D32]">$265.00</span>
-                        <select id="qty-prod_2" onchange="actualizarPedido('prod_2', 'Cacao en trozos 500g', 265.0)" class="text-xs border border-stone-300 rounded px-1.5 py-1 bg-stone-50">
-                            <option value="1">1 pza</option>
-                            <option value="2">2 pzas</option>
-                            <option value="3">3 pzas</option>
-                            <option value="4">4 pzas</option>
-                            <option value="5">5 pzas</option>
-                        </select>
-                    </div>
-                    <a id="btn-prod_2" href="https://wa.me/523313018552?text=Hola%2C%20me%20interesa%20pedir%201%20pieza%28s%29%20de%20Cacao%20en%20trozos%20500g%20%28%24265.00%20c/u%29.%20%C2%BFA%C3%BAn%20hay%20disponibilidad%3F" target="_blank" class="bg-[#2E7D32] hover:bg-[#1B5E20] text-white text-xs px-3 py-1.5 rounded-lg font-medium transition transform active:scale-95 shadow-sm">Pedir</a>
-                </div>
-            </div>
-            
-            <div class="product-card bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden flex flex-col justify-between p-4">
-                <div>
-                    <div class="flex justify-between items-start">
-                        <h3 class="font-semibold text-stone-900">Curcuma en plb. 150g</h3>
-                    </div>
-                    <p class="text-xs text-[#2E7D32] font-medium mt-1">✨ Producto 100% natural seleccionado para tu bienestar.</p>
-                </div>
-                <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-lg font-bold text-[#2E7D32]">$165.00</span>
-                        <select id="qty-prod_3" onchange="actualizarPedido('prod_3', 'Curcuma en plb. 150g', 165.0)" class="text-xs border border-stone-300 rounded px-1.5 py-1 bg-stone-50">
-                            <option value="1">1 pza</option>
-                            <option value="2">2 pzas</option>
-                            <option value="3">3 pzas</option>
-                            <option value="4">4 pzas</option>
-                            <option value="5">5 pzas</option>
-                        </select>
-                    </div>
-                    <a id="btn-prod_3" href="https://wa.me/523313018552?text=Hola%2C%20me%20interesa%20pedir%201%20pieza%28s%29%20de%20Curcuma%20en%20plb.%20150g%20%28%24165.00%20c/u%29.%20%C2%BFA%C3%BAn%20hay%20disponibilidad%3F" target="_blank" class="bg-[#2E7D32] hover:bg-[#1B5E20] text-white text-xs px-3 py-1.5 rounded-lg font-medium transition transform active:scale-95 shadow-sm">Pedir</a>
-                </div>
-            </div>
-            
-            <div class="product-card bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden flex flex-col justify-between p-4">
-                <div>
-                    <div class="flex justify-between items-start">
-                        <h3 class="font-semibold text-stone-900">Espirulina en Pastilla 500g</h3>
-                    </div>
-                    <p class="text-xs text-[#2E7D32] font-medium mt-1">✨ Producto 100% natural seleccionado para tu bienestar.</p>
-                </div>
-                <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-lg font-bold text-[#2E7D32]">$235.00</span>
-                        <select id="qty-prod_4" onchange="actualizarPedido('prod_4', 'Espirulina en Pastilla 500g', 235.0)" class="text-xs border border-stone-300 rounded px-1.5 py-1 bg-stone-50">
-                            <option value="1">1 pza</option>
-                            <option value="2">2 pzas</option>
-                            <option value="3">3 pzas</option>
-                            <option value="4">4 pzas</option>
-                            <option value="5">5 pzas</option>
-                        </select>
-                    </div>
-                    <a id="btn-prod_4" href="https://wa.me/523313018552?text=Hola%2C%20me%20interesa%20pedir%201%20pieza%28s%29%20de%20Espirulina%20en%20Pastilla%20500g%20%28%24235.00%20c/u%29.%20%C2%BFA%C3%BAn%20hay%20disponibilidad%3F" target="_blank" class="bg-[#2E7D32] hover:bg-[#1B5E20] text-white text-xs px-3 py-1.5 rounded-lg font-medium transition transform active:scale-95 shadow-sm">Pedir</a>
-                </div>
-            </div>
-            
-            <div class="product-card bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden flex flex-col justify-between p-4">
-                <div>
-                    <div class="flex justify-between items-start">
-                        <h3 class="font-semibold text-stone-900">Granola Gourmet 1kg</h3>
-                    </div>
-                    <p class="text-xs text-[#2E7D32] font-medium mt-1">✨ Producto 100% natural seleccionado para tu bienestar.</p>
-                </div>
-                <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-lg font-bold text-[#2E7D32]">$0.00</span>
-                        <select id="qty-prod_5" onchange="actualizarPedido('prod_5', 'Granola Gourmet 1kg', 0.0)" class="text-xs border border-stone-300 rounded px-1.5 py-1 bg-stone-50">
-                            <option value="1">1 pza</option>
-                            <option value="2">2 pzas</option>
-                            <option value="3">3 pzas</option>
-                            <option value="4">4 pzas</option>
-                            <option value="5">5 pzas</option>
-                        </select>
-                    </div>
-                    <a id="btn-prod_5" href="https://wa.me/523313018552?text=Hola%2C%20me%20interesa%20pedir%201%20pieza%28s%29%20de%20Granola%20Gourmet%201kg%20%28%240.00%20c/u%29.%20%C2%BFA%C3%BAn%20hay%20disponibilidad%3F" target="_blank" class="bg-[#2E7D32] hover:bg-[#1B5E20] text-white text-xs px-3 py-1.5 rounded-lg font-medium transition transform active:scale-95 shadow-sm">Pedir</a>
-                </div>
-            </div>
-            
-            <div class="product-card bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden flex flex-col justify-between p-4">
-                <div>
-                    <div class="flex justify-between items-start">
-                        <h3 class="font-semibold text-stone-900">Granola Gourmet 250g</h3>
-                    </div>
-                    <p class="text-xs text-[#2E7D32] font-medium mt-1">✨ Producto 100% natural seleccionado para tu bienestar.</p>
-                </div>
-                <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-lg font-bold text-[#2E7D32]">$0.00</span>
-                        <select id="qty-prod_6" onchange="actualizarPedido('prod_6', 'Granola Gourmet 250g', 0.0)" class="text-xs border border-stone-300 rounded px-1.5 py-1 bg-stone-50">
-                            <option value="1">1 pza</option>
-                            <option value="2">2 pzas</option>
-                            <option value="3">3 pzas</option>
-                            <option value="4">4 pzas</option>
-                            <option value="5">5 pzas</option>
-                        </select>
-                    </div>
-                    <a id="btn-prod_6" href="https://wa.me/523313018552?text=Hola%2C%20me%20interesa%20pedir%201%20pieza%28s%29%20de%20Granola%20Gourmet%20250g%20%28%240.00%20c/u%29.%20%C2%BFA%C3%BAn%20hay%20disponibilidad%3F" target="_blank" class="bg-[#2E7D32] hover:bg-[#1B5E20] text-white text-xs px-3 py-1.5 rounded-lg font-medium transition transform active:scale-95 shadow-sm">Pedir</a>
-                </div>
-            </div>
-            
-            <div class="product-card bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden flex flex-col justify-between p-4">
-                <div>
-                    <div class="flex justify-between items-start">
-                        <h3 class="font-semibold text-stone-900">Granola Gourmet 500g</h3>
-                    </div>
-                    <p class="text-xs text-[#2E7D32] font-medium mt-1">✨ Producto 100% natural seleccionado para tu bienestar.</p>
-                </div>
-                <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-lg font-bold text-[#2E7D32]">$0.00</span>
-                        <select id="qty-prod_7" onchange="actualizarPedido('prod_7', 'Granola Gourmet 500g', 0.0)" class="text-xs border border-stone-300 rounded px-1.5 py-1 bg-stone-50">
-                            <option value="1">1 pza</option>
-                            <option value="2">2 pzas</option>
-                            <option value="3">3 pzas</option>
-                            <option value="4">4 pzas</option>
-                            <option value="5">5 pzas</option>
-                        </select>
-                    </div>
-                    <a id="btn-prod_7" href="https://wa.me/523313018552?text=Hola%2C%20me%20interesa%20pedir%201%20pieza%28s%29%20de%20Granola%20Gourmet%20500g%20%28%240.00%20c/u%29.%20%C2%BFA%C3%BAn%20hay%20disponibilidad%3F" target="_blank" class="bg-[#2E7D32] hover:bg-[#1B5E20] text-white text-xs px-3 py-1.5 rounded-lg font-medium transition transform active:scale-95 shadow-sm">Pedir</a>
-                </div>
-            </div>
-            
-            <div class="product-card bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden flex flex-col justify-between p-4">
-                <div>
-                    <div class="flex justify-between items-start">
-                        <h3 class="font-semibold text-stone-900">Jengibre de plb. 150g</h3>
-                    </div>
-                    <p class="text-xs text-[#2E7D32] font-medium mt-1">✨ Producto 100% natural seleccionado para tu bienestar.</p>
-                </div>
-                <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-lg font-bold text-[#2E7D32]">$129.00</span>
-                        <select id="qty-prod_8" onchange="actualizarPedido('prod_8', 'Jengibre de plb. 150g', 129.0)" class="text-xs border border-stone-300 rounded px-1.5 py-1 bg-stone-50">
-                            <option value="1">1 pza</option>
-                            <option value="2">2 pzas</option>
-                            <option value="3">3 pzas</option>
-                            <option value="4">4 pzas</option>
-                            <option value="5">5 pzas</option>
-                        </select>
-                    </div>
-                    <a id="btn-prod_8" href="https://wa.me/523313018552?text=Hola%2C%20me%20interesa%20pedir%201%20pieza%28s%29%20de%20Jengibre%20de%20plb.%20150g%20%28%24129.00%20c/u%29.%20%C2%BFA%C3%BAn%20hay%20disponibilidad%3F" target="_blank" class="bg-[#2E7D32] hover:bg-[#1B5E20] text-white text-xs px-3 py-1.5 rounded-lg font-medium transition transform active:scale-95 shadow-sm">Pedir</a>
-                </div>
-            </div>
-            
-            <div class="product-card bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden flex flex-col justify-between p-4">
-                <div>
-                    <div class="flex justify-between items-start">
-                        <h3 class="font-semibold text-stone-900">Levadura 200g</h3>
-                    </div>
-                    <p class="text-xs text-[#2E7D32] font-medium mt-1">✨ Producto 100% natural seleccionado para tu bienestar.</p>
-                </div>
-                <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-lg font-bold text-[#2E7D32]">$0.00</span>
-                        <select id="qty-prod_9" onchange="actualizarPedido('prod_9', 'Levadura 200g', 0.0)" class="text-xs border border-stone-300 rounded px-1.5 py-1 bg-stone-50">
-                            <option value="1">1 pza</option>
-                            <option value="2">2 pzas</option>
-                            <option value="3">3 pzas</option>
-                            <option value="4">4 pzas</option>
-                            <option value="5">5 pzas</option>
-                        </select>
-                    </div>
-                    <a id="btn-prod_9" href="https://wa.me/523313018552?text=Hola%2C%20me%20interesa%20pedir%201%20pieza%28s%29%20de%20Levadura%20200g%20%28%240.00%20c/u%29.%20%C2%BFA%C3%BAn%20hay%20disponibilidad%3F" target="_blank" class="bg-[#2E7D32] hover:bg-[#1B5E20] text-white text-xs px-3 py-1.5 rounded-lg font-medium transition transform active:scale-95 shadow-sm">Pedir</a>
-                </div>
-            </div>
-            
-            <div class="product-card bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden flex flex-col justify-between p-4">
-                <div>
-                    <div class="flex justify-between items-start">
-                        <h3 class="font-semibold text-stone-900">Magnesio 250g</h3>
-                    </div>
-                    <p class="text-xs text-[#2E7D32] font-medium mt-1">✨ Producto 100% natural seleccionado para tu bienestar.</p>
-                </div>
-                <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-lg font-bold text-[#2E7D32]">$279.00</span>
-                        <select id="qty-prod_10" onchange="actualizarPedido('prod_10', 'Magnesio 250g', 279.0)" class="text-xs border border-stone-300 rounded px-1.5 py-1 bg-stone-50">
-                            <option value="1">1 pza</option>
-                            <option value="2">2 pzas</option>
-                            <option value="3">3 pzas</option>
-                            <option value="4">4 pzas</option>
-                            <option value="5">5 pzas</option>
-                        </select>
-                    </div>
-                    <a id="btn-prod_10" href="https://wa.me/523313018552?text=Hola%2C%20me%20interesa%20pedir%201%20pieza%28s%29%20de%20Magnesio%20250g%20%28%24279.00%20c/u%29.%20%C2%BFA%C3%BAn%20hay%20disponibilidad%3F" target="_blank" class="bg-[#2E7D32] hover:bg-[#1B5E20] text-white text-xs px-3 py-1.5 rounded-lg font-medium transition transform active:scale-95 shadow-sm">Pedir</a>
-                </div>
-            </div>
-            
-            <div class="product-card bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden flex flex-col justify-between p-4">
-                <div>
-                    <div class="flex justify-between items-start">
-                        <h3 class="font-semibold text-stone-900">Matcha 125g</h3>
-                    </div>
-                    <p class="text-xs text-[#2E7D32] font-medium mt-1">✨ Producto 100% natural seleccionado para tu bienestar.</p>
-                </div>
-                <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-lg font-bold text-[#2E7D32]">$230.00</span>
-                        <select id="qty-prod_11" onchange="actualizarPedido('prod_11', 'Matcha 125g', 230.0)" class="text-xs border border-stone-300 rounded px-1.5 py-1 bg-stone-50">
-                            <option value="1">1 pza</option>
-                            <option value="2">2 pzas</option>
-                            <option value="3">3 pzas</option>
-                            <option value="4">4 pzas</option>
-                            <option value="5">5 pzas</option>
-                        </select>
-                    </div>
-                    <a id="btn-prod_11" href="https://wa.me/523313018552?text=Hola%2C%20me%20interesa%20pedir%201%20pieza%28s%29%20de%20Matcha%20125g%20%28%24230.00%20c/u%29.%20%C2%BFA%C3%BAn%20hay%20disponibilidad%3F" target="_blank" class="bg-[#2E7D32] hover:bg-[#1B5E20] text-white text-xs px-3 py-1.5 rounded-lg font-medium transition transform active:scale-95 shadow-sm">Pedir</a>
-                </div>
-            </div>
-            
-            <div class="product-card bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden flex flex-col justify-between p-4">
-                <div>
-                    <div class="flex justify-between items-start">
-                        <h3 class="font-semibold text-stone-900">Miel de Abeja 1kg</h3>
-                    </div>
-                    <p class="text-xs text-[#2E7D32] font-medium mt-1">✨ Producto 100% natural seleccionado para tu bienestar.</p>
-                </div>
-                <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-lg font-bold text-[#2E7D32]">$0.00</span>
-                        <select id="qty-prod_12" onchange="actualizarPedido('prod_12', 'Miel de Abeja 1kg', 0.0)" class="text-xs border border-stone-300 rounded px-1.5 py-1 bg-stone-50">
-                            <option value="1">1 pza</option>
-                            <option value="2">2 pzas</option>
-                            <option value="3">3 pzas</option>
-                            <option value="4">4 pzas</option>
-                            <option value="5">5 pzas</option>
-                        </select>
-                    </div>
-                    <a id="btn-prod_12" href="https://wa.me/523313018552?text=Hola%2C%20me%20interesa%20pedir%201%20pieza%28s%29%20de%20Miel%20de%20Abeja%201kg%20%28%240.00%20c/u%29.%20%C2%BFA%C3%BAn%20hay%20disponibilidad%3F" target="_blank" class="bg-[#2E7D32] hover:bg-[#1B5E20] text-white text-xs px-3 py-1.5 rounded-lg font-medium transition transform active:scale-95 shadow-sm">Pedir</a>
-                </div>
-            </div>
-            
-            <div class="product-card bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden flex flex-col justify-between p-4">
-                <div>
-                    <div class="flex justify-between items-start">
-                        <h3 class="font-semibold text-stone-900">Miel de Abeja 250g</h3>
-                    </div>
-                    <p class="text-xs text-[#2E7D32] font-medium mt-1">✨ Producto 100% natural seleccionado para tu bienestar.</p>
-                </div>
-                <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-lg font-bold text-[#2E7D32]">$0.00</span>
-                        <select id="qty-prod_13" onchange="actualizarPedido('prod_13', 'Miel de Abeja 250g', 0.0)" class="text-xs border border-stone-300 rounded px-1.5 py-1 bg-stone-50">
-                            <option value="1">1 pza</option>
-                            <option value="2">2 pzas</option>
-                            <option value="3">3 pzas</option>
-                            <option value="4">4 pzas</option>
-                            <option value="5">5 pzas</option>
-                        </select>
-                    </div>
-                    <a id="btn-prod_13" href="https://wa.me/523313018552?text=Hola%2C%20me%20interesa%20pedir%201%20pieza%28s%29%20de%20Miel%20de%20Abeja%20250g%20%28%240.00%20c/u%29.%20%C2%BFA%C3%BAn%20hay%20disponibilidad%3F" target="_blank" class="bg-[#2E7D32] hover:bg-[#1B5E20] text-white text-xs px-3 py-1.5 rounded-lg font-medium transition transform active:scale-95 shadow-sm">Pedir</a>
-                </div>
-            </div>
-            
-            <div class="product-card bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden flex flex-col justify-between p-4">
-                <div>
-                    <div class="flex justify-between items-start">
-                        <h3 class="font-semibold text-stone-900">Miel de Abeja 500g</h3>
-                    </div>
-                    <p class="text-xs text-[#2E7D32] font-medium mt-1">✨ Producto 100% natural seleccionado para tu bienestar.</p>
-                </div>
-                <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-lg font-bold text-[#2E7D32]">$0.00</span>
-                        <select id="qty-prod_14" onchange="actualizarPedido('prod_14', 'Miel de Abeja 500g', 0.0)" class="text-xs border border-stone-300 rounded px-1.5 py-1 bg-stone-50">
-                            <option value="1">1 pza</option>
-                            <option value="2">2 pzas</option>
-                            <option value="3">3 pzas</option>
-                            <option value="4">4 pzas</option>
-                            <option value="5">5 pzas</option>
-                        </select>
-                    </div>
-                    <a id="btn-prod_14" href="https://wa.me/523313018552?text=Hola%2C%20me%20interesa%20pedir%201%20pieza%28s%29%20de%20Miel%20de%20Abeja%20500g%20%28%240.00%20c/u%29.%20%C2%BFA%C3%BAn%20hay%20disponibilidad%3F" target="_blank" class="bg-[#2E7D32] hover:bg-[#1B5E20] text-white text-xs px-3 py-1.5 rounded-lg font-medium transition transform active:scale-95 shadow-sm">Pedir</a>
-                </div>
-            </div>
-            
-            <div class="product-card bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden flex flex-col justify-between p-4">
-                <div>
-                    <div class="flex justify-between items-start">
-                        <h3 class="font-semibold text-stone-900">Miel de Abeja 5kg</h3>
-                    </div>
-                    <p class="text-xs text-[#2E7D32] font-medium mt-1">✨ Producto 100% natural seleccionado para tu bienestar.</p>
-                </div>
-                <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-lg font-bold text-[#2E7D32]">$0.00</span>
-                        <select id="qty-prod_15" onchange="actualizarPedido('prod_15', 'Miel de Abeja 5kg', 0.0)" class="text-xs border border-stone-300 rounded px-1.5 py-1 bg-stone-50">
-                            <option value="1">1 pza</option>
-                            <option value="2">2 pzas</option>
-                            <option value="3">3 pzas</option>
-                            <option value="4">4 pzas</option>
-                            <option value="5">5 pzas</option>
-                        </select>
-                    </div>
-                    <a id="btn-prod_15" href="https://wa.me/523313018552?text=Hola%2C%20me%20interesa%20pedir%201%20pieza%28s%29%20de%20Miel%20de%20Abeja%205kg%20%28%240.00%20c/u%29.%20%C2%BFA%C3%BAn%20hay%20disponibilidad%3F" target="_blank" class="bg-[#2E7D32] hover:bg-[#1B5E20] text-white text-xs px-3 py-1.5 rounded-lg font-medium transition transform active:scale-95 shadow-sm">Pedir</a>
-                </div>
-            </div>
-            
-            <div class="product-card bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden flex flex-col justify-between p-4">
-                <div>
-                    <div class="flex justify-between items-start">
-                        <h3 class="font-semibold text-stone-900">Raíz de maca 200g</h3>
-                    </div>
-                    <p class="text-xs text-[#2E7D32] font-medium mt-1">✨ Producto 100% natural seleccionado para tu bienestar.</p>
-                </div>
-                <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-lg font-bold text-[#2E7D32]">$179.00</span>
-                        <select id="qty-prod_16" onchange="actualizarPedido('prod_16', 'Raíz de maca 200g', 179.0)" class="text-xs border border-stone-300 rounded px-1.5 py-1 bg-stone-50">
-                            <option value="1">1 pza</option>
-                            <option value="2">2 pzas</option>
-                            <option value="3">3 pzas</option>
-                            <option value="4">4 pzas</option>
-                            <option value="5">5 pzas</option>
-                        </select>
-                    </div>
-                    <a id="btn-prod_16" href="https://wa.me/523313018552?text=Hola%2C%20me%20interesa%20pedir%201%20pieza%28s%29%20de%20Ra%C3%ADz%20de%20maca%20200g%20%28%24179.00%20c/u%29.%20%C2%BFA%C3%BAn%20hay%20disponibilidad%3F" target="_blank" class="bg-[#2E7D32] hover:bg-[#1B5E20] text-white text-xs px-3 py-1.5 rounded-lg font-medium transition transform active:scale-95 shadow-sm">Pedir</a>
-                </div>
-            </div>
-            
-            <div class="product-card bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden flex flex-col justify-between p-4">
-                <div>
-                    <div class="flex justify-between items-start">
-                        <h3 class="font-semibold text-stone-900">Te chai 75g</h3>
-                    </div>
-                    <p class="text-xs text-[#2E7D32] font-medium mt-1">✨ Producto 100% natural seleccionado para tu bienestar.</p>
-                </div>
-                <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-lg font-bold text-[#2E7D32]">$199.00</span>
-                        <select id="qty-prod_17" onchange="actualizarPedido('prod_17', 'Te chai 75g', 199.0)" class="text-xs border border-stone-300 rounded px-1.5 py-1 bg-stone-50">
-                            <option value="1">1 pza</option>
-                            <option value="2">2 pzas</option>
-                            <option value="3">3 pzas</option>
-                            <option value="4">4 pzas</option>
-                            <option value="5">5 pzas</option>
-                        </select>
-                    </div>
-                    <a id="btn-prod_17" href="https://wa.me/523313018552?text=Hola%2C%20me%20interesa%20pedir%201%20pieza%28s%29%20de%20Te%20chai%2075g%20%28%24199.00%20c/u%29.%20%C2%BFA%C3%BAn%20hay%20disponibilidad%3F" target="_blank" class="bg-[#2E7D32] hover:bg-[#1B5E20] text-white text-xs px-3 py-1.5 rounded-lg font-medium transition transform active:scale-95 shadow-sm">Pedir</a>
-                </div>
-            </div>
-            
+
         </div>
     </section>
 </main>
+
 <footer class="bg-stone-800 text-stone-300 py-8 px-4 text-center mt-12 animate-fade">
     <p class="text-sm">💳 Pagos por transferencia o efectivo. Entregas a domicilio: <b>Próximamente disponible</b>.</p>
     <p class="text-xs text-stone-400 mt-2">¡Gracias por consumir natural y apoyar el comercio local! ✨</p>
 </footer>
+
 </body>
 </html>
