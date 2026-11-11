@@ -1431,7 +1431,7 @@ with pestana5:
 
 with pestana6:
     st.subheader("🌐 Catálogo Web en Línea (GitHub Pages)")
-    st.markdown("Tu catálogo ya está publicado en la web y disponible en tiempo real para tus clientes mediante GitHub Pages.")
+    st.markdown("Tu catálogo dinámico está listo. Descarga el archivo `index.html` actualizado para que se inyecten automáticamente todos tus productos con sus imágenes, beneficios y música de arroyo.")
     
     url_catalogo_web = "https://ruiseartmg.github.io/inventario-suplementos/"
     
@@ -1457,8 +1457,7 @@ with pestana6:
             st.toast("¡Enlace listo para compartir por WhatsApp!", icon="✨")
 
     st.divider()
-    st.markdown("### 🛠️ Código HTML con Audio e Inventario Dinámico")
-    st.markdown("Este es el código que debes guardar en tu archivo **`index.html`** dentro de tu repositorio de GitHub para que cargue tanto el botón de sonido como todos tus productos de forma automática:")
+    st.markdown("### 📥 Descargar index.html Completo (Con Fotos, Beneficios y Audio)")
 
     if registros_inv:
         html_catalogo = """<!DOCTYPE html>
@@ -1556,10 +1555,11 @@ with pestana6:
             html_catalogo += f"""
             <div class="product-card bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden flex flex-col justify-between p-4">
                 <div>
-                    <div class="flex justify-between items-start">
-                        <h3 class="font-semibold text-stone-900">{nombre}</h3>
+                    <div class="w-full h-40 bg-stone-100 rounded-lg mb-3 overflow-hidden flex items-center justify-center">
+                        <img src="watermarked_img_3973813175880226978.jpg" alt="{nombre}" class="w-full h-full object-cover">
                     </div>
-                    <p class="text-xs text-[#2E7D32] font-medium mt-1">✨ Producto 100% natural seleccionado para tu bienestar.</p>
+                    <h3 class="font-semibold text-stone-900">{nombre}</h3>
+                    <p class="text-xs text-stone-500 mt-1">✨ <b>Beneficios:</b> Producto 100% natural seleccionado para tu bienestar y vitalidad diaria.</p>
                 </div>
                 <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between">
                     <div class="flex items-center space-x-2">
@@ -1590,7 +1590,7 @@ with pestana6:
 """
 
         st.download_button(
-            label="📥 Descargar index.html Completo (Con Audio y Productos)",
+            label="📥 Descargar index.html Completo",
             data=html_catalogo,
             file_name="index.html",
             mime="text/html"
