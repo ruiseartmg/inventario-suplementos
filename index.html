@@ -131,13 +131,15 @@
 
 <!-- REPRODUCTOR DE MÚSICA AMBIENTAL -->
 <div id="music-player-widget">
-    <button id="play-pause-btn" onclick="toggleAudio()">▶</button>
+    <!-- Cambiado por defecto a Mute (🔇) -->
+    <button id="play-pause-btn" onclick="toggleAudio()">🔇</button>
     <div style="font-size: 11px; color: #1B5E20; font-weight: 600; line-height: 1.2;">
         🎵 Música<br>
         <span id="music-status" style="font-size: 9px; color: #555; font-weight: normal;">Pausado</span>
     </div>
-    <!-- Añadimos crossOrigin para permitir el control de audio avanzado -->
-    <audio id="bg-audio" src="https://ruiseartmg.github.io/inventario-suplementos/arroyo.mp3" preload="auto" crossorigin="anonymous" loop></audio>
+    <audio id="bg-audio" loop>
+        <source src="https://ruiseartmg.github.io/inventario-suplementos/arroyo.mp3" type="audio/mpeg">
+    </audio>
 </div>
 
 <script>
@@ -323,44 +325,22 @@
         window.open(linkWa, '_blank');
     }
 
-    // CONTROLADOR DE AUDIO AVANZADO (Web Audio API para volumen super bajo real)
+    // Funciones del reproductor de música con iconos de bocina
     const audioElem = document.getElementById('bg-audio');
     const btnElem = document.getElementById('play-pause-btn');
     const statusElem = document.getElementById('music-status');
 
-    let audioCtx = null;
-    let gainNode = null;
-    let sourceNode = null;
-
     function toggleAudio() {
-        if (!audioCtx) {
-            // Inicializamos el contexto de audio del navegador al primer clic del usuario
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            audioCtx = new AudioContext();
-            
-            gainNode = audioCtx.createGain();
-            // 0.02 equivale a un susurro de fondo muy tenue, independiente del volumen general del celular
-            gainNode.gain.value = 0.02; 
-            
-            sourceNode = audioCtx.createMediaElementSource(audioElem);
-            sourceNode.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-        }
-
-        if (audioCtx.state === 'suspended') {
-            audioCtx.resume();
-        }
-
         if (audioElem.paused) {
             audioElem.play().then(() => {
-                btnElem.innerHTML = '⏸';
+                btnElem.innerHTML = '🔊'; // Bocina activa cuando suena
                 statusElem.innerText = 'Sonando';
             }).catch(e => {
                 console.log("Error al reproducir:", e);
             });
         } else {
             audioElem.pause();
-            btnElem.innerHTML = '▶';
+            btnElem.innerHTML = '🔇'; // Bocina bloqueada/mute cuando está pausado
             statusElem.innerText = 'Pausado';
         }
     }
