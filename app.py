@@ -1495,14 +1495,14 @@ with pestana6:
 </head>
 <body class="bg-[#FAFAFA] text-[#263238]">
 
-<!-- Audio de fondo conectado directo a GitHub -->
+<!-- Audio de fondo alojado en tu GitHub -->
 <audio id="bgAudio" loop>
     <source src="https://raw.githubusercontent.com/ruiseartmg/inventario-suplementos/main/arroyo.mp3" type="audio/mpeg">
     Tu navegador no soporta audio.
 </audio>
 
 <header class="bg-white py-8 px-4 text-center shadow-sm animate-fade border-b border-stone-200 relative">
-    <!-- Botón flotante superior para controlar el sonido -->
+    <!-- Botón flotante superior para controlar el sonido en cualquier momento -->
     <div class="absolute top-4 right-4">
         <button id="btnAudio" onclick="toggleAudio()" class="bg-[#2E7D32] hover:bg-[#1B5E20] text-white text-xs px-3 py-1.5 rounded-full font-medium transition shadow-sm flex items-center gap-1 cursor-pointer">
             🔊 Sonido: Activado
