@@ -136,9 +136,8 @@
         🎵 Música<br>
         <span id="music-status" style="font-size: 9px; color: #555; font-weight: normal;">Pausado</span>
     </div>
-    <audio id="bg-audio" loop>
-        <source src="https://ruiseartmg.github.io/inventario-suplementos/arroyo.mp3" type="audio/mpeg">
-    </audio>
+    <!-- Añadimos crossOrigin para permitir el control de audio avanzado -->
+    <audio id="bg-audio" src="https://ruiseartmg.github.io/inventario-suplementos/arroyo.mp3" preload="auto" crossorigin="anonymous" loop></audio>
 </div>
 
 <script>
@@ -324,16 +323,34 @@
         window.open(linkWa, '_blank');
     }
 
-    // Funciones del reproductor de música
+    // CONTROLADOR DE AUDIO AVANZADO (Web Audio API para volumen super bajo real)
     const audioElem = document.getElementById('bg-audio');
-    
-    // Bajamos el volumen a un 3% (0.03)
-    audioElem.volume = 0.03; 
-    
     const btnElem = document.getElementById('play-pause-btn');
     const statusElem = document.getElementById('music-status');
 
+    let audioCtx = null;
+    let gainNode = null;
+    let sourceNode = null;
+
     function toggleAudio() {
+        if (!audioCtx) {
+            // Inicializamos el contexto de audio del navegador al primer clic del usuario
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            audioCtx = new AudioContext();
+            
+            gainNode = audioCtx.createGain();
+            // 0.02 equivale a un susurro de fondo muy tenue, independiente del volumen general del celular
+            gainNode.gain.value = 0.02; 
+            
+            sourceNode = audioCtx.createMediaElementSource(audioElem);
+            sourceNode.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+        }
+
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+
         if (audioElem.paused) {
             audioElem.play().then(() => {
                 btnElem.innerHTML = '⏸';
