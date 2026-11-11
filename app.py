@@ -234,15 +234,15 @@ try:
 except:
     st.title("🌿 Nature’s Select")
 
-# --- BARRA COMPACTA DE ACCESO AL CATÁLOGO WEB ---
+# --- ENLACE DIRECTO COMPACTO AL CATÁLOGO WEB ---
 url_catalogo = "https://ruiseartmg.github.io/inventario-suplementos/"
 
 st.markdown(f"""
-    <div style="background-color: #E8F5E9; padding: 10px 16px; border-radius: 10px; border-left: 5px solid #2E7D32; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
-        <div>
-            <span style="font-weight: 600; color: #1B5E20; font-size: 14px;">🌐 Catálogo Web Oficial</span>
-        </div>
-        <a href="{url_catalogo}" target="_blank" style="background-color: #2E7D32; color: white; padding: 6px 14px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 12px; display: inline-block;">🌐 Abrir Catálogo</a>
+    <div style="background-color: #E8F5E9; padding: 12px 18px; border-radius: 10px; border-left: 5px solid #2E7D32; margin-bottom: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+        <a href="{url_catalogo}" target="_blank" style="text-decoration: none; color: #1B5E20; font-weight: 600; font-size: 14px; display: flex; align-items: center; justify-content: space-between;">
+            <span>🌐 Catálogo Web Oficial</span>
+            <span style="font-size: 12px; color: #2E7D32; font-weight: bold;">Abrir ↗</span>
+        </a>
     </div>
 """, unsafe_allow_html=True)
 
