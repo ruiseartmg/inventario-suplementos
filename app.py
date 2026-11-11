@@ -1460,10 +1460,55 @@ with pestana6:
             const url = `https://wa.me/523313018552?text=` + encodeURIComponent(mensaje);
             btn.href = url;
         }
+
+        // Función para controlar el audio de fondo (Arroyo relajante)
+        function toggleAudio() {
+            const audio = document.getElementById('bgAudio');
+            const btnAudio = document.getElementById('btnAudio');
+            if (audio.paused) {
+                audio.play();
+                btnAudio.innerHTML = "🔊 Sonido: Activado";
+                btnAudio.classList.remove("bg-stone-700", "hover:bg-stone-600");
+                btnAudio.classList.add("bg-[#2E7D32]", "hover:bg-[#1B5E20]");
+            } else {
+                audio.pause();
+                btnAudio.innerHTML = "🔇 Sonido: Silenciado";
+                btnAudio.classList.remove("bg-[#2E7D32]", "hover:bg-[#1B5E20]");
+                btnAudio.classList.add("bg-stone-700", "hover:bg-stone-600");
+            }
+        }
+
+        // Intentar reproducción automática al cargar la página
+        window.addEventListener('DOMContentLoaded', (event) => {
+            const audio = document.getElementById('bgAudio');
+            const btnAudio = document.getElementById('btnAudio');
+            audio.play().then(() => {
+                btnAudio.innerHTML = "🔊 Sonido: Activado";
+                btnAudio.classList.remove("bg-stone-700");
+                btnAudio.classList.add("bg-[#2E7D32]");
+            }).catch(error => {
+                btnAudio.innerHTML = "🔇 Activar Sonido";
+                console.log("Autoplay bloqueado por el navegador.");
+            });
+        });
     </script>
 </head>
 <body class="bg-[#FAFAFA] text-[#263238]">
-<header class="bg-white py-8 px-4 text-center shadow-sm animate-fade border-b border-stone-200">
+
+<!-- Audio de fondo conectado directo a GitHub -->
+<audio id="bgAudio" loop>
+    <source src="https://raw.githubusercontent.com/ruiseartmg/inventario-suplementos/main/arroyo.mp3" type="audio/mpeg">
+    Tu navegador no soporta audio.
+</audio>
+
+<header class="bg-white py-8 px-4 text-center shadow-sm animate-fade border-b border-stone-200 relative">
+    <!-- Botón flotante superior para controlar el sonido -->
+    <div class="absolute top-4 right-4">
+        <button id="btnAudio" onclick="toggleAudio()" class="bg-[#2E7D32] hover:bg-[#1B5E20] text-white text-xs px-3 py-1.5 rounded-full font-medium transition shadow-sm flex items-center gap-1 cursor-pointer">
+            🔊 Sonido: Activado
+        </button>
+    </div>
+
     <div class="max-w-xl mx-auto">
         <div style="text-align: center; margin-bottom: 12px; width: 100%;">
             <img src="https://raw.githubusercontent.com/ruiseartmg/inventario-suplementos/main/watermarked_img_3973813175880226978.jpg" alt="Nature's Select Logo" style="width: 100%; max-width: 280px; margin: 0 auto; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
