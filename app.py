@@ -225,7 +225,7 @@ try:
         encoded_image = base64.b64encode(image_file.read()).decode()
     st.markdown(
         f"""
-        <div style="text-align: center; margin-bottom: 15px; width: 100%;">
+        <div style="text-align: center; margin-bottom: 12px; width: 100%;">
             <img src="data:image/jpeg;base64,{encoded_image}" style="width: 100%; max-width: 700px; border-radius: 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.1);">
         </div>
         """,
@@ -234,22 +234,15 @@ try:
 except:
     st.title("🌿 Nature’s Select")
 
-# --- TARJETA DE ACCESO RÁPIDO Y COMPARTIR POR WHATSAPP ---
+# --- BARRA COMPACTA DE ACCESO AL CATÁLOGO WEB ---
 url_catalogo = "https://ruiseartmg.github.io/inventario-suplementos/"
-mensaje_wa = urllib.parse.quote(f"¡Hola! Te comparto el catálogo oficial en línea de Nature’s Select para que consultes los productos disponibles y hagas tu pedido: {url_catalogo}")
 
 st.markdown(f"""
-    <div style="background-color: #E8F5E9; padding: 15px 20px; border-radius: 12px; border-left: 6px solid #2E7D32; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-            <div>
-                <h4 style="margin: 0; color: #1B5E20; font-size: 16px;">🌐 Tu Catálogo Web Oficial</h4>
-                <p style="margin: 4px 0 0 0; font-size: 13px; color: #37474F;">Enlace listo para que tus clientes lo consulten y te hagan pedidos directos.</p>
-            </div>
-            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <a href="{url_catalogo}" target="_blank" style="background-color: #2E7D32; color: white; padding: 8px 14px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 13px; display: inline-block;">🌐 Abrir Catálogo</a>
-                <a href="https://api.whatsapp.com/send?text={mensaje_wa}" target="_blank" style="background-color: #25D366; color: white; padding: 8px 14px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 13px; display: inline-block;">💬 Compartir WhatsApp</a>
-            </div>
+    <div style="background-color: #E8F5E9; padding: 10px 16px; border-radius: 10px; border-left: 5px solid #2E7D32; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
+        <div>
+            <span style="font-weight: 600; color: #1B5E20; font-size: 14px;">🌐 Catálogo Web Oficial</span>
         </div>
+        <a href="{url_catalogo}" target="_blank" style="background-color: #2E7D32; color: white; padding: 6px 14px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 12px; display: inline-block;">🌐 Abrir Catálogo</a>
     </div>
 """, unsafe_allow_html=True)
 
@@ -1232,7 +1225,7 @@ with pestana3:
         st.info("Aún no hay registros en el historial.")
 
 with pestana4:
-    st.subheader("📋 Sugerencia de Pedido (Por Surtirกับ Proveedor) y Costos")
+    st.subheader("📋 Sugerencia de Pedido (Por Surtir con Proveedor) y Costos")
     st.markdown("Consulta el pedido sugerido al proveedor, el costo estimado por artículo y el total a invertir.")
     reg_hist_actuales = cargar_historial_cache()
     
