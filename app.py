@@ -266,6 +266,19 @@ with pestana1:
         "Compra (Entrada de Proveedor)"
     ])
     
+    nombre_cliente = ""
+    descuento_porcentaje = 0.0
+    
+    if tipo_transaccion == "Venta / Pedido de Cliente":
+        nombre_cliente = st.text_input("Nombre del Cliente * (Obligatorio):", "")
+    elif tipo_transaccion == "🔄 Devolución de Cliente (Reingreso)":
+        nombre_cliente = st.text_input("Nombre del Cliente que devuelve * (Obligatorio):", "")
+    elif tipo_transaccion == "Salida Especial (Muestra / Merma / Consumo Propio)":
+        motivo_salida = st.selectbox("Motivo de la Salida:", ["Muestra Gratis", "Merma / Dañado", "Consumo Propio"])
+        nombre_cliente = motivo_salida
+    else:
+        nombre_cliente = "Proveedor"
+
     nombres_productos = [str(p.get("Nombre del Producto", "")).strip() for p in registros_inv if p.get("Nombre del Producto")]
     
     if nombres_productos:
@@ -287,17 +300,6 @@ with pestana1:
         stock_str_fmt = str(int(stock_en_selector)) if stock_en_selector.is_integer() else f"{stock_en_selector:g}"
         st.markdown(f'<div class="stock-badge">📦 Existencia Física Actual: <b>{stock_str_fmt} unidades</b></div>', unsafe_allow_html=True)
         
-        nombre_cliente = ""
-        descuento_porcentaje = 0.0
-        
-        if tipo_transaccion == "Venta / Pedido de Cliente":
-            nombre_cliente = st.text_input("Nombre del Cliente * (Obligatorio):", "")
-        elif tipo_transaccion == "🔄 Devolución de Cliente (Reingreso)":
-            nombre_cliente = st.text_input("Nombre del Cliente que devuelve * (Obligatorio):", "")
-        elif tipo_transaccion == "Salida Especial (Muestra / Merma / Consumo Propio)":
-            motivo_salida = st.selectbox("Motivo de la Salida:", ["Muestra Gratis", "Merma / Dañado", "Consumo Propio"])
-            nombre_cliente = motivo_salida
-            
         cantidad = st.number_input("Cantidad", min_value=1.0, step=1.0, value=1.0)
         
         if tipo_transaccion == "Venta / Pedido de Cliente":
