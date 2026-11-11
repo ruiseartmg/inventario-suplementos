@@ -258,6 +258,14 @@ pestana1, pestana2, pestana3, pestana4, pestana5 = st.tabs([
 
 with pestana1:
     st.subheader("Registrar Pedido o Movimiento")
+    
+    tipo_transaccion = st.radio("Tipo de Transacción", [
+        "Venta / Pedido de Cliente", 
+        "🔄 Devolución de Cliente (Reingreso)",
+        "Salida Especial (Muestra / Merma / Consumo Propio)", 
+        "Compra (Entrada de Proveedor)"
+    ])
+    
     nombres_productos = [str(p.get("Nombre del Producto", "")).strip() for p in registros_inv if p.get("Nombre del Producto")]
     
     if nombres_productos:
@@ -279,19 +287,11 @@ with pestana1:
         stock_str_fmt = str(int(stock_en_selector)) if stock_en_selector.is_integer() else f"{stock_en_selector:g}"
         st.markdown(f'<div class="stock-badge">📦 Existencia Física Actual: <b>{stock_str_fmt} unidades</b></div>', unsafe_allow_html=True)
         
-        tipo_transaccion = st.radio("Tipo de Transacción", [
-            "Venta / Pedido de Cliente", 
-            "🔄 Devolución de Cliente (Reingreso)",
-            "Salida Especial (Muestra / Merma / Consumo Propio)", 
-            "Compra (Entrada de Proveedor)"
-        ])
-        
         nombre_cliente = ""
         descuento_porcentaje = 0.0
         
         if tipo_transaccion == "Venta / Pedido de Cliente":
             nombre_cliente = st.text_input("Nombre del Cliente * (Obligatorio):", "")
-            descuento_porcentaje = st.number_input("Descuento aplicable (%)", min_value=0.0, max_value=100.0, value=0.0, step=5.0)
         elif tipo_transaccion == "🔄 Devolución de Cliente (Reingreso)":
             nombre_cliente = st.text_input("Nombre del Cliente que devuelve * (Obligatorio):", "")
         elif tipo_transaccion == "Salida Especial (Muestra / Merma / Consumo Propio)":
@@ -299,6 +299,9 @@ with pestana1:
             nombre_cliente = motivo_salida
             
         cantidad = st.number_input("Cantidad", min_value=1.0, step=1.0, value=1.0)
+        
+        if tipo_transaccion == "Venta / Pedido de Cliente":
+            descuento_porcentaje = st.number_input("Descuento aplicable (%)", min_value=0.0, max_value=100.0, value=0.0, step=5.0)
         
         if st.button("Registrar en el Sistema") and prod_seleccionado:
             if tipo_transaccion in ["Venta / Pedido de Cliente", "🔄 Devolución de Cliente (Reingreso)"] and not nombre_cliente.strip():
