@@ -242,7 +242,7 @@ pestana1, pestana2, pestana3, pestana4, pestana5, pestana6 = st.tabs([
     "📜 Historial", 
     "📋 Resurtido",
     "➕ Nuevo Producto",
-    "🌐 Catálogo Web"
+    "🌐 Catálogo Web WhatsApp"
 ])
 
 with pestana1:
@@ -419,6 +419,7 @@ with pestana1:
                 df_inv[col] = pd.to_numeric(df_inv[col], errors="coerce").fillna(0)
                 df_inv[col] = df_inv[col].apply(lambda x: str(int(x)) if x.is_integer() else f"{x:g}")
 
+        # SELECCIÓN ESTRICTA: Únicamente las 4 columnas solicitadas
         cols_deseadas = [col_prod, col_stock, "Por entregar", col_precio]
         cols_existentes = [c for c in cols_deseadas if c in df_inv.columns]
         df_inv = df_inv[cols_existentes]
@@ -1430,35 +1431,9 @@ with pestana5:
                     st.error(f"Error al guardar: {e}")
 
 with pestana6:
-    st.subheader("🌐 Catálogo Web en Línea (GitHub Pages)")
-    st.markdown("Tu catálogo dinámico está listo. Descarga el archivo `index.html` actualizado para que se inyecten automáticamente todos tus productos con sus imágenes, beneficios y música de arroyo.")
+    st.subheader("🌐 Generar Catálogo Web para WhatsApp")
+    st.markdown("Descarga tu archivo de catálogo HTML actualizado con todos los productos actuales de tu base de datos y sus precios al día.")
     
-    url_catalogo_web = "https://ruiseartmg.github.io/inventario-suplementos/"
-    
-    st.markdown(f"""
-        <div style="background-color: #E8F5E9; padding: 20px; border-radius: 12px; border-left: 6px solid #2E7D32; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
-            <h4 style="margin-top: 0; color: #1B5E20;">🔗 Enlace oficial del Catálogo:</h4>
-            <a href="{url_catalogo_web}" target="_blank" style="font-size: 16px; font-weight: bold; color: #2E7D32; word-break: break-all;">{url_catalogo_web}</a>
-        </div>
-    """, unsafe_allow_html=True)
-
-    col_btn_1, col_btn_2 = st.columns(2)
-    with col_btn_1:
-        st.markdown(f"""
-            <a href="{url_catalogo_web}" target="_blank">
-                <button style="background-color: #2E7D32; color: white; border: none; border-radius: 8px; font-weight: 600; padding: 10px 20px; width: 100%; cursor: pointer; text-align: center; display: block; text-decoration: none;">
-                    🌐 Abrir Catálogo en Vivo
-                </button>
-            </a>
-        """, unsafe_allow_html=True)
-        
-    with col_btn_2:
-        if st.button("📋 Copiar enlace al portapapeles"):
-            st.toast("¡Enlace listo para compartir por WhatsApp!", icon="✨")
-
-    st.divider()
-    st.markdown("### 📥 Descargar index.html Completo (Con Fotos, Beneficios y Audio)")
-
     if registros_inv:
         html_catalogo = """<!DOCTYPE html>
 <html lang="es">
@@ -1485,45 +1460,13 @@ with pestana6:
             const url = `https://wa.me/523313018552?text=` + encodeURIComponent(mensaje);
             btn.href = url;
         }
-
-        // Función para controlar el audio de fondo (Arroyo relajante)
-        function toggleAudio() {
-            const audio = document.getElementById('bgAudio');
-            const btnAudio = document.getElementById('btnAudio');
-            if (audio.paused) {
-                audio.play().then(() => {
-                    btnAudio.innerHTML = "🔊 Sonido: Activado";
-                    btnAudio.classList.remove("bg-stone-700", "hover:bg-stone-600");
-                    btnAudio.classList.add("bg-[#2E7D32]", "hover:bg-[#1B5E20]");
-                }).catch(e => console.log("Reproducción bloqueada:", e));
-            } else {
-                audio.pause();
-                btnAudio.innerHTML = "🔇 Sonido: Silenciado";
-                btnAudio.classList.remove("bg-[#2E7D32]", "hover:bg-[#1B5E20]");
-                btnAudio.classList.add("bg-stone-700", "hover:bg-stone-600");
-            }
-        }
     </script>
 </head>
 <body class="bg-[#FAFAFA] text-[#263238]">
-
-<!-- Audio de fondo configurado -->
-<audio id="bgAudio" loop>
-    <source src="arroyo.mp3" type="audio/mpeg">
-    Tu navegador no soporta audio.
-</audio>
-
-<!-- Botón flotante superior derecho fijo para la bocina -->
-<div class="fixed top-4 right-4 z-50">
-    <button id="btnAudio" onclick="toggleAudio()" class="bg-stone-700 hover:bg-stone-600 text-white text-xs px-3.5 py-2 rounded-full font-medium transition shadow-md flex items-center gap-1.5 cursor-pointer">
-        🔇 Activar Sonido
-    </button>
-</div>
-
 <header class="bg-white py-8 px-4 text-center shadow-sm animate-fade border-b border-stone-200">
     <div class="max-w-xl mx-auto">
         <div style="text-align: center; margin-bottom: 12px; width: 100%;">
-            <img src="watermarked_img_3973813175880226978.jpg" alt="Nature's Select Logo" style="width: 100%; max-width: 280px; margin: 0 auto; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+            <img src="https://raw.githubusercontent.com/ruiseartmg/inventario-suplementos/main/watermarked_img_3973813175880226978.jpg" alt="Nature's Select Logo" style="width: 100%; max-width: 280px; margin: 0 auto; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
         </div>
         <span class="bg-[#E8F5E9] text-[#1B5E20] text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider">Catálogo 2026</span>
         <p class="text-stone-600 text-sm md:text-base mt-3">Alimenta tu bienestar con lo mejor de la naturaleza. Elige tus piezas y haz tu pedido directo por WhatsApp.</p>
@@ -1555,11 +1498,10 @@ with pestana6:
             html_catalogo += f"""
             <div class="product-card bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden flex flex-col justify-between p-4">
                 <div>
-                    <div class="w-full h-40 bg-stone-100 rounded-lg mb-3 overflow-hidden flex items-center justify-center">
-                        <img src="watermarked_img_3973813175880226978.jpg" alt="{nombre}" class="w-full h-full object-cover">
+                    <div class="flex justify-between items-start">
+                        <h3 class="font-semibold text-stone-900">{nombre}</h3>
                     </div>
-                    <h3 class="font-semibold text-stone-900">{nombre}</h3>
-                    <p class="text-xs text-stone-500 mt-1">✨ <b>Beneficios:</b> Producto 100% natural seleccionado para tu bienestar y vitalidad diaria.</p>
+                    <p class="text-xs text-[#2E7D32] font-medium mt-1">✨ Producto 100% natural seleccionado para tu bienestar.</p>
                 </div>
                 <div class="mt-4 pt-3 border-t border-stone-100 flex items-center justify-between">
                     <div class="flex items-center space-x-2">
@@ -1590,10 +1532,10 @@ with pestana6:
 """
 
         st.download_button(
-            label="📥 Descargar index.html Completo",
+            label="📥 Descargar Catálogo HTML Actualizado",
             data=html_catalogo,
-            file_name="index.html",
+            file_name=f"catalogo_natures_select_{datetime.now().strftime('%d-%m-%Y')}.html",
             mime="text/html"
         )
     else:
-        st.info("No hay productos disponibles para generar el archivo.")
+        st.info("No hay productos disponibles para generar el catálogo.")
