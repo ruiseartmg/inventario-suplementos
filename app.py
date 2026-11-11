@@ -419,7 +419,6 @@ with pestana1:
                 df_inv[col] = pd.to_numeric(df_inv[col], errors="coerce").fillna(0)
                 df_inv[col] = df_inv[col].apply(lambda x: str(int(x)) if x.is_integer() else f"{x:g}")
 
-        # SELECCIÓN ESTRICTA: Únicamente las 4 columnas solicitadas
         cols_deseadas = [col_prod, col_stock, "Por entregar", col_precio]
         cols_existentes = [c for c in cols_deseadas if c in df_inv.columns]
         df_inv = df_inv[cols_existentes]
@@ -1495,9 +1494,9 @@ with pestana6:
 </head>
 <body class="bg-[#FAFAFA] text-[#263238]">
 
-<!-- Audio de fondo alojado en tu GitHub -->
+<!-- Audio de fondo configurado para reproducción directa -->
 <audio id="bgAudio" loop>
-    <source src="https://raw.githubusercontent.com/ruiseartmg/inventario-suplementos/main/arroyo.mp3" type="audio/mpeg">
+    <source src="https://github.com/ruiseartmg/inventario-suplementos/raw/main/arroyo.mp3" type="audio/mpeg">
     Tu navegador no soporta audio.
 </audio>
 
