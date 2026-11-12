@@ -54,18 +54,18 @@
             margin-bottom: 30px;
         }
 
-        /* Estilo para el reproductor de música flotante */
+        /* Reproductor de música flotante */
         .music-player-container {
             position: fixed;
             bottom: 20px;
             right: 20px;
             background: #FFFFFF;
-            padding: 10px 15px;
+            padding: 10px 16px;
             border-radius: 30px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
             z-index: 1000;
             border: 1px solid #C8E6C9;
         }
@@ -75,8 +75,8 @@
             color: white;
             border: none;
             border-radius: 50%;
-            width: 36px;
-            height: 36px;
+            width: 38px;
+            height: 38px;
             cursor: pointer;
             font-size: 16px;
             display: flex;
@@ -111,17 +111,16 @@
             <p>Explora el catálogo actualizado en tiempo real desde nuestro inventario.</p>
         </div>
         
-        <!-- Aquí se cargará dinámicamente tu inventario desde Google Sheets -->
+        <!-- Contenedor del inventario sincronizado con Google Sheets -->
         <div id="productos-container" style="text-align: center; color: #555;">
             Cargando catálogo completo desde el inventario...
         </div>
     </div>
 
-    <!-- Reproductor de Música de Fondo con Autoplay Inteligente por Scroll/Toque -->
+    <!-- Reproductor de Música de Fondo -->
     <div class="music-player-container">
         <span class="music-label" id="music-status">🎵 Música</span>
-        <button id="toggle-music" onclick="togglePlayMusic()">🔊</button>
-        <!-- Reemplaza 'tu-musica.mp3' con el archivo o enlace de la música que prefieras -->
+        <button id="toggle-music" onclick="togglePlayMusic()">🔇</button>
         <audio id="bg-audio" loop>
             <source src="tu-musica.mp3" type="audio/mpeg">
             Tu navegador no soporta el elemento de audio.
@@ -132,13 +131,10 @@
         const audioElement = document.getElementById('bg-audio');
         const musicStatus = document.getElementById('music-status');
         const toggleBtn = document.getElementById('toggle-music');
-        let musicaIniciada = false;
 
-        // Función para alternar manualmente con el botón
         function togglePlayMusic() {
             if (audioElement.paused) {
                 audioElement.play().then(() => {
-                    musicaIniciada = true;
                     toggleBtn.textContent = "🔊";
                     musicStatus.textContent = "Reproduciendo";
                 }).catch(e => {
@@ -150,28 +146,6 @@
                 musicStatus.textContent = "Pausado";
             }
         }
-
-        // Activación automática en cuanto el usuario hace scroll o toca la pantalla por primera vez
-        function activarMusicaConInteraccion() {
-            if (!musicaIniciada) {
-                audioElement.play().then(() => {
-                    musicaIniciada = true;
-                    toggleBtn.textContent = "🔊";
-                    musicStatus.textContent = "Reproduciendo";
-                    // Remover los escuchas una vez que arrancó con éxito
-                    window.removeEventListener('scroll', activarMusicaConInteraccion);
-                    window.removeEventListener('click', activarMusicaConInteraccion);
-                    window.removeEventListener('touchstart', activarMusicaConInteraccion);
-                }).catch(e => {
-                    console.log("El navegador requiere interacción adicional para reproducir audio.");
-                });
-            }
-        }
-
-        // Escuchar el primer movimiento de scroll, toque o clic del cliente
-        window.addEventListener('scroll', activarMusicaConInteraccion, { once: true });
-        window.addEventListener('click', activarMusicaConInteraccion, { once: true });
-        window.addEventListener('touchstart', activarMusicaConInteraccion, { once: true });
     </script>
 
 </body>
