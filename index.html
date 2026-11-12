@@ -61,7 +61,7 @@
 </head>
 <body class="bg-[#FAFAFA] text-[#263238] pb-28">
 
-<!-- Reproductor de Música de Fondo Flotante (Superior Derecho) -->
+<!-- Reproductor de Música de Fondo Flotante (Superior Derecho con Autoplay por Scroll/Toque) -->
 <div class="music-player-container">
     <span class="music-label" id="music-status">🎵 Música</span>
     <button id="toggle-music" onclick="togglePlayMusic()">🔇</button>
@@ -331,14 +331,16 @@
         window.open(linkWa, '_blank');
     }
 
-    // --- SCRIPT PARA EL REPRODUCTOR DE MÚSICA ---
+    // --- SCRIPT PARA EL REPRODUCTOR DE MÚSICA CON ACTIVACIÓN POR SCROLL / TOQUE ---
     const audioElement = document.getElementById('bg-audio');
     const musicStatus = document.getElementById('music-status');
     const toggleBtn = document.getElementById('toggle-music');
+    let musicaIniciada = false;
 
     function togglePlayMusic() {
         if (audioElement.paused) {
             audioElement.play().then(() => {
+                musicaIniciada = true;
                 toggleBtn.textContent = "🔊";
                 musicStatus.textContent = "Reproduciendo";
             }).catch(e => {
@@ -350,6 +352,27 @@
             musicStatus.textContent = "Pausado";
         }
     }
+
+    function activarMusicaConInteraccion() {
+        if (!musicaIniciada) {
+            audioElement.play().then(() => {
+                musicaIniciada = true;
+                toggleBtn.textContent = "🔊";
+                musicStatus.textContent = "Reproduciendo";
+                // Remover los escuchas para que solo ocurra una vez
+                window.removeEventListener('scroll', activarMusicaConInteraccion);
+                window.removeEventListener('click', activarMusicaConInteraccion);
+                window.removeEventListener('touchstart', activarMusicaConInteraccion);
+            }).catch(e => {
+                console.log("Esperando interacción adicional del navegador.");
+            });
+        }
+    }
+
+    // Escuchar el primer scroll o toque en la pantalla
+    window.addEventListener('scroll', activarMusicaConInteraccion, { once: true });
+    window.addEventListener('click', activarMusicaConInteraccion, { once: true });
+    window.addEventListener('touchstart', activarMusicaConInteraccion, { once: true });
 
     cargarProductos();
 </script>
