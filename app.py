@@ -234,8 +234,8 @@ try:
 except:
     st.title("🌿 Nature’s Select")
 
-# --- ENLACE DIRECTO COMPACTO AL CATÁLOGO WEB ---
-url_catalogo = "https://ruiseartmg.github.io/inventario-suplementos/"
+# --- ENLACE DIRECTO COMPACTO AL CATÁLOGO WEB (ACTUALIZADO A VERCEL) ---
+url_catalogo = "https://natures-select-catalogo.vercel.app/"
 
 st.markdown(f"""
     <div style="background-color: #E8F5E9; padding: 12px 18px; border-radius: 10px; border-left: 5px solid #2E7D32; margin-bottom: 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.03);">
