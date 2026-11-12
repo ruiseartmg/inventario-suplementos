@@ -15,6 +15,48 @@
         .animate-fade { animation: fadeIn 0.6s ease-out forwards; }
         .product-card { transition: transform 0.3s ease, box-shadow 0.3s ease; }
         .product-card:hover { transform: translateY(-4px); box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.08); }
+
+        /* Estilo para el reproductor de música flotante */
+        .music-player-container {
+            position: fixed;
+            bottom: 85px;
+            right: 20px;
+            background: #FFFFFF;
+            padding: 8px 14px;
+            border-radius: 30px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 40;
+            border: 1px solid #C8E6C9;
+        }
+
+        .music-player-container button {
+            background-color: #2E7D32;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 34px;
+            height: 34px;
+            cursor: pointer;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+
+        .music-player-container button:hover {
+            background-color: #1B5E20;
+        }
+
+        .music-label {
+            font-size: 12px;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            color: #1B5E20;
+        }
     </style>
 </head>
 <body class="bg-[#FAFAFA] text-[#263238] pb-28">
@@ -43,6 +85,16 @@
         </div>
     </section>
 </main>
+
+<!-- Reproductor de Música de Fondo Flotante -->
+<div class="music-player-container">
+    <span class="music-label" id="music-status">🎵 Música</span>
+    <button id="toggle-music" onclick="togglePlayMusic()">🔇</button>
+    <audio id="bg-audio" loop>
+        <source src="tu-musica.mp3" type="audio/mpeg">
+        Tu navegador no soporta el elemento de audio.
+    </audio>
+</div>
 
 <!-- Barra flotante del Carrito -->
 <div id="barra-carrito" class="fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 shadow-2xl p-4 transform translate-y-full transition-transform duration-300 z-50">
@@ -277,6 +329,26 @@
 
         const linkWa = `https://wa.me/523313018552?text=` + encodeURIComponent(mensaje);
         window.open(linkWa, '_blank');
+    }
+
+    // --- SCRIPT PARA EL REPRODUCTOR DE MÚSICA ---
+    const audioElement = document.getElementById('bg-audio');
+    const musicStatus = document.getElementById('music-status');
+    const toggleBtn = document.getElementById('toggle-music');
+
+    function togglePlayMusic() {
+        if (audioElement.paused) {
+            audioElement.play().then(() => {
+                toggleBtn.textContent = "🔊";
+                musicStatus.textContent = "Reproduciendo";
+            }).catch(e => {
+                console.log("Reproducción bloqueada por el navegador.");
+            });
+        } else {
+            audioElement.pause();
+            toggleBtn.textContent = "🔇";
+            musicStatus.textContent = "Pausado";
+        }
     }
 
     cargarProductos();
