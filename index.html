@@ -44,7 +44,7 @@
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1000px;
             margin: 0 auto;
             padding: 20px;
         }
@@ -52,6 +52,56 @@
         .catalogo-header {
             text-align: center;
             margin-bottom: 30px;
+        }
+
+        /* Tarjetas de productos */
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .product-card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border-left: 5px solid var(--primary-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .product-title {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 10px;
+            color: var(--text-color);
+        }
+
+        .product-price {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary-dark);
+            margin-bottom: 15px;
+        }
+
+        .whatsapp-btn {
+            background-color: #25D366;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-family: 'Montserrat', sans-serif;
+            box-shadow: 0 2px 6px rgba(37, 211, 102, 0.3);
+            transition: 0.2s;
+        }
+
+        .whatsapp-btn:hover {
+            background-color: #1EBE5D;
         }
 
         /* Reproductor de música flotante */
@@ -111,9 +161,9 @@
             <p>Explora el catálogo actualizado en tiempo real desde nuestro inventario.</p>
         </div>
         
-        <!-- Contenedor del inventario sincronizado con Google Sheets -->
-        <div id="productos-container" style="text-align: center; color: #555;">
-            Cargando catálogo completo desde el inventario...
+        <!-- Contenedor donde aparecerán los productos cargados desde Google Sheets -->
+        <div id="productos-container">
+            <p style="text-align: center; color: #555;">Cargando catálogo completo desde el inventario...</p>
         </div>
     </div>
 
@@ -128,6 +178,58 @@
     </div>
 
     <script>
+        // --- SCRIPT PARA CARGAR PRODUCTOS DESDE GOOGLE SHEETS ---
+        // ⚠️ Asegúrate de colocar aquí tu URL de Google Apps Script correcta si la tenías configurada
+        const SCRIPT_URL = "PEGAR_AQUI_TU_WEB_APP_URL_DE_GOOGLE_SCRIPT";
+
+        async function cargarCatalogo() {
+            const container = document.getElementById('productos-container');
+            try {
+                const response = await fetch(SCRIPT_URL);
+                const data = await response.json();
+                
+                if (!data || data.length === 0) {
+                    container.innerHTML = "<p style='text-align: center;'>No hay productos disponibles por el momento.</p>";
+                    return;
+                }
+
+                let gridHtml = '<div class="product-grid">';
+                data.forEach(item => {
+                    const nombre = item["Nombre del Producto"] || item["nombre"] || "Producto";
+                    const precio = item["Precio de Venta"] || item["precio"] || "0.00";
+                    const stock = parseFloat(item["Cantidad en Stock"] || item["stock"] || 0);
+
+                    // Solo mostrar productos con stock disponible
+                    if (stock > 0) {
+                        const mensajeWp = encodeURIComponent(`Hola, me interesa el producto: *${nombre}* (${precio})`);
+                        gridHtml += `
+                            <div class="product-card">
+                                <div>
+                                    <div class="product-title">${nombre}</div>
+                                    <div class="product-price">$${precio}</div>
+                                </div>
+                                <a href="https://wa.me/5233XXXXXXXX?text=${mensajeWp}" target="_blank" class="whatsapp-btn">Pedir por WhatsApp ↗</a>
+                            </div>
+                        `;
+                    }
+                });
+                gridHtml += '</div>';
+                container.innerHTML = gridHtml;
+
+            } catch (error) {
+                console.error("Error al cargar inventario:", error);
+                container.innerHTML = "<p style='text-align: center; color: #C62828;'>Error al conectar con el inventario en tiempo real.</p>";
+            }
+        }
+
+        // Ejecutar carga al abrir la página
+        if (SCRIPT_URL !== "PEGAR_AQUI_TU_WEB_APP_URL_DE_GOOGLE_SCRIPT") {
+            cargarCatalogo();
+        } else {
+            document.getElementById('productos-container').innerHTML = "<p style='text-align: center; color: #C62828;'>Falta configurar la URL de Google Apps Script en el código.</p>";
+        }
+
+        // --- SCRIPT PARA EL REPRODUCTOR DE MÚSICA ---
         const audioElement = document.getElementById('bg-audio');
         const musicStatus = document.getElementById('music-status');
         const toggleBtn = document.getElementById('toggle-music');
