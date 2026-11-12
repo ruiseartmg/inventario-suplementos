@@ -3,350 +3,176 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Bloqueamos la indexación en buscadores -->
     <meta name="robots" content="noindex, nofollow">
-    <title>Nature’s Select - Catálogo en Línea</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <title>Nature’s Select - Catálogo Oficial</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        html, body { font-family: 'Open Sans', sans-serif !important; background-color: #FAFAFA !important; color: #263238; }
-        h1, h2, h3, h4, h5, h6 { font-family: 'Montserrat', sans-serif !important; color: #263238 !important; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fade { animation: fadeIn 0.6s ease-out forwards; }
-        .product-card { transition: transform 0.3s ease, box-shadow 0.3s ease; }
-        .product-card:hover { transform: translateY(-4px); box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.08); }
-        
-        /* Estilos del reproductor flotante */
-        #music-player-widget {
+        :root {
+            --primary-color: #2E7D32;
+            --primary-dark: #1B5E20;
+            --bg-color: #FAFAFA;
+            --text-color: #263238;
+            --card-bg: #FFFFFF;
+        }
+
+        html, body {
+            font-family: 'Open Sans', sans-serif !important;
+            background-color: var(--bg-color) !important;
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        header {
+            text-align: center;
+            padding: 20px;
+            background-color: var(--card-bg);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+        }
+
+        header img {
+            width: 100%;
+            max-width: 600px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        h1, h2, h3 {
+            font-family: 'Montserrat', sans-serif !important;
+            color: var(--text-color);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .catalogo-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        /* Estilo para el reproductor de música flotante */
+        .music-player-container {
             position: fixed;
-            top: 20px;
+            bottom: 20px;
             right: 20px;
-            background: rgba(255, 255, 255, 0.95);
-            border: 2px solid #2E7D32;
-            border-radius: 50px;
-            padding: 6px 12px;
+            background: #FFFFFF;
+            padding: 10px 15px;
+            border-radius: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             display: flex;
             align-items: center;
             gap: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            z-index: 9999;
-            backdrop-filter: blur(4px);
+            z-index: 1000;
+            border: 1px solid #C8E6C9;
         }
-        #play-pause-btn {
-            background: #2E7D32;
+
+        .music-player-container button {
+            background-color: var(--primary-color);
             color: white;
             border: none;
             border-radius: 50%;
-            width: 32px;
-            height: 32px;
+            width: 36px;
+            height: 36px;
             cursor: pointer;
+            font-size: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 14px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
             transition: 0.2s;
         }
-        #play-pause-btn:hover { background: #1B5E20; }
+
+        .music-player-container button:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .music-label {
+            font-size: 13px;
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 600;
+            color: var(--primary-dark);
+        }
     </style>
 </head>
-<body class="bg-[#FAFAFA] text-[#263238] pb-28">
+<body>
 
-<header class="bg-white py-8 px-4 text-center shadow-sm animate-fade border-b border-stone-200">
-    <div class="max-w-xl mx-auto">
-        <div style="text-align: center; margin-bottom: 12px; width: 100%;">
-            <img src="https://raw.githubusercontent.com/ruiseartmg/inventario-suplementos/main/watermarked_img_3973813175880226978.jpg" alt="Nature's Select Logo" style="width: 100%; max-width: 280px; margin: 0 auto; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
-        </div>
-        <span class="bg-[#E8F5E9] text-[#1B5E20] text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider">Catálogo Oficial 2026</span>
-        <p class="text-stone-600 text-sm md:text-base mt-3">Alimenta tu bienestar con lo mejor de la naturaleza. Agrega tus productos al carrito y haz tu pedido por WhatsApp.</p>
-    </div>
-</header>
+    <header>
+        <img src="watermarked_img_3973813175880226978.jpg" alt="Nature's Select Logo">
+        <h1>Nature’s Select</h1>
+        <p>Alimenta tu bienestar con lo mejor de la naturaleza.</p>
+    </header>
 
-<main class="max-w-3xl mx-auto px-4 py-8 space-y-10">
-    <section class="animate-fade">
-        <div class="flex items-center space-x-2 mb-4 border-b border-stone-200 pb-2">
-            <h2 class="text-xl font-bold text-[#4A1525]">Nuestros Productos Disponibles</h2>
+    <div class="container">
+        <div class="catalogo-header">
+            <h2>Nuestros Productos Disponibles</h2>
+            <p>Explora el catálogo actualizado en tiempo real desde nuestro inventario.</p>
         </div>
         
-        <!-- Contenedor dinámico de productos -->
-        <div id="grid-productos" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div class="col-span-2 text-center py-12">
-                <p class="text-stone-500 animate-pulse text-sm">Cargando catálogo completo desde tu inventario...</p>
-            </div>
-        </div>
-    </section>
-</main>
-
-<!-- Barra flotante del Carrito -->
-<div id="barra-carrito" class="fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 shadow-2xl p-4 transform translate-y-full transition-transform duration-300 z-50">
-    <div class="max-w-3xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-        <div class="flex items-center space-x-3 text-center sm:text-left">
-            <span class="text-2xl">🛒</span>
-            <div>
-                <p class="text-sm font-bold text-stone-900"><span id="cart-count">0</span> producto(s) en tu carrito</p>
-                <p class="text-xs text-[#2E7D32] font-semibold">Total estimado: $<span id="cart-total">0.00</span></p>
-            </div>
-        </div>
-        <div class="flex items-center space-x-2 w-full sm:w-auto">
-            <button onclick="verDetalleCarrito()" class="flex-1 sm:flex-none bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs px-4 py-2.5 rounded-lg font-medium transition">Ver Detalle</button>
-            <button onclick="enviarPedidoWhatsApp()" class="flex-1 sm:flex-none bg-[#2E7D32] hover:bg-[#1B5E20] text-white text-xs px-5 py-2.5 rounded-lg font-semibold shadow transition flex items-center justify-center space-x-1.5">
-                <span>Enviar Pedido por WhatsApp</span> 💬
-            </button>
+        <!-- Aquí se cargará dinámicamente tu inventario desde Google Sheets -->
+        <div id="productos-container" style="text-align: center; color: #555;">
+            Cargando catálogo completo desde el inventario...
         </div>
     </div>
-</div>
 
-<!-- Modal de Detalle del Carrito -->
-<div id="modal-carrito" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl max-h-[80vh] flex flex-col">
-        <div class="flex items-center justify-between border-b pb-3">
-            <h3 class="text-lg font-bold text-[#4A1525]">Tu Carrito de Compras 🌿</h3>
-            <button onclick="cerrarModal()" class="text-stone-400 hover:text-stone-700 text-xl font-bold">&times;</button>
-        </div>
-        <div id="lista-modal-carrito" class="overflow-y-auto space-y-3 flex-1 divide-y divide-stone-100 pr-1">
-            <!-- Items -->
-        </div>
-        <div class="border-t pt-3 flex items-center justify-between font-bold text-stone-900">
-            <span>Total a pagar:</span>
-            <span class="text-[#2E7D32] text-lg">$<span id="modal-total">0.00</span></span>
-        </div>
-        <div class="flex space-x-2 pt-2">
-            <button onclick="cerrarModal()" class="flex-1 bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs py-2.5 rounded-lg font-medium transition">Seguir Viendo</button>
-            <button onclick="enviarPedidoWhatsApp()" class="flex-1 bg-[#2E7D32] hover:bg-[#1B5E20] text-white text-xs py-2.5 rounded-lg font-semibold shadow transition">Enviar a WhatsApp</button>
-        </div>
+    <!-- Reproductor de Música de Fondo con Autoplay Inteligente por Scroll/Toque -->
+    <div class="music-player-container">
+        <span class="music-label" id="music-status">🎵 Música</span>
+        <button id="toggle-music" onclick="togglePlayMusic()">🔊</button>
+        <!-- Reemplaza 'tu-musica.mp3' con el archivo o enlace de la música que prefieras -->
+        <audio id="bg-audio" loop>
+            <source src="tu-musica.mp3" type="audio/mpeg">
+            Tu navegador no soporta el elemento de audio.
+        </audio>
     </div>
-</div>
 
-<!-- Modal para ver imagen en grande (Lightbox) -->
-<div id="modal-imagen" class="fixed inset-0 bg-black/80 hidden z-50 flex items-center justify-center p-4" onclick="cerrarImagenGrande()">
-    <div class="relative max-w-2xl w-full flex justify-center" onclick="event.stopPropagation()">
-        <button onclick="cerrarImagenGrande()" class="absolute -top-10 right-0 text-white text-3xl font-bold px-2">&times;</button>
-        <img id="imagen-ampliada" src="" alt="Imagen ampliada" class="max-h-[85vh] max-w-full rounded-xl object-contain shadow-2xl">
-    </div>
-</div>
+    <script>
+        const audioElement = document.getElementById('bg-audio');
+        const musicStatus = document.getElementById('music-status');
+        const toggleBtn = document.getElementById('toggle-music');
+        let musicaIniciada = false;
 
-<footer class="bg-stone-800 text-stone-300 py-6 px-4 text-center mt-12 mb-16 animate-fade">
-    <p class="text-xs text-stone-400">¡Gracias por consumir natural y apoyar el comercio local! ✨</p>
-</footer>
-
-<!-- REPRODUCTOR DE MÚSICA AMBIENTAL -->
-<div id="music-player-widget">
-    <!-- Cambiado por defecto a Mute (🔇) -->
-    <button id="play-pause-btn" onclick="toggleAudio()">🔇</button>
-    <div style="font-size: 11px; color: #1B5E20; font-weight: 600; line-height: 1.2;">
-        🎵 Música<br>
-        <span id="music-status" style="font-size: 9px; color: #555; font-weight: normal;">Pausado</span>
-    </div>
-    <audio id="bg-audio" loop>
-        <source src="https://ruiseartmg.github.io/inventario-suplementos/arroyo.mp3" type="audio/mpeg">
-    </audio>
-</div>
-
-<script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxxgJ_D5-fF4xu1OzzPURgktY3FzrLuu26tJxh09YsYKnTD_Lx5d4uewDHjhBZ7gUOUcQ/exec";
-    let productosGlobal = [];
-    let carrito = {};
-
-    function cargarProductos() {
-        const contenedor = document.getElementById('grid-productos');
-        
-        fetch(SCRIPT_URL, { redirect: 'follow' })
-            .then(response => response.json())
-            .then(productos => {
-                if (!productos || productos.length === 0) {
-                    contenedor.innerHTML = '<p class="text-stone-500 text-center col-span-2 py-8">No hay productos disponibles por el momento.</p>';
-                    return;
-                }
-
-                productosGlobal = productos;
-                let html = '';
-                productos.forEach((prod, index) => {
-                    let imagenesHtml = '';
-                    if (prod.imagen1 && prod.imagen2) {
-                        imagenesHtml = `
-                            <div class="grid grid-cols-2 gap-1 h-48 bg-stone-100 overflow-hidden">
-                                <img src="${prod.imagen1}" alt="${prod.nombre} 1" class="w-full h-full object-cover cursor-pointer hover:opacity-90 transition" onclick="abrirImagenGrande('${prod.imagen1}')">
-                                <img src="${prod.imagen2}" alt="${prod.nombre} 2" class="w-full h-full object-cover cursor-pointer hover:opacity-90 transition" onclick="abrirImagenGrande('${prod.imagen2}')">
-                            </div>
-                        `;
-                    } else if (prod.imagen1) {
-                        imagenesHtml = `
-                            <div class="w-full h-48 overflow-hidden bg-stone-100">
-                                <img src="${prod.imagen1}" alt="${prod.nombre}" class="w-full h-full object-cover cursor-pointer hover:opacity-90 transition" onclick="abrirImagenGrande('${prod.imagen1}')">
-                            </div>
-                        `;
-                    }
-
-                    html += `
-                        <div class="product-card bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden flex flex-col justify-between">
-                            ${imagenesHtml}
-                            <div class="p-4">
-                                <h3 class="font-semibold text-stone-900">${prod.nombre}</h3>
-                                <p class="text-xs text-[#2E7D32] font-medium mt-1">${prod.beneficio}</p>
-                            </div>
-                            <div class="p-4 pt-0 mt-2 flex items-center justify-between">
-                                <div class="flex items-center space-x-2">
-                                    <span class="text-lg font-bold text-[#2E7D32]">$${prod.precio.toFixed(2)}</span>
-                                    <select id="qty-${index}" class="text-xs border border-stone-300 rounded px-1.5 py-1 bg-stone-50">
-                                        <option value="1">1 pza</option>
-                                        <option value="2">2 pzas</option>
-                                        <option value="3">3 pzas</option>
-                                        <option value="4">4 pzas</option>
-                                        <option value="5">5 pzas</option>
-                                    </select>
-                                </div>
-                                <button onclick="agregarAlCarrito(${index})" class="bg-[#2E7D32] hover:bg-[#1B5E20] text-white text-xs px-3 py-1.5 rounded-lg font-medium transition transform active:scale-95 shadow-sm">
-                                    Agregar 🛒
-                                </button>
-                            </div>
-                        </div>
-                    `;
+        // Función para alternar manualmente con el botón
+        function togglePlayMusic() {
+            if (audioElement.paused) {
+                audioElement.play().then(() => {
+                    musicaIniciada = true;
+                    toggleBtn.textContent = "🔊";
+                    musicStatus.textContent = "Reproduciendo";
+                }).catch(e => {
+                    console.log("Reproducción bloqueada por el navegador.");
                 });
-                contenedor.innerHTML = html;
-            })
-            .catch(error => {
-                console.error("Error al cargar:", error);
-                contenedor.innerHTML = '<p class="text-red-500 text-center col-span-2 py-8">Error al conectar con el inventario. Intenta recargar más tarde.</p>';
-            });
-    }
-
-    // Funciones del Lightbox (Ver imagen en grande)
-    function abrirImagenGrande(url) {
-        if (!url) return;
-        document.getElementById('imagen-ampliada').src = url;
-        document.getElementById('modal-imagen').classList.remove('hidden');
-    }
-
-    function cerrarImagenGrande() {
-        document.getElementById('modal-imagen').classList.add('hidden');
-    }
-
-    function agregarAlCarrito(index) {
-        const selectQty = document.getElementById('qty-' + index);
-        const cantidadSeleccionada = parseInt(selectQty.value);
-
-        if (carrito[index]) {
-            carrito[index] += cantidadSeleccionada;
-        } else {
-            carrito[index] = cantidadSeleccionada;
+            } else {
+                audioElement.pause();
+                toggleBtn.textContent = "🔇";
+                musicStatus.textContent = "Pausado";
+            }
         }
 
-        actualizarBarraCarrito();
-        
-        const btn = selectQty.nextElementSibling;
-        const textoOriginal = btn.innerHTML;
-        btn.innerHTML = "¡Agregado! ✓";
-        btn.classList.add("bg-emerald-700");
-        setTimeout(() => {
-            btn.innerHTML = textoOriginal;
-            btn.classList.remove("bg-emerald-700");
-        }, 1000);
-    }
-
-    function actualizarBarraCarrito() {
-        let totalItems = 0;
-        let totalPrice = 0;
-        const barra = document.getElementById('barra-carrito');
-
-        for (let idx in carrito) {
-            let cant = carrito[idx];
-            let prod = productosGlobal[idx];
-            totalItems += cant;
-            totalPrice += prod.precio * cant;
+        // Activación automática en cuanto el usuario hace scroll o toca la pantalla por primera vez
+        function activarMusicaConInteraccion() {
+            if (!musicaIniciada) {
+                audioElement.play().then(() => {
+                    musicaIniciada = true;
+                    toggleBtn.textContent = "🔊";
+                    musicStatus.textContent = "Reproduciendo";
+                    // Remover los escuchas una vez que arrancó con éxito
+                    window.removeEventListener('scroll', activarMusicaConInteraccion);
+                    window.removeEventListener('click', activarMusicaConInteraccion);
+                    window.removeEventListener('touchstart', activarMusicaConInteraccion);
+                }).catch(e => {
+                    console.log("El navegador requiere interacción adicional para reproducir audio.");
+                });
+            }
         }
 
-        document.getElementById('cart-count').innerText = totalItems;
-        document.getElementById('cart-total').innerText = totalPrice.toFixed(2);
-        document.getElementById('modal-total').innerText = totalPrice.toFixed(2);
-
-        if (totalItems > 0) {
-            barra.classList.remove('translate-y-full');
-        } else {
-            barra.classList.add('translate-y-full');
-        }
-    }
-
-    function verDetalleCarrito() {
-        const listaModal = document.getElementById('lista-modal-carrito');
-        let html = '';
-
-        for (let idx in carrito) {
-            let cant = carrito[idx];
-            let prod = productosGlobal[idx];
-            let subtotal = prod.precio * cant;
-
-            html += `
-                <div class="py-2 flex items-center justify-between text-sm">
-                    <div>
-                        <p class="font-semibold text-stone-900">${prod.nombre}</p>
-                        <p class="text-xs text-stone-500">${cant} pza(s) x $${prod.precio.toFixed(2)}</p>
-                    </div>
-                    <div class="flex items-center space-x-3">
-                        <span class="font-bold text-[#2E7D32]">$${subtotal.toFixed(2)}</span>
-                        <button onclick="quitarDelCarrito(${idx})" class="text-red-500 hover:text-red-700 text-xs font-bold px-2 py-1 bg-red-50 rounded">🗑️</button>
-                    </div>
-                </div>
-            `;
-        }
-
-        if (html === '') {
-            html = '<p class="text-stone-400 text-center py-6 text-sm">Tu carrito está vacío.</p>';
-        }
-
-        listaModal.innerHTML = html;
-        document.getElementById('modal-carrito').classList.remove('hidden');
-    }
-
-    function quitarDelCarrito(index) {
-        delete carrito[index];
-        actualizarBarraCarrito();
-        verDetalleCarrito();
-    }
-
-    function cerrarModal() {
-        document.getElementById('modal-carrito').classList.add('hidden');
-    }
-
-    function enviarPedidoWhatsApp() {
-        let mensaje = "Hola, me gustaría hacer el siguiente pedido en Nature’s Select:\n\n";
-        let totalPrice = 0;
-
-        for (let idx in carrito) {
-            let cant = carrito[idx];
-            let prod = productosGlobal[idx];
-            let subtotal = prod.precio * cant;
-            totalPrice += subtotal;
-            mensaje += `▪️ ${cant}x ${prod.nombre} ($${prod.precio.toFixed(2)} c/u) = $${subtotal.toFixed(2)}\n`;
-        }
-
-        mensaje += `\n*Total a pagar: $${totalPrice.toFixed(2)}*\n\n¿Me confirma disponibilidad y datos para el pago por favor? ¡Gracias! ✨`;
-
-        const linkWa = `https://wa.me/523313018552?text=` + encodeURIComponent(mensaje);
-        window.open(linkWa, '_blank');
-    }
-
-    // Funciones del reproductor de música con iconos de bocina
-    const audioElem = document.getElementById('bg-audio');
-    const btnElem = document.getElementById('play-pause-btn');
-    const statusElem = document.getElementById('music-status');
-
-    function toggleAudio() {
-        if (audioElem.paused) {
-            audioElem.play().then(() => {
-                btnElem.innerHTML = '🔊'; // Bocina activa cuando suena
-                statusElem.innerText = 'Sonando';
-            }).catch(e => {
-                console.log("Error al reproducir:", e);
-            });
-        } else {
-            audioElem.pause();
-            btnElem.innerHTML = '🔇'; // Bocina bloqueada/mute cuando está pausado
-            statusElem.innerText = 'Pausado';
-        }
-    }
-
-    cargarProductos();
-</script>
+        // Escuchar el primer movimiento de scroll, toque o clic del cliente
+        window.addEventListener('scroll', activarMusicaConInteraccion, { once: true });
+        window.addEventListener('click', activarMusicaConInteraccion, { once: true });
+        window.addEventListener('touchstart', activarMusicaConInteraccion, { once: true });
+    </script>
 
 </body>
 </html>
